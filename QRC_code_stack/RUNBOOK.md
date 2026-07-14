@@ -1,0 +1,97 @@
+# RUNBOOK - how to execute everything in qrc-stack
+
+Audience: a stranger with this repo and a laptop. Every command below is
+copy-pasteable from the repo root (`QRC_code_stack/`). All results are
+SIMULATION; surrogate data is labelled wherever a number appears.
+
+## 0. Environment (one-time, ~5 min)
+
+```bash
+python3.11 -m venv .venv          # 3.11 or 3.12; 3.13 untested for cirq
+./.venv/bin/pip install --upgrade pip
+./.venv/bin/pip install numpy scipy matplotlib pandas statsmodels \
+    scikit-learn pytest qiskit qiskit-aer qiskit-ibm-runtime \
+    cirq-core pennylane
+```
+
+(Equivalent: `pip install -e ".[circuits,ports,dev]"` from
+pyproject.toml.) No API keys, no network data fetches needed for
+anything below: the ENSO cache and the solar surrogate ship with the
+repo.
+
+## 1. The whole ladder (the only command that matters)
+
+```bash
+./.venv/bin/python run_tests.py            # exit 0 iff stages 0-8 green
+./.venv/bin/python run_tests.py --stage 6  # any single stage
+```
+
+Runtime ~12 min total; slowest gates: stage 6 (~4 min, exact-sim MFE
+pilot), stage 0 (~2 min, 77 anchor tests incl. subprocess suites).
+
+## 2. Per-stage commands (what each does, where numbers land)
+
+| Stage | Command (from repo root) | Produces |
+|---|---|---|
+| 0 | `cd stage0_anchors && ../.venv/bin/python -m pytest -q .` | 77 anchors; sabotage tests must stay red-capable |
+| 1 | `cd stage1_numpy_core && ../.venv/bin/python qrc_core.py` | reference validation suite |
+| 1 | `... ../.venv/bin/python experiments.py` | Part VII figures -> `figures/`, results.npy (regression target) |
+| 1 | `cd stage1_numpy_core/enso_app && ../../.venv/bin/python forecast.py` | ENSO forecast + battery -> `outputs/metrics.json` |
+| 2 | `cd stage2_circuits_exact && PYTHONPATH=../stage1_numpy_core/enso_app ../.venv/bin/python qrc_qiskit.py` | 1e-15 validation gate + sampled/noisy checks |
+| 3 | `cd stage3_noisy_simple && ../.venv/bin/python noise_models.py` | CPTP + p=0 anchors |
+| 3 | `... PYTHONPATH=../stage5_qubit_reuse ../.venv/bin/python exp_tfim1d_noisy.py` | degradation curves -> `tfim1d_noisy_curves.png` (drop --check for the full grid) |
+| 4 | `cd stage4_hamiltonian_battery && PYTHONPATH=../stage5_qubit_reuse ../.venv/bin/python exp_family_scan.py` | <r> anchors + disorder crossover -> `family_scan.png` |
+| 4 | `... ../.venv/bin/python benchmark_hamiltonians.py` | 7-family compression table -> `benchmark_results.json` + 2 png |
+| 5 | `cd stage5_qubit_reuse && ../.venv/bin/python run_stage5_tests.py` | full reuse suite -> `qrc_reuse_results.png` (--quick for anchors only) |
+| 6 | `cd stage6_rfqrc && ../.venv/bin/python mfe_model.py` | MFE anchors (laminar point; energy conservation 1e-15) |
+| 6 | `... PYTHONPATH=../stage5_qubit_reuse ../.venv/bin/python exp_lorenz63_check.py` | VPT table (declared: classical expected to win) |
+| 6 | `... PYTHONPATH=../stage5_qubit_reuse ../.venv/bin/python exp_mfe_extremes.py` | PH/F1/rank per config (default = medium sweep) |
+| 6 | `... exp_mfe_extremes.py --full` | THE pre-registered study; hours-days; writes `mfe_results.json` incrementally; criteria evaluated ONCE against it |
+| 7 | `cd stage7_integration && PYTHONPATH=../stage5_qubit_reuse:../stage6_rfqrc ../.venv/bin/python exp_rfqrc_reuse.py` | TVD gate + width-vs-horizon structural table |
+| 8 | `cd stage8_product && PYTHONPATH=../stage5_qubit_reuse:../stage6_rfqrc ../.venv/bin/python exp_product_demo.py` | six-layer walk-forward -> model card in `stage8_product/data/model_cards/` |
+
+`--check` on any exp_* script = the reduced promotion-gate grid the
+driver runs; drop it for the full version.
+
+## 3. Data: what ships, what needs fetching
+
+SHIPS WITH THE REPO (no action): real NOAA ENSO monthly SST
+(`stage1_numpy_core/data/raw/enso.csv`, 732 months, pinned) and the
+solar SURROGATE generator (statistical, clearly labelled; the stage-8
+demo runs on it).
+
+NEEDS FETCHING (only for the stage-7 solar study and Track-A work; walk
+the vetting checklist in `stage8_product/data_plane/connectors.py`
+FIRST, then land files under `stage8_product/data/raw/<source>/`):
+
+- SURFRAD (Track A ground truth, public domain):
+  `https://gml.noaa.gov/aftp/data/radiation/surfrad/<station>/<year>/`
+  stations bon,tbl,dra,fpk,gwn,psu,sxf; ~0.5 GB/station-year; mask
+  qc!=0 then aggregate 1-min -> 5-min.
+- NSRDB (30-min gridded; free NREL API key):
+  `https://developer.nrel.gov/api/nsrdb/v2/solar/psm3-2-2-download.csv`
+  with `wkt=POINT(lon lat)`, `attributes=ghi,dni,clearsky_ghi,cloud_type`.
+- ERA5 (exogenous channels; free Copernicus account): `cdsapi` client,
+  dataset `reanalysis-era5-single-levels`.
+- Site SCADA: private; schema contract in connectors.py; raw never
+  leaves the customer boundary.
+
+Attribution: SURFRAD/NSRDB/ERA5/NOAA all carry citation requirements -
+see each `SourceSpec.licence`.
+
+## 4. Reproducibility contract
+
+SEED = 7 project-wide; every experiment prints its config block at
+runtime; no number enters a table unless a script printed it; figures
+are regenerated by scripts only. To reproduce any reported number: find
+the script in the table above, run it, read stdout.
+
+## 5. Common failures
+
+- `ModuleNotFoundError: qreuse_ir / rfqrc_reservoir` -> you forgot the
+  PYTHONPATH shown in the table (the driver sets it for you).
+- Broken conda base env (numpy 2.x vs 1.x-compiled scipy): do NOT use
+  conda base; the repo venv is self-contained.
+- `FileNotFoundError` from a stage-8 connector = that source needs
+  fetching; the error message IS the acquisition recipe.
+- Stage-6 --check slow (~4 min): expected; it is the promotion gate.

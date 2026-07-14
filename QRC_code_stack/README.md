@@ -28,7 +28,7 @@ protocol").
 
 | # | Directory | Question | Status (2026-07-14) |
 |---|-----------|----------|--------|
-| 0 | `stage0_anchors/` | do our instruments work? | GREEN - 64 tests (core + noise + family + reuse + RF-QRC + batch anchors) |
+| 0 | `stage0_anchors/` | do our instruments work? | GREEN - 77 tests (core/noise/family/reuse/RF-QRC/batch/product anchors) |
 | 1 | `stage1_numpy_core/` | exact small-scale QRC (NumPy) | GREEN - Part VII regression numbers reproduced exactly |
 | 2 | `stage2_circuits_exact/` | same reservoir as circuits (exact) | GREEN - qiskit gate 1.4e-15 at seed 7; cirq + pennylane ports run |
 | 3 | `stage3_noisy_simple/` | noisy simple Hamiltonian | GREEN - noise anchors + degradation gates; full grid pending |
@@ -36,9 +36,10 @@ protocol").
 | 5 | `stage5_qubit_reuse/` | qubit reuse on those | GREEN - full suite ALL PASS (22.7 s) |
 | 6 | `stage6_rfqrc/` | independent RF-QRC | GREEN - anchors + pilots; pre-registered study pending (--full) |
 | 7 | `stage7_integration/` | RF-QRC x reuse | GREEN (batch+compress gates) - solar study plan-level |
-| 8 | `stage8_product/` | product pipeline | PLAN.md (Part XI Phases 8-12) |
+| 8 | `stage8_product/` | product pipeline | GREEN - six-layer skeleton + walk-forward demo on labelled surrogate |
 
-Full provenance of every copied file: `docs/MOVE_MAP.md`.
+Full provenance of every copied file: `docs/MOVE_MAP.md`. How to run
+everything, including data acquisition: `RUNBOOK.md`.
 
 ## Running
 

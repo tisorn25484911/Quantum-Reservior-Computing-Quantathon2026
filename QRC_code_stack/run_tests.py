@@ -63,7 +63,11 @@ STAGES: dict[int, tuple[str, list[list[str]] | None, list[str], str]] = {
         ["stage5_qubit_reuse", "stage6_rfqrc"],
         "batch-and-compress: TVD gate + width-vs-horizon structural claim"
         " (solar study still plan-level)"),
-    8: ("stage8_product", None, [], "planned - see PLAN.md"),
+    8: ("stage8_product",
+        [[sys.executable, "exp_product_demo.py", "--check"]],
+        ["stage5_qubit_reuse", "stage6_rfqrc"],
+        "six-layer walk-forward demo on SURROGATE data; Phase 8-9 "
+        "acceptance gates (module self-tests live in stage 0)"),
 }
 
 

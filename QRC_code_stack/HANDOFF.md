@@ -1,34 +1,64 @@
 # HANDOFF - qrc-stack repository build
 
-Last updated: 2026-07-14, end of Phase 5.
+Last updated: 2026-07-14, end of Phase 6.
 
 ## Resume here (next session)
 
-State: stages 0-7 GREEN under `./.venv/bin/python run_tests.py` (exit 0;
-slowest gates: stage 6 ~4 min, stage 7 ~1 min). Stage 8 is PLAN.md only.
-Git not initialised (open user decision, with the docs/-PDF question).
+State: THE WHOLE LADDER IS GREEN - stages 0-8 PASS under
+`./.venv/bin/python run_tests.py` (exit 0; ~12 min; 77 stage-0 anchors).
+Execution guide for everything incl. data acquisition: RUNBOOK.md.
+Repo root = QRC_main_stack on GitHub
+(tisorn25484911/Quantum-Reservior-Computing-Quantathon2026); Phase-6
+work NOT yet committed/pushed at handoff time.
 
-Phase 6 scope: read `../LaTeX_logbook/part11.tex` IN FULL, convert Part
-XI Phases 8-12 into a detailed structural plan for stage8_product/
-(file-by-file responsibilities, interfaces, promotion gates). Plan-only
-unless the user upgrades scope. Then Phase 7: stage reports in docs/,
-citation audit, final handoff.
+Phase 7 scope (last phase): stage reports in docs/ (one per stage:
+config block, tables, honest failures - Part IX promotion protocol iv),
+citation audit of every paper referenced in code/docs (/citation-audit),
+final handoff. Optional user-gated items: SURFRAD/NSRDB download ->
+stage-7 solar study; stage-6 --full pre-registered run (add ESN sweep +
+windowed/recurrent-ring comparators first).
 
-Carried forward: stage-7 solar study awaits a user data-download
-decision (SURFRAD/NSRDB); stage-6 --full study needs ESN sweep +
-windowed/recurrent-ring comparators; stage-3 full noise grid; stage-1
-namespace merge.
+Carried forward: stage-3 full noise grid; stage-1 namespace merge;
+stage-6 --full study prerequisites (above).
 
-How to run things:
-    ./.venv/bin/python run_tests.py              # full ladder
-    ./.venv/bin/python run_tests.py --stage 7    # one stage
-    cd stage7_integration && \
-        PYTHONPATH=../stage5_qubit_reuse:../stage6_rfqrc \
-        ../.venv/bin/python exp_rfqrc_reuse.py    # full scan
+How to run things: see RUNBOOK.md (single source). Quick: 
+    ./.venv/bin/python run_tests.py
 
-Suggested skills for the next session: /qrc-project-playbook,
-/quantum-reservoir-computing; /arxiv + /citation-audit for Phase 7;
-/task-clarifying-questions if part11's product scope is ambiguous.
+Suggested skills for the next session: /citation-audit (Phase 7 core),
+/qrc-project-playbook, /arxiv (verify anything newly cited).
+
+## What Phase 6 did (2026-07-14)
+
+- part11.tex read in full; user upgraded scope from plan-only to
+  code + detailed data plan + execution guide.
+- Stage 8 BUILT as a working six-layer skeleton, every module
+  self-tested (13 module self-tests = stage-0 test_product_anchors.py):
+  L1 connectors (dataset registry AS CODE: SURFRAD/NSRDB/ERA5/SCADA
+  acquisition recipes, licences, sizes; ENSO real + labelled surrogate
+  runnable today) + QC (mask-never-interpolate, autocorr gap splits);
+  L2 leakage firewall (frozen versioned stats, refusal on unfitted
+  apply); L3 FeatureProvider (Sim/Cached/Hardware-stub), pinball
+  quantile + event heads, adaptive conformal + coverage monitor, shadow
+  battery; L4 isotonic recal, expected-cost persona thresholds, regime
+  router, stacker fairness table, alert engine (Part XI provenance
+  payload, dedup/escalation/fatigue); L5 spec (services deliberately
+  not built); L6 drift + effective-rank monitors, promotion gates with
+  the contractual quantum-demotion path, model cards incl. nulls.
+- exp_product_demo.py: all six layers end-to-end on the labelled
+  surrogate, walk-forward, ~1 s thanks to CachedProvider (96% hit rate
+  - the RF-QRC memoisability argument working). Phase 8-9 acceptance
+  gates ALL PASS (leakage audit, coverage within 3 pts, battery in
+  every row, valid alerts). Honest demo findings printed: effective
+  rank 1.2 under scalar drive (known concentration), ramp-F1 below
+  persistence (the honest champion), drift monitor correctly flagging
+  the surrogate's seasonal shift, promotion verdict FAILED and the
+  quantum-demotion machinery exercised - demo artifacts, not claims.
+- RUNBOOK.md written: env setup, the one ladder command, per-stage
+  command table, data-shipping vs data-fetching detail, reproducibility
+  contract, common failures.
+- Coverage-gate lesson: at 84 test rows the +/-3-point tolerance is
+  tighter than sampling noise (~4.4 pts); check spans raised to 60
+  days (2880 steps) where the gate is meaningful.
 
 Working directory: `Quantathon2026/QRC_main_stack/QRC_code_stack/`
 Design source: `../LaTeX_logbook/part9.tex` (stage ladder, rules R1-R6,
@@ -44,7 +74,7 @@ repo tree) and `part10.tex` (RF-QRC theory + phased plan). Part XI
 | 3 | Stages 3-5: extract `noise_models.py`, build `exp_tfim1d_noisy.py`, merge the two Hamiltonian files + `exp_family_scan.py` (<r> anchors 0.386/0.531), extract `test_reuse_anchors.py`, `exp_reuse_compression.py`; stages 3-5 green | DONE |
 | 4 | Stage 6 RF-QRC: expand PLAN.md to signatures, then implement Part X Phases 0-4 (anchors -> core -> read-out -> metrics/battery -> MFE + Lorenz-63) | DONE (this handoff) |
 | 5 | Stage 7: `qreuse_batch.py`, batch-and-compress validation, solar data plan/vetting, `exp_solar_ramps.py`; vn-fusion prototype only if IR extension stays small | DONE (this handoff; solar = plan-level, vn-fusion deferred as anticipated) |
-| 6 | Stage 8: read part11.tex fully, produce detailed structural plan (plan-only unless user upgrades scope) | pending |
+| 6 | Stage 8: read part11.tex fully, produce detailed structural plan (plan-only unless user upgrades scope) | DONE (this handoff; user UPGRADED scope -> working six-layer skeleton + demo + RUNBOOK) |
 | 7 | Docs: stage reports in docs/, citation audit of anything cited, final handoff | pending |
 
 ## What Phase 1 did

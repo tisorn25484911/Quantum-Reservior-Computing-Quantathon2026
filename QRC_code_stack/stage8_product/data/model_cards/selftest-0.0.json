@@ -1,0 +1,1 @@
+{"battery": {"persistence": {"nmse": 1.0}}, "config": {"n_qubits": 4}, "gates": {"gates": [], "passed": true}, "generated": "2026-07-14T05:16:31Z", "model_version": "selftest-0.0", "scope": "simulation", "sources": [{"kind": "surrogate", "source": "solar_surrogate"}]}
