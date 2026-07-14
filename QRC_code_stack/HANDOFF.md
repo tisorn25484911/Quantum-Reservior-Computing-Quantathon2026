@@ -8,8 +8,9 @@ State: THE WHOLE LADDER IS GREEN - stages 0-8 PASS under
 `./.venv/bin/python run_tests.py` (exit 0; ~12 min; 77 stage-0 anchors).
 Execution guide for everything incl. data acquisition: RUNBOOK.md.
 Repo root = QRC_main_stack on GitHub
-(tisorn25484911/Quantum-Reservior-Computing-Quantathon2026); Phase-6
-work NOT yet committed/pushed at handoff time.
+(tisorn25484911/Quantum-Reservior-Computing-Quantathon2026); everything
+through Phase 6 is committed and pushed (commit 021bf7c). Day-to-day:
+`git add -A && git commit -m "..." && git push` from QRC_main_stack.
 
 Phase 7 scope (last phase): stage reports in docs/ (one per stage:
 config block, tables, honest failures - Part IX promotion protocol iv),
