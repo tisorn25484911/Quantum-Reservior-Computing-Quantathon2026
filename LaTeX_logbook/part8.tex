@@ -1,0 +1,261 @@
+\parttitle{VIII}{Design Principles and Research Directions}
+
+\section{Design principles}
+\label{sec:design-principles}
+
+Ten principles condense Parts~I--VII. Each is stated as an imperative with
+its justification and the place in this document where it was earned.
+
+\emph{D1 --- Name your contraction.} Every working reservoir has an explicit
+mechanism that erases initial conditions and the remote past: a partial
+trace, a reset, engineered dissipation, a window truncation. State which one
+your design uses, verify it numerically (trajectory convergence from
+different $\rho_0$; PTM spectral radius), and check it contracts toward an
+\emph{input-sensitive} region rather than the maximally mixed state
+(coherence influx, Section~\ref{sec:quantum-esp}). Architectures that
+inherit stability from unexamined device noise are not reproducible across
+calibration cycles (Sections~\ref{sec:arch-dissipative}, \ref{sec:hw-ibm}).
+
+\emph{D2 --- Sweep the operating point.} The injection interval and dynamical
+regime are not defaults but the reservoir's most sensitive dials; the
+temporal-edge sweep of Section~\ref{sec:temporal-edge} moved NARMA-10 error
+by a factor of nearly four at fixed architecture. Re-sweep when the task,
+input scaling, or noise level changes; on hardware the sweep reuses circuits
+and is cheap (Figure~\ref{fig:temporal-edge};
+\citealp{kobayashi2026edge,martinez2021dynamical}).
+
+\emph{D3 --- Budget features, not qubits.} The read-out sees $K$ measured,
+well-conditioned directions, not $4^n-1$ abstract ones. Track effective rank
+and memory capacity of the actual feature matrix; enrich observables
+($X$, $ZZ$) and multiplex before adding qubits
+(Sections~\ref{sec:extraction}, \ref{sec:cirq}; Table~\ref{tab:cirq-sweep}).
+
+\emph{D4 --- Treat the encoding scale as physics.} Rotation encodings place
+the model's approximation power on a frequency comb set by the scale
+$\gamma$ \citep{schuld2021effect}; the wrong scale wastes the register on
+harmonics the task lacks. The single largest error reduction in Part~IV came
+from halving $\gamma$, and the cheapest gradient in the document was the one
+tuning it (Sections~\ref{sec:cirq}, \ref{sec:pennylane}).
+
+\emph{D5 --- Anchors before experiments.} Build the validation suite first:
+identities with known answers (injection rebuild, unitarity, ridge recovery,
+NMSE of the mean $=1$, shot-noise scaling). Every later anomaly is then
+attributable in minutes rather than days
+(Section~\ref{sec:validation-suite}).
+
+\emph{D6 --- Shots are the currency.} Measure the exact ceiling before any
+sampled result; report $S$ next to every number; budget mitigation
+multipliers explicitly; and read \citet{hu2023tackling} and
+\citet{ahmed2025optimal} before a device campaign. A method that needs
+$10^5$ shots per feature to approach its own ceiling has stated its cost
+(Sections~\ref{sec:shot-practice}, \ref{sec:shot-budget}).
+
+\emph{D7 --- The baseline battery is part of the model.} Mean, persistence,
+linear lags, size-matched ESN, Haar control; chronological splits; the
+physically stationary target ($k_t$, anomaly, residual). Part~VII's solar
+row exists to show how publishable a meaningless result can look when the
+battery is absent (Sections~\ref{sec:baselines}, \ref{sec:task-demos}).
+
+\emph{D8 --- Default to the hybrid posture, with ablations.} Concatenate
+quantum features with the cheap classical ones and report quantum-only and
+classical-only columns; the difference is the measured quantum
+contribution. Part~IV's noisy hybrid \emph{underperforming} its classical
+ablation is exactly the kind of result this posture is designed to surface
+(Sections~\ref{sec:arch-hybrid}, \ref{sec:qiskit-results}).
+
+\emph{D9 --- Respect concentration and symmetry at scale.} Monitor feature
+variance and effective rank as $n$, depth, or noise grow; expect exponential
+signal collapse in scrambling or noise-dominated regimes and design against
+it (shallow steps, local observables, spatial multiplexing); resolve
+symmetry sectors before trusting chaos diagnostics or observable choices
+(Section~\ref{sec:concentration};
+\citealp{sannia2025exponential,xiong2025role,mcclean2018barren}).
+
+\emph{D10 --- Scope every claim.} Theory, simulation, or hardware; surrogate
+or real; the phrase ``quantum advantage'' only behind a controlled scaling
+comparison that includes cost. The defensible current claim for QRC in this
+domain is parameter-parity plus engineering fit, and this document says no
+more anywhere (frontmatter; Section~\ref{sec:arch-comparison}).
+
+\section{Detecting real quantum utility}
+\label{sec:detecting-utility}
+
+A benchmark that could in principle certify a quantum benefit has five
+properties, and their absence diagnoses most overclaims. \emph{Matched
+read-out capacity}: classical baselines get the same number of trained
+parameters and comparable tuning effort. \emph{Structure controls}: a
+Haar-random quantum reservoir of the same size separates ``tuned dynamics''
+from ``being quantum'' (Figure~\ref{fig:memory-capacity}); an efficiently
+simulable quantum control (Gaussian or Clifford reservoir) separates
+``quantum hardware'' from ``quantum formalism''
+\citep{nokkala2021gaussian,gotting2023exploring,palacios2024role}.
+\emph{Scaling curves, not points}: performance versus size, shots, and data
+on both sides, since crossings, not gaps at one configuration, are the
+object of interest. \emph{Cost on the axis}: wall-clock, shots, and energy;
+Section~\ref{sec:shot-budget}'s arithmetic belongs in every hardware paper.
+\emph{Pre-registered success criteria}: the target, metric, split, and
+baselines fixed before the test set is touched --- the cheapest and most
+neglected of the five.
+
+\section{Research directions}
+\label{sec:research-directions}
+
+Ten directions follow, ordered roughly by increasing ambition. Each gives
+motivation, background, a concrete route, difficulty, data, metrics, and
+publication potential. All are scoped so that a small group with the shipped
+code and modest cloud access can start immediately.
+
+\subsection*{R1 --- A temporal-edge atlas across architectures}
+\emph{Motivation:} D2 is currently a per-study ritual; a systematic map
+would make it a lookup. \emph{Background:}
+\citet{kobayashi2026edge} establish the two-edge (parametric, temporal)
+structure for SYK-class reservoirs; Part~VII reproduced the temporal edge in
+a 5-qubit Ising register. \emph{Route:} sweep $(J\Delta t$, disorder,
+task-memory-length$)$ across the Part~III templates (Ising, chain,
+brickwork circuit) at $n\le 12$ exact, correlating optima with level-spacing
+ratio and PTM gap; deliver a design chart and the sweep harness.
+\emph{Difficulty:} low--medium (compute-bound, conceptually clean).
+\emph{Data:} NARMA family, solar $k_t$, ENSO. \emph{Metrics:} NMSE surfaces;
+optimum-location predictors. \emph{Potential:} strong methods paper
+(PRApplied/PRResearch class); immediately useful tooling.
+
+\subsection*{R2 --- Closing the recurrent-memory gap on ENSO-class tasks}
+\emph{Motivation:} Part~VII's sharpest result --- recurrence worth 20 NMSE
+points over windowed maps, tuned ESN still ahead of the small register.
+\emph{Background:} memory-augmented hybrids \citep{settino2025memory},
+feedback reservoirs \citep{kobayashi2024feedback}, NISQRC's
+coherence-independent memory \citep{hu2024overcoming}.
+\emph{Route:} implement feedback and memory-augmented variants on the exact
+simulator; identify which mechanism closes the gap to the matched ESN at
+fixed feature count; then a small hardware run (mid-circuit reset, Part~IV
+Part-B shape) on the real ENSO series. \emph{Difficulty:} medium--high.
+\emph{Data:} ENSO (real); Ni\~no 3.4 from reanalysis for length.
+\emph{Metrics:} NMSE and warm-event skill versus matched ESN.
+\emph{Potential:} first honest hardware benchmark on a real climate index;
+high.
+
+\subsection*{R3 --- Shot-optimal read-outs for forecasting}
+\emph{Motivation:} Section~\ref{sec:shot-budget}'s arithmetic is the
+adoption barrier. \emph{Background:} eigentask construction
+\citep{hu2023tackling}; shot-optimal training \citep{ahmed2025optimal}.
+\emph{Route:} apply eigentask-weighted observable selection to the solar and
+load pipelines; produce NMSE-versus-total-shot-budget frontiers against
+naive uniform allocation. \emph{Difficulty:} medium.
+\emph{Data:} surrogate then NSRDB/GEFCom. \emph{Metrics:} error at fixed
+budget; budget at fixed error. \emph{Potential:} the paper every hardware
+group cites in its methods; solid.
+
+\subsection*{R4 --- Event skill: ramps and extremes}
+\emph{Motivation:} Part~VII shows averages are ties; operational value
+lives in tails. \emph{Background:} extreme-event reservoir prediction
+\citep{ahmed2024prediction}; energy community's event metrics
+\citep{hong2016gefcom,inman2013solar}. \emph{Route:} define ramp events on
+SURFRAD minute data and warm events on ENSO; train quantile read-outs
+(Section~\ref{sec:uncertainty}); compare event-conditional skill (POD/FAR,
+tail pinball) across the reservoir battery. \emph{Difficulty:} medium
+(metrics discipline is the work). \emph{Data:} SURFRAD (real), ENSO (real).
+\emph{Metrics:} event scores, reliability diagrams. \emph{Potential:} high
+--- the first tail-focused QRC study in the domain would define the
+evaluation standard.
+
+\subsection*{R5 --- Noise as a characterised resource, on hardware}
+\emph{Motivation:} D1/D5 versus the reality that device noise drifts.
+\emph{Background:} natural reservoirs \citep{suzuki2022natural};
+dissipation-as-resource \citep{sannia2024dissipation}; coherence-influx
+criterion \citep{kobayashi2024coherence}. \emph{Route:} on one
+superconducting backend, characterise the same reservoir circuit across
+calibration cycles; correlate task performance with measured
+$T_1/T_2$/read-out drift; test the amplitude-damping-helps /
+dephasing-hurts prediction by Trotter-inserting engineered channels in
+simulation first. \emph{Difficulty:} medium (patience-bound).
+\emph{Data:} NARMA + solar surrogate. \emph{Metrics:} performance-drift
+curves; influx diagnostics. \emph{Potential:} a reproducibility protocol
+the field lacks; solid.
+
+\subsection*{R6 --- The hybrid load benchmark, pre-registered}
+\emph{Motivation:} Section~\ref{sec:pipeline-load} is specified but unrun;
+it is the cleanest first real-data project. \emph{Background:} GEFCom
+practice \citep{hong2016gefcom,hong2016load}; QRC load studies at few-qubit
+scale \citep{odo2026quantum}. \emph{Route:} execute the pipeline exactly as
+specified (calendar model, residual target, hybrid read-out, ablations,
+pinball quantiles) on GEFCom2014 and one ENTSO-E zone; pre-register the
+success criterion. \emph{Difficulty:} low--medium.
+\emph{Data:} GEFCom2014, ENTSO-E/OPSD (all real).
+\emph{Metrics:} pinball loss versus calendar-plus-linear; ablation deltas.
+\emph{Potential:} modest novelty, high credibility value --- the reference
+others must match methodologically.
+
+\subsection*{R7 --- Solar beyond persistence: multi-horizon, regime-aware}
+\emph{Motivation:} the one-step tie (Table~\ref{tab:results-master}) says
+move the goalposts to where value exists. \emph{Background:} solar
+benchmarking practice \citep{yang2018history,inman2013solar}; hybrid
+model-plus-reservoir posture \citep{pathak2018hybrid}.
+\emph{Route:} 2--6\,h horizons on NSRDB/SURFRAD $k_t$ with
+regime-conditional evaluation; test whether reservoir memory helps most at
+regime transitions; optionally fuse a cheap clear-sky/NWP prior.
+\emph{Difficulty:} medium. \emph{Data:} NSRDB, SURFRAD (real).
+\emph{Metrics:} NMSE by horizon and regime; ramp scores (with R4).
+\emph{Potential:} directly relevant to the application community; good
+cross-venue paper.
+
+\subsection*{R8 --- Empirical concentration scaling for QRC}
+\emph{Motivation:} D9 currently cites theory; design needs measured
+curves. \emph{Background:} exponential concentration and symmetry analysis
+\citep{sannia2025exponential,xiong2025role}; eigentask noise ceiling
+\citep{hu2023tackling}. \emph{Route:} exact simulation to $n=12$--$14$:
+feature variance, effective rank, and task NMSE versus $n$, depth, noise
+rate, and symmetry sector; fit decay constants; identify the multiplexing
+crossover where two $n$-qubit registers beat one $2n$-qubit register at
+fixed shots. \emph{Difficulty:} medium--high (careful numerics).
+\emph{Data:} NARMA suffices. \emph{Metrics:} scaling exponents; crossover
+maps. \emph{Potential:} the quantitative backbone for honest scaling
+claims; strong.
+
+\subsection*{R9 --- An analog-platform energy demonstration}
+\emph{Motivation:} the largest registers are analog
+(Section~\ref{sec:hw-neutral}); the domain lacks any energy-data result on
+them. \emph{Background:} 108-qubit Rydberg QRC \citep{kornjaca2024large};
+global-detuning encoding's size-independent memory.
+\emph{Route:} map a short-window load or ramp \emph{classification} task
+(matching the platform's restart/ensemble operation) onto global-detuning
+waveforms in emulation; then a partner-hardware run; report against the
+full battery including a matched classical kernel.
+\emph{Difficulty:} high (platform access and encoding design).
+\emph{Data:} GEFCom/SURFRAD-derived labels. \emph{Metrics:} accuracy at
+matched trained parameters; shots and wall-clock on the axis.
+\emph{Potential:} headline-adjacent if honest; must be pre-registered to
+stay so.
+
+\subsection*{R10 --- Clean-physics ESP and edge studies on trapped ions}
+\emph{Motivation:} Part~V flags the absence of ion-platform QRC benchmarks
+despite the best per-step fidelities and native all-to-all coupling.
+\emph{Background:} QCCD mid-circuit primitives \citep{moses2023race};
+dynamical-phase reservoir physics
+\citep{martinez2021dynamical,kobayashi2026edge}. \emph{Route:} small-$T$,
+high-fidelity implementations of the Eq.~\eqref{eq:fn-hamiltonian}
+reservoir with mid-circuit reset; measure trajectory-convergence rates
+(ESP directly, not via proxy) and the temporal edge on-device; compare with
+exact simulation at identical seeds. \emph{Difficulty:} high (access;
+shot-rate limits set $T$). \emph{Data:} NARMA-2/10 at small $T$.
+\emph{Metrics:} measured contraction rates; edge location on-device versus
+simulation. \emph{Potential:} the cleanest hardware--theory comparison
+available to the field; high scientific value independent of any advantage
+question.
+
+\section{Closing statement}
+\label{sec:closing}
+
+This document set out to be the reference its own Part~VIII demands:
+theory stated with its assumptions, implementations that run, data
+characterised before being forecast, baselines that would embarrass a weak
+claim, and research directions scoped to be started rather than admired.
+The honest summary of the field it surveys is neither triumphal nor
+dismissive. Small quantum registers, operated at their dynamical sweet
+spot, demonstrably match classical read-outs several times their size on
+memory-nonlinearity benchmarks, and the engineering paths around their two
+structural taxes --- measurement statistics and the recurrence gap --- are
+active and credible. Whether that matures into practical value for
+renewable-energy and climate forecasting is exactly the kind of question
+that is settled by pre-registered benchmarks on real data, run by people
+who would publish either answer. The code, data discipline, and directions
+above are offered to make that settling faster.

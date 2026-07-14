@@ -1,0 +1,138 @@
+\documentclass[11pt,twocolumn]{article}
+
+% ------------------------------------------------------------------ layout
+\usepackage[a4paper,margin=1.8cm]{geometry}
+\setlength{\columnsep}{18pt}
+\setlength{\emergencystretch}{2em}
+\usepackage[expansion=false]{microtype} % expansion needs scalable fonts absent here (cf. T1 note)
+%\usepackage[T1]{fontenc} % cm-super absent; OT1 Type-1 CM keeps fonts scalable
+\usepackage[utf8]{inputenc}
+
+% ------------------------------------------------------------------- maths
+\usepackage{amsmath,amssymb,amsthm,mathtools,bm}
+\usepackage{siunitx}
+
+% ------------------------------------------------------------------ floats
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{longtable}
+\usepackage{tabularx}
+\captionsetup{font=small,labelfont=bf}
+
+% ---------------------------------------------------------------- algorithms
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% ------------------------------------------------------------------- code
+\usepackage{listings}
+\usepackage{xcolor}
+\definecolor{codegray}{gray}{0.45}
+\definecolor{codebg}{gray}{0.97}
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\footnotesize,
+  commentstyle=\color{codegray}\itshape,
+  keywordstyle=\bfseries,
+  stringstyle=\color{codegray},
+  showstringspaces=false,
+  numbers=left,
+  numberstyle=\tiny\color{codegray},
+  numbersep=8pt,
+  breaklines=true,
+  breakatwhitespace=true,
+  frame=single,
+  rulecolor=\color{black!25},
+  backgroundcolor=\color{codebg},
+  captionpos=b,
+  aboveskip=1.0\baselineskip,
+  belowskip=1.0\baselineskip
+}
+
+% ------------------------------------------------------------------- TikZ
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,calc,shapes.geometric}
+\tikzset{
+  block/.style={draw, rounded corners=2pt, minimum height=9mm, minimum width=22mm, align=center, font=\small},
+  qblock/.style={block, fill=black!6},
+  arrow/.style={-{Latex[length=2.4mm]}, thick}
+}
+
+% ------------------------------------------------------------- references
+\usepackage{cuted}          % full-width in-place blocks (strip) across both columns
+\makeatletter\providecommand{\@setmarks}{}\makeatother % cuted's \@outputdblcol calls \@setmarks, absent in this kernel
+\renewcommand{\dbltopfraction}{0.92}
+\renewcommand{\dblfloatpagefraction}{0.75}
+\renewcommand{\textfraction}{0.06}
+\setcounter{dbltopnumber}{4}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[hidelinks]{hyperref}
+
+% ------------------------------------------------------------ environments
+\newtheorem{definition}{Definition}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{remark}{Remark}[section]
+
+% ---------------------------------------------------------------- notation
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Hil}{\mathcal{H}}
+\newcommand{\tr}{\operatorname{Tr}}
+\newcommand{\id}{\mathbb{1}}
+\newcommand{\map}[1]{\mathcal{#1}}
+\newcommand{\ket}[1]{|#1\rangle}
+\newcommand{\bra}[1]{\langle#1|}
+\newcommand{\braket}[2]{\langle#1|#2\rangle}
+\newcommand{\ketbra}[2]{|#1\rangle\!\langle#2|}
+\newcommand{\ev}[1]{\langle #1\rangle}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\NMSE}{\mathrm{NMSE}}
+
+\newcommand{\parttitle}[2]{%
+  \twocolumn[{%
+    \phantomsection
+    \addcontentsline{toc}{section}{\texorpdfstring{\textbf{Part #1.\ #2}}{Part #1. #2}}%
+    \begin{center}
+      {\Large\bfseries Part #1}\\[2mm]
+      {\LARGE\bfseries #2}
+    \end{center}
+    \vspace{4mm}%
+  }]%
+}
+
+\setcounter{tocdepth}{2}
+\setcounter{secnumdepth}{3}
+
+\title{\bfseries Quantum Reservoir Computing for Renewable Energy and Climate Prediction:\\[2mm]
+\Large A Research Review and Implementation Handbook}
+\author{Prepared for Quantathon 2026}
+\date{3 July 2026; revised 11 July 2026 (Parts IX--XI added)}
+
+\begin{document}
+
+\maketitle
+\onecolumn
+\input{frontmatter}
+
+\input{part1}
+\input{part2}
+\input{part3}
+\input{part4}
+\input{part5}
+\input{part6}
+\input{part7}
+\input{part8}
+\input{part9}
+\input{part10}
+\input{part11}
+
+\clearpage
+\phantomsection
+\addcontentsline{toc}{section}{References}
+\bibliographystyle{unsrtnat}
+\bibliography{references}
+
+\end{document}

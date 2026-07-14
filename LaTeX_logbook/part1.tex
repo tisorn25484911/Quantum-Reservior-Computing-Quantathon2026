@@ -1,0 +1,323 @@
+\parttitle{I}{Foundations of Classical Reservoir Computing}
+
+\section{The reservoir computing paradigm}
+\label{sec:rc-paradigm}
+
+Reservoir computing (RC) is a way of using a fixed dynamical system as a
+computational resource. A time-dependent input drives the system; the system's
+internal state, by virtue of its own dynamics, becomes a rich nonlinear
+function of the input history; and a simple \emph{linear} map from the state to
+the output is the only component that is ever trained. The paradigm emerged
+twice independently around 2001--2002: as \emph{echo state networks} (ESNs) in
+the machine-learning community~\citep{jaeger2001echo,jaeger2004harnessing} and
+as \emph{liquid state machines} in computational
+neuroscience~\citep{maass2002realtime}; the two were later unified under the
+reservoir computing name~\citep{verstraeten2007experimental,lukosevicius2009reservoir}.
+
+The appeal of the paradigm is threefold. First, training is a linear
+least-squares problem --- convex, closed-form, and cheap --- so the pathologies of
+training recurrent networks by gradient descent (vanishing and exploding
+gradients through time) never arise. Second, because the dynamical core is
+fixed, \emph{any} sufficiently rich dynamical system can serve as the
+reservoir; this is what opens the door to physical and, in this document,
+quantum reservoirs. Third, despite the simplicity of training, reservoir
+computers are provably universal approximators for an important class of
+input--output maps (Section~\ref{sec:universality}) and are competitive in
+practice on chaotic time-series prediction, a task family directly relevant to
+weather and climate~\citep{pathak2018model,arcomano2020machine,vlachas2020backpropagation}.
+
+Figure~\ref{fig:rc-blocks} fixes the three-layer anatomy used throughout this
+document: an \emph{encoding} (input layer), a fixed \emph{reservoir}, and a
+trained linear \emph{read-out}. Every architecture in Part~III, quantum or
+classical, is an instance of this anatomy; design work happens almost entirely
+in the first two layers, and honesty in evaluation happens in the third.
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[node distance=9mm and 13mm]
+  \node[block] (in) {input\\$u_t$};
+  \node[block, right=of in, minimum width=34mm, minimum height=16mm] (res)
+    {fixed reservoir\\$x_t = F(x_{t-1}, u_t)$};
+  \node[block, right=of res] (out) {read-out\\$\hat y_t = W_{\mathrm{out}}\,\tilde x_t$};
+  \draw[arrow] (in) -- node[above,font=\scriptsize]{$W_{\mathrm{in}}$} (res);
+  \draw[arrow] (res) -- (out);
+  \draw[arrow] (res.20) to[out=55,in=125,looseness=5] node[above,font=\scriptsize]{$W_{\mathrm{res}}$} (res.160);
+  \node[below=2mm of in, font=\scriptsize, align=center] {given};
+  \node[below=2mm of res, font=\scriptsize, align=center] {fixed (never trained)};
+  \node[below=2mm of out, font=\scriptsize, align=center] {trained (linear only)};
+\end{tikzpicture}
+\caption{The three-layer anatomy of reservoir computing. Only the read-out is
+trained; the recurrent core is fixed at initialisation. In quantum reservoir
+computing (Part~II) the middle block becomes an input-driven quantum channel
+and the read-out acts on measured expectation values.}
+\label{fig:rc-blocks}
+\end{figure*}
+
+\section{Echo state networks}
+\label{sec:esn}
+
+\subsection{State update and read-out}
+
+The standard ESN maintains a state $x_t \in \R^{N_x}$ updated as
+\begin{equation}
+\begin{aligned}
+  x_{t+1} \;=\;{}& (1-\alpha)\, x_t
+  + \alpha\, f\!\left(W_{\mathrm{res}}\, x_t + W_{\mathrm{in}}\, u_{t+1} + b\right),\\
+  & \alpha \in (0,1],
+\end{aligned}
+  \label{eq:leaky}
+\end{equation}
+whose leak rate $\alpha$ sets the intrinsic time scale of the reservoir and is
+the single most important hyperparameter to match to the autocorrelation time
+of the data (a point that returns, in quantum form, as the injection interval
+$\Delta t$ in Parts~II and~VIII). The output is linear in the (possibly
+augmented) state $\tilde x_t = (x_t^{\!\top}, 1)^{\!\top}$:
+\begin{equation}
+  \hat y_t \;=\; W_{\mathrm{out}}\, \tilde x_t .
+  \label{eq:readout}
+\end{equation}
+
+Three conventions from Eq.~\eqref{eq:esn-update} onward hold throughout this
+document. First, a \emph{washout}: the first $T_w$ states, which still remember
+the arbitrary initial condition, are discarded before training. Second,
+\emph{chronological splits}: training data strictly precede validation data,
+which strictly precede test data; shuffled splits leak information through
+autocorrelation and are one of the most common sources of inflated results in
+time-series work. Third, all errors are reported as the normalised mean-square
+error
+\begin{equation}
+  \NMSE \;=\; \frac{\sum_t \left(y_t - \hat y_t\right)^2}{\sum_t \left(y_t - \bar y\right)^2},
+  \label{eq:nmse}
+\end{equation}
+for which the constant predictor $\hat y_t = \bar y$ scores exactly $1$.
+
+\subsection{Ridge regression: derivation and practice}
+\label{sec:ridge}
+
+Collect the post-washout training states row-wise into
+$X \in \R^{T\times (N_x+1)}$ and the targets into $y \in \R^{T}$. Ordinary
+least squares minimises $\lVert Xw - y\rVert_2^2$, but reservoir states are
+strongly collinear (neighbouring neurons see overlapping input histories), so
+the normal-equations matrix $X^{\!\top}X$ is ill-conditioned and the unpenalised
+solution overfits noise in the state trajectory. Ridge (Tikhonov) regression
+minimises instead
+\begin{equation}
+  J(w) \;=\; \lVert Xw - y\rVert_2^2 + \lambda \lVert w\rVert_2^2,
+  \qquad \lambda > 0 .
+  \label{eq:ridge-objective}
+\end{equation}
+Setting $\nabla_w J = 2X^{\!\top}(Xw-y) + 2\lambda w = 0$ gives the closed form
+\begin{equation}
+  w^\star \;=\; \left(X^{\!\top}X + \lambda \id\right)^{-1} X^{\!\top} y .
+  \label{eq:ridge-solution}
+\end{equation}
+Since $X^{\!\top}X \succeq 0$, the regularised matrix
+$X^{\!\top}X + \lambda\id \succ 0$ is always invertible, and the objective
+\eqref{eq:ridge-objective} is strictly convex, so $w^\star$ is the unique global
+minimiser. In the singular-value decomposition $X = U\Sigma V^{\!\top}$ with
+singular values $s_i$, Eq.~\eqref{eq:ridge-solution} becomes
+\begin{equation}
+  w^\star \;=\; \sum_i \frac{s_i}{s_i^2 + \lambda}\, \left(u_i^{\!\top} y\right) v_i ,
+  \label{eq:ridge-svd}
+\end{equation}
+which exhibits ridge as a \emph{spectral filter}: directions of the state
+space with $s_i^2 \gg \lambda$ pass through essentially untouched, while
+directions with $s_i^2 \ll \lambda$ --- precisely the poorly excited, noise-dominated
+ones --- are shrunk toward zero. This picture matters doubly in the quantum
+setting, where each feature carries shot noise of known magnitude
+(Part~IV): $\lambda$ is then not a nuisance parameter but the dial that trades
+the reservoir's expressivity against its measurement noise. The penalty is
+selected on held-out data --- either a chronological validation block or, when
+that block is too short to be representative, by generalised cross-validation
+on the training span; it is never tuned on the test set.
+
+\begin{algorithm*}[t]
+\caption{Echo state network training (batch, ridge read-out)}
+\label{alg:esn}
+\begin{algorithmic}[1]
+\State draw $W_{\mathrm{in}}, W_{\mathrm{res}}, b$ at random; rescale $W_{\mathrm{res}}$ to spectral radius $\rho_{\mathrm{sr}}<1$
+\State $x_0 \gets 0$
+\For{$t = 1, \dots, T_{\mathrm{total}}$}
+  \State $x_t \gets (1-\alpha)x_{t-1} + \alpha f(W_{\mathrm{res}}x_{t-1} + W_{\mathrm{in}}u_t + b)$
+\EndFor
+\State discard $t \le T_w$ (washout); stack remaining training states into $X$, targets into $y$
+\State $W_{\mathrm{out}} \gets \left(X^{\!\top}X + \lambda\id\right)^{-1}X^{\!\top}y$ \Comment{$\lambda$ chosen on validation data}
+\State \Return predictions $\hat y_t = W_{\mathrm{out}}\tilde x_t$ on the untouched test span
+\end{algorithmic}
+\end{algorithm*}
+
+\section{What makes a good reservoir: the formal properties}
+\label{sec:properties}
+
+Three properties, introduced for ESNs but stated here in a form that transfers
+verbatim to quantum reservoirs, separate systems that can compute from systems
+that merely fluctuate.
+
+\subsection{Echo state property}
+
+\begin{definition}[Echo state property]
+\label{def:esp}
+A driven system with update $x_{t+1} = F(x_t, u_{t+1})$ on a compact state set
+has the \emph{echo state property} (ESP) if for every input sequence
+$\{u_t\}$ and every pair of initial conditions $x_0, x_0'$, the resulting
+trajectories converge: $\lVert x_t - x_t'\rVert \to 0$ as $t \to \infty$.
+Equivalently, after a transient the state is a function of the input history
+alone, $x_t = \phi(\dots, u_{t-1}, u_t)$, independent of initialisation~\citep{jaeger2001echo}.
+\end{definition}
+
+The ESP is what makes the washout finite and the learned read-out
+reproducible: without it, the ``features'' depend on an arbitrary initial
+condition and the training problem is ill-posed. For the $\tanh$ ESN, a
+sufficient condition is that the largest singular value of
+$W_{\mathrm{res}}$ be below $1$; the everyday design rule of setting the
+\emph{spectral radius} $\rho_{\mathrm{sr}}(W_{\mathrm{res}})$ slightly below
+$1$ is a necessary condition (for zero input) and works well in practice,
+though it is not sufficient in general~\citep{jaeger2001echo,lukosevicius2009reservoir}.
+Extensions of the ESP to non-stationary systems and to subsystems --- needed when
+only part of a larger system is observed, as is typical for quantum
+reservoirs --- are developed in~\citet{kobayashi2024extending}.
+
+\subsection{Fading memory}
+
+\begin{definition}[Fading memory]
+\label{def:fading}
+A causal, time-invariant operator $M$ mapping input sequences to outputs has
+\emph{fading memory} if inputs that agree on a recent window and differ only in
+the remote past produce outputs that are close: for every $\varepsilon>0$
+there exist $\delta>0$ and a decreasing weight sequence $w_k \downarrow 0$ such
+that $\sup_k w_k\,|u_{t-k}-u'_{t-k}| < \delta$ implies
+$|M[u]_t - M[u']_t| < \varepsilon$~\citep{boyd1985fading}.
+\end{definition}
+
+Fading memory formalises the intuition that a forecaster should care about the
+recent past more than the distant past, with influence decaying continuously.
+\citet{boyd1985fading} proved that operators with fading memory are exactly
+those approximable by Volterra series --- the classical result that underlies all
+reservoir universality theorems. In a reservoir with the ESP, fading memory is
+automatic: the same contraction that erases the initial condition also erases
+the remote input past. The tension at the heart of reservoir design is that
+\emph{too much} contraction erases the recent past as well; the useful regime
+lies near, but on the stable side of, the boundary
+(Section~\ref{sec:edge-of-chaos}).
+
+\subsection{Separation and the memory--nonlinearity trade-off}
+
+The read-out is linear, so any two input histories that must be mapped to
+different outputs must first be mapped, by the reservoir, to linearly
+distinguishable states. This \emph{separation property}~\citep{maass2002realtime}
+is the reservoir's expressivity requirement, complementary to the ESP's
+stability requirement. A quantitative unification is the information-processing
+capacity of \citet{dambre2012information}: for a reservoir with $N_x$
+linearly independent state variables driven by i.i.d.\ input, the total
+capacity to reconstruct \emph{any} orthonormal set of functions of the input
+history (linear or nonlinear) is bounded by $N_x$, and saturates it for
+fading-memory systems. Capacity spent on nonlinear functions is capacity not
+available for linear memory --- the \emph{memory--nonlinearity trade-off} that
+every reservoir, classical or quantum, must budget for the task at hand.
+
+\subsection{Linear memory capacity}
+\label{sec:memory-capacity}
+
+The standard operational probe of memory is Jaeger's \emph{memory
+capacity}~\citep{jaeger2001echo}. Drive the reservoir with i.i.d.\ scalar input
+$u_t$, train a separate linear read-out to reconstruct each delayed input
+$y_t = u_{t-d}$, and define
+\begin{equation}
+\begin{aligned}
+  \mathrm{MC}_d \;&=\; \max_{w}\;
+  \frac{\operatorname{cov}^2\!\left(u_{t-d},\, w^{\!\top}\tilde x_t\right)}
+       {\operatorname{var}(u_{t-d})\,\operatorname{var}\!\left(w^{\!\top}\tilde x_t\right)},\\
+  \mathrm{MC} \;&=\; \sum_{d=1}^{\infty} \mathrm{MC}_d .
+\end{aligned}
+  \label{eq:mc}
+\end{equation}
+Each $\mathrm{MC}_d \in [0,1]$ is the fraction of the delay-$d$ input variance
+linearly recoverable from the state; $\mathrm{MC} \le N_x$ with equality
+approached by linear reservoirs~\citep{jaeger2001echo,dambre2012information}.
+In this document $\mathrm{MC}$ is estimated with delays up to $d_{\max}=25$ and
+reported alongside every reservoir comparison (Part~VII), because a forecasting
+model's usable history is bounded by it.
+
+\subsection{Universality}
+\label{sec:universality}
+
+The formal justification for training only a linear read-out is a family of
+universality theorems. For ESNs, \citet{grigoryeva2018echo} proved that echo
+state networks with linear read-outs are universal: any causal, time-invariant
+fading-memory filter on uniformly bounded inputs can be approximated to
+arbitrary accuracy by an ESN of sufficient size. The proof route --- show the
+family of reservoir functionals forms a polynomial algebra that separates
+points, then apply Stone--Weierstrass --- is worth internalising because it
+transfers: universality proofs for quantum reservoirs
+(Part~II, Section~\ref{sec:qrc-universality}) follow the same architecture,
+with the algebra generated by measured observables of the driven quantum
+state~\citep{chen2019learning,nokkala2021gaussian,martinez2023finite}. Two
+caveats temper the theorem's practical force. Universality is an existence
+statement about \emph{some} sufficiently large reservoir, not a statement that
+a random one of fixed size is good; and it says nothing about sample
+efficiency. Both gaps are exactly where empirical reservoir quality --- and any
+prospective quantum edge --- lives.
+
+\section{Operating point: the edge of chaos}
+\label{sec:edge-of-chaos}
+
+For a fixed task, reservoir performance as a function of the dynamical regime
+is strikingly non-monotonic. Deep in the ordered (strongly contracting) regime
+the state barely responds to input and memory is short; deep in the chaotic
+regime the ESP fails and the state amplifies microscopic differences until the
+input signal is scrambled. Performance typically peaks near the
+order--chaos boundary --- the \emph{edge of chaos} --- where correlations are long
+but reproducibility survives~\citep{boedecker2012information}. For ESNs the
+practical dials are the spectral radius $\rho_{\mathrm{sr}}$, the input
+scaling, and the leak rate $\alpha$; systematic constraints on their joint
+choice are mapped in~\citet{storm2022constraints}. Two further classical
+lessons recur in the quantum setting. First, reservoirs whose dynamics have a
+symmetry the task must break (for the $\tanh$ ESN, the odd symmetry
+$f(-z)=-f(z)$) fail on symmetric tasks unless the symmetry is explicitly
+broken, e.g.\ by biases~\citep{herteux2020breaking}; the quantum analogue ---
+symmetries of the reservoir Hamiltonian polluting chaos diagnostics and
+constraining which observables carry information --- appears in Part~VIII.
+Second, the edge is a property of the \emph{driven} system, not the autonomous
+one: input strength shifts it, so the operating point must be tuned with the
+data in the loop. In quantum many-body reservoirs the edge acquires a second,
+temporal dimension (the injection interval relative to the Thouless time),
+identified by \citet{kobayashi2026edge} and reproduced numerically in Part~VII
+of this document.
+
+\section{Reservoir computing for chaotic and geophysical systems}
+\label{sec:rc-chaos}
+
+The application benchmark that made modern RC famous is model-free prediction
+of chaos. \citet{jaeger2004harnessing} demonstrated orders-of-magnitude
+improvements in Mackey--Glass~\citep{mackey1977oscillation} prediction;
+\citet{pathak2018model} showed that a parallelised ESN can forecast the
+Kuramoto--Sivashinsky equation for multiple Lyapunov times and reproduce its
+climate (attractor statistics); hybrids of reservoirs with imperfect
+knowledge-based models outperform either alone~\citep{pathak2018hybrid};
+and \citet{arcomano2020machine} scaled the approach to a global atmospheric
+model, establishing RC as a serious tool for the weather--climate problem class
+this document targets. Careful comparisons find well-tuned reservoirs
+competitive with, and far cheaper to train than, backpropagated recurrent
+networks on these tasks~\citep{vlachas2020backpropagation}. Chaotic benchmarks
+(Lorenz-63~\citep{lorenz1963deterministic}, Mackey--Glass) therefore serve in
+this document as controlled stand-ins for the harder, noisier renewable and
+climate series of Part~VI, and the NARMA family serves as the standard
+memory-plus-nonlinearity stress test.
+
+\section{Baseline discipline}
+\label{sec:baselines}
+
+Because Parts~VI--VIII evaluate quantum reservoirs against economically
+meaningful forecasting tasks, the classical baselines are fixed here once and
+used everywhere. (i)~\emph{Mean predictor}: $\NMSE = 1$ by construction; drawn
+as a horizontal line on every error axis. (ii)~\emph{Persistence}:
+$\hat y_{t+h} = y_t$; embarrassingly strong on slowly varying series such as
+solar irradiance at short horizons, and the baseline most often missing from
+overclaiming studies. (iii)~\emph{Linear auto-regression on $p$ lags}: the
+cheapest model with memory; any nonlinear reservoir must beat it to justify
+its existence. (iv)~\emph{Size-matched ESN}: Eqs.~\eqref{eq:leaky} and
+\eqref{eq:ridge-solution} with the number of read-out features equal to the
+quantum feature count, so comparisons are at matched read-out capacity.
+A quantum reservoir result in this document is reported as interesting only
+relative to all four, and Part~VIII adds a fifth, quantum-internal control:
+a structureless (Haar-random) quantum reservoir of the same size.

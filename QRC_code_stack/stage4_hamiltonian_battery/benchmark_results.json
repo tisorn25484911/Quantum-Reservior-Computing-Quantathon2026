@@ -1,0 +1,322 @@
+{
+  "config": {
+    "seed": 7,
+    "shots": 2048,
+    "noise": {
+      "p1": 0.0003,
+      "p2": 0.007,
+      "ro": 0.015,
+      "reset": 0.005
+    }
+  },
+  "hamiltonians": [
+    {
+      "name": "TFIM-1D",
+      "n_logical": 10,
+      "n_physical": 5,
+      "n_terms": 19,
+      "trotter_steps": 2,
+      "depth_direct": 19,
+      "depth_reuse": 76,
+      "cx_count": 36,
+      "resets": 5,
+      "mid_circuit_measurements": 9,
+      "reuse_measurements": 5,
+      "dropped_operations": 0,
+      "compile_seconds": 0.0021550655364990234,
+      "tvd_direct_vs_reuse_ideal": 0.15576171875,
+      "tvd_direct_vs_reuse_noisy": 0.1689453125,
+      "exact_tvd_direct_vs_reuse": 3.889583123056245e-16,
+      "runs": {
+        "ideal_direct": {
+          "tvd_to_exact": 0.12347747916420254,
+          "hellinger_to_exact": 0.9290774853027425,
+          "marginal_mae": 0.008877705500396692,
+          "sim_seconds": 0.5795788764953613
+        },
+        "ideal_reuse": {
+          "tvd_to_exact": 0.11430482922475421,
+          "hellinger_to_exact": 0.9240926700042172,
+          "marginal_mae": 0.006373832645995792,
+          "sim_seconds": 0.16275882720947266
+        },
+        "noisy_direct": {
+          "tvd_to_exact": 0.15809749893482963,
+          "hellinger_to_exact": 0.9182496334184205,
+          "marginal_mae": 0.026269649854996024,
+          "sim_seconds": 0.1938340663909912
+        },
+        "noisy_reuse": {
+          "tvd_to_exact": 0.17685701490529002,
+          "hellinger_to_exact": 0.9078825948692664,
+          "marginal_mae": 0.031103634229996024,
+          "sim_seconds": 0.12452197074890137
+        }
+      }
+    },
+    {
+      "name": "Ising-mix",
+      "n_logical": 10,
+      "n_physical": 5,
+      "n_terms": 29,
+      "trotter_steps": 2,
+      "depth_direct": 21,
+      "depth_reuse": 84,
+      "cx_count": 36,
+      "resets": 5,
+      "mid_circuit_measurements": 9,
+      "reuse_measurements": 5,
+      "dropped_operations": 0,
+      "compile_seconds": 0.0022499561309814453,
+      "tvd_direct_vs_reuse_ideal": 0.11376953125,
+      "tvd_direct_vs_reuse_noisy": 0.146484375,
+      "exact_tvd_direct_vs_reuse": 4.2003099301979313e-16,
+      "runs": {
+        "ideal_direct": {
+          "tvd_to_exact": 0.08813410347081639,
+          "hellinger_to_exact": 0.94675839613988,
+          "marginal_mae": 0.005077982896402639,
+          "sim_seconds": 0.05369424819946289
+        },
+        "ideal_reuse": {
+          "tvd_to_exact": 0.0821381121380689,
+          "hellinger_to_exact": 0.9448093882030513,
+          "marginal_mae": 0.004712603624070472,
+          "sim_seconds": 0.10090184211730957
+        },
+        "noisy_direct": {
+          "tvd_to_exact": 0.16749478186997588,
+          "hellinger_to_exact": 0.9228129162997484,
+          "marginal_mae": 0.0322034398103814,
+          "sim_seconds": 0.18593478202819824
+        },
+        "noisy_reuse": {
+          "tvd_to_exact": 0.17482467675105703,
+          "hellinger_to_exact": 0.9211544654375236,
+          "marginal_mae": 0.0334241429353814,
+          "sim_seconds": 0.14638590812683105
+        }
+      }
+    },
+    {
+      "name": "XXZ",
+      "n_logical": 10,
+      "n_physical": 5,
+      "n_terms": 37,
+      "trotter_steps": 2,
+      "depth_direct": 64,
+      "depth_reuse": 244,
+      "cx_count": 108,
+      "resets": 5,
+      "mid_circuit_measurements": 9,
+      "reuse_measurements": 5,
+      "dropped_operations": 0,
+      "compile_seconds": 0.005511045455932617,
+      "tvd_direct_vs_reuse_ideal": 0.1435546875,
+      "tvd_direct_vs_reuse_noisy": 0.28271484375,
+      "exact_tvd_direct_vs_reuse": 5.1578941773054e-16,
+      "runs": {
+        "ideal_direct": {
+          "tvd_to_exact": 0.09233401303129261,
+          "hellinger_to_exact": 0.9777564240527644,
+          "marginal_mae": 0.011258956585597146,
+          "sim_seconds": 0.061144113540649414
+        },
+        "ideal_reuse": {
+          "tvd_to_exact": 0.09435840440735035,
+          "hellinger_to_exact": 0.9766807781863337,
+          "marginal_mae": 0.009972042370362878,
+          "sim_seconds": 0.16925382614135742
+        },
+        "noisy_direct": {
+          "tvd_to_exact": 0.4036709532422841,
+          "hellinger_to_exact": 0.5929582535700776,
+          "marginal_mae": 0.007568359375000005,
+          "sim_seconds": 0.20084619522094727
+        },
+        "noisy_reuse": {
+          "tvd_to_exact": 0.4317802277911944,
+          "hellinger_to_exact": 0.5558279774316447,
+          "marginal_mae": 0.011891363768127775,
+          "sim_seconds": 0.344188928604126
+        }
+      }
+    },
+    {
+      "name": "XY",
+      "n_logical": 10,
+      "n_physical": 5,
+      "n_terms": 28,
+      "trotter_steps": 2,
+      "depth_direct": 52,
+      "depth_reuse": 199,
+      "cx_count": 72,
+      "resets": 5,
+      "mid_circuit_measurements": 9,
+      "reuse_measurements": 5,
+      "dropped_operations": 0,
+      "compile_seconds": 0.004549264907836914,
+      "tvd_direct_vs_reuse_ideal": 0.1318359375,
+      "tvd_direct_vs_reuse_noisy": 0.26025390625,
+      "exact_tvd_direct_vs_reuse": 4.85066396534996e-16,
+      "runs": {
+        "ideal_direct": {
+          "tvd_to_exact": 0.09867712647766397,
+          "hellinger_to_exact": 0.9759862329054879,
+          "marginal_mae": 0.012589348974705086,
+          "sim_seconds": 0.058522939682006836
+        },
+        "ideal_reuse": {
+          "tvd_to_exact": 0.09802101616878138,
+          "hellinger_to_exact": 0.9737514677301873,
+          "marginal_mae": 0.00710307032277771,
+          "sim_seconds": 0.08743119239807129
+        },
+        "noisy_direct": {
+          "tvd_to_exact": 0.350648231036032,
+          "hellinger_to_exact": 0.6428213657325624,
+          "marginal_mae": 0.007281148610914149,
+          "sim_seconds": 0.1964561939239502
+        },
+        "noisy_reuse": {
+          "tvd_to_exact": 0.3810101828311221,
+          "hellinger_to_exact": 0.6095718400710188,
+          "marginal_mae": 0.01206401026571834,
+          "sim_seconds": 0.338670015335083
+        }
+      }
+    },
+    {
+      "name": "TFIM-2D",
+      "n_logical": 12,
+      "n_physical": 7,
+      "n_terms": 29,
+      "trotter_steps": 1,
+      "depth_direct": 16,
+      "depth_reuse": 49,
+      "cx_count": 34,
+      "resets": 5,
+      "mid_circuit_measurements": 11,
+      "reuse_measurements": 5,
+      "dropped_operations": 0,
+      "compile_seconds": 0.0017919540405273438,
+      "tvd_direct_vs_reuse_ideal": 0.0615234375,
+      "tvd_direct_vs_reuse_noisy": 0.125,
+      "exact_tvd_direct_vs_reuse": 1.1139222372330122e-16,
+      "runs": {
+        "ideal_direct": {
+          "tvd_to_exact": 0.048938201468520334,
+          "hellinger_to_exact": 0.9732674431027558,
+          "marginal_mae": 0.004177483375479703,
+          "sim_seconds": 0.05832219123840332
+        },
+        "ideal_reuse": {
+          "tvd_to_exact": 0.039742283605498835,
+          "hellinger_to_exact": 0.9736218288219393,
+          "marginal_mae": 0.0016547478955934818,
+          "sim_seconds": 0.42511534690856934
+        },
+        "noisy_direct": {
+          "tvd_to_exact": 0.1957648727716411,
+          "hellinger_to_exact": 0.9126173161829747,
+          "marginal_mae": 0.031616108980605774,
+          "sim_seconds": 0.505328893661499
+        },
+        "noisy_reuse": {
+          "tvd_to_exact": 0.20954611647587007,
+          "hellinger_to_exact": 0.9081717150998039,
+          "marginal_mae": 0.033731994397272445,
+          "sim_seconds": 0.11354303359985352
+        }
+      }
+    },
+    {
+      "name": "SK-all2all",
+      "n_logical": 8,
+      "n_physical": 8,
+      "n_terms": 36,
+      "trotter_steps": 1,
+      "depth_direct": 43,
+      "depth_reuse": 43,
+      "cx_count": 56,
+      "resets": 0,
+      "mid_circuit_measurements": 7,
+      "reuse_measurements": 0,
+      "dropped_operations": 0,
+      "compile_seconds": 0.0018279552459716797,
+      "tvd_direct_vs_reuse_ideal": 0.04541015625,
+      "tvd_direct_vs_reuse_noisy": 0.07177734375,
+      "exact_tvd_direct_vs_reuse": 5.202855902389314e-17,
+      "runs": {
+        "ideal_direct": {
+          "tvd_to_exact": 0.027010652277711267,
+          "hellinger_to_exact": 0.9885105210224494,
+          "marginal_mae": 0.0037028249683898895,
+          "sim_seconds": 0.05094766616821289
+        },
+        "ideal_reuse": {
+          "tvd_to_exact": 0.02894296435545765,
+          "hellinger_to_exact": 0.9906923313544511,
+          "marginal_mae": 0.0040079242819702765,
+          "sim_seconds": 0.05096602439880371
+        },
+        "noisy_direct": {
+          "tvd_to_exact": 0.2268797806037985,
+          "hellinger_to_exact": 0.9091375103040897,
+          "marginal_mae": 0.05263254778269055,
+          "sim_seconds": 0.044332027435302734
+        },
+        "noisy_reuse": {
+          "tvd_to_exact": 0.2260375991554459,
+          "hellinger_to_exact": 0.9061226263950592,
+          "marginal_mae": 0.05379221575144055,
+          "sim_seconds": 0.043643951416015625
+        }
+      }
+    },
+    {
+      "name": "SYK4",
+      "n_logical": 4,
+      "n_physical": 4,
+      "n_terms": 70,
+      "trotter_steps": 1,
+      "depth_direct": 577,
+      "depth_reuse": 577,
+      "cx_count": 300,
+      "resets": 0,
+      "mid_circuit_measurements": 2,
+      "reuse_measurements": 0,
+      "dropped_operations": 0,
+      "compile_seconds": 0.01125192642211914,
+      "tvd_direct_vs_reuse_ideal": 0.02197265625,
+      "tvd_direct_vs_reuse_noisy": 0.06201171875,
+      "exact_tvd_direct_vs_reuse": 0.0,
+      "runs": {
+        "ideal_direct": {
+          "tvd_to_exact": 0.017030677959265574,
+          "hellinger_to_exact": 0.9991978107367999,
+          "marginal_mae": 0.008227171551895722,
+          "sim_seconds": 0.05882716178894043
+        },
+        "ideal_reuse": {
+          "tvd_to_exact": 0.014039181875268385,
+          "hellinger_to_exact": 0.9991432588272567,
+          "marginal_mae": 0.006414872013295957,
+          "sim_seconds": 0.057592153549194336
+        },
+        "noisy_direct": {
+          "tvd_to_exact": 0.5611676233459133,
+          "hellinger_to_exact": 0.44792300187040157,
+          "marginal_mae": 0.19797778226729335,
+          "sim_seconds": 0.047884225845336914
+        },
+        "noisy_reuse": {
+          "tvd_to_exact": 0.5396832483459133,
+          "hellinger_to_exact": 0.4681317066094559,
+          "marginal_mae": 0.18418383695479335,
+          "sim_seconds": 0.04579305648803711
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+\begin{abstract}
+\noindent
+Quantum reservoir computing (QRC) trains only a linear read-out on the measured
+observables of a fixed, input-driven quantum system, sidestepping the trainability
+problems of variational quantum circuits while inheriting the temporal-processing
+strengths of classical reservoir computing. Renewable-energy and climate time
+series --- solar irradiance, wind power, electric load, and coupled ocean--atmosphere
+indices --- are a natural application domain: they are abundantly available, exhibit
+memory and nonlinearity on many time scales, and support an economically important
+forecasting industry against which any quantum claim can be honestly benchmarked.
+This document is both a formal research review and an implementation handbook. It
+develops classical reservoir computing and its guarantees (echo-state property,
+fading memory, universality); formulates QRC in the language of quantum channels
+and derives where nonlinearity, memory, and measurement enter; surveys the
+principal reservoir architectures and hardware platforms; provides complete,
+line-by-line-explained implementations in Cirq, Qiskit, and PennyLane, including
+transpilation to native gate sets, realistic noise, finite-shot estimation, and
+mid-circuit measurement with reset; catalogues and analyses public renewable-energy
+and climate datasets with full exploratory data analysis of three of them; assembles
+end-to-end forecasting pipelines that share one mathematical structure across
+frameworks; and closes with design principles and ten concrete research directions.
+All numerical results in this document were produced by the code shipped alongside
+it, every experiment reports size-matched classical baselines and structureless
+quantum controls, and no claim of quantum advantage is made where none was observed.
+\end{abstract}
+
+\vspace{2mm}
+\subsection*{How to read this document}
+
+Parts~I and~II build the theory in a linear order and are prerequisites for
+everything else. Part~III (architectures) and Part~V (hardware) are reference
+material: they can be read selectively. Part~IV is the software handbook and is
+best read at a keyboard, alongside the \code{code/} directory that ships with
+this document. Part~VI introduces the application domain and its data; Part~VII
+assembles the pieces into complete pipelines; Part~VIII distils design judgement
+and proposes research programmes. A reader who already knows classical reservoir
+computing can start at Part~II; a reader who wants to forecast something by
+tonight can start at Part~VII and backtrack as needed. Parts~IX--XI, added in
+the July 2026 revision, are forward-looking: Part~IX designs the staged
+repository that consolidates this document's code with the qubit-reuse
+compiler, Part~X gives the theory and pre-registered implementation plan for
+the recurrence-free reservoir with virtual-node readout, and Part~XI wraps
+the forecast core in a full product pipeline with a survey of classical
+ML/DL and agentic-AI post-processing.
+
+\subsection*{Epistemic conventions}
+
+Three kinds of statement appear in this document and are kept explicitly
+distinct. \emph{Theory} means a mathematical statement with stated assumptions,
+attributed to the literature or derived in the text. \emph{Simulation} means a
+numerical result produced by the exact density-matrix or statevector code in
+\code{code/}, on either synthetic surrogate data (always labelled
+\emph{surrogate}) or real recorded data (always labelled \emph{real}).
+\emph{Hardware} means a result reported in the literature from a physical
+quantum device; this document runs no hardware jobs itself, but Part~IV's Qiskit
+pipeline is written exactly as a hardware submission would be, including
+transpilation, native basis gates, coupling constraints, realistic noise, and
+finite shots. Throughout, reported errors are normalised mean-square errors
+(NMSE), for which predicting the training-set mean scores $1.0$; any method
+worth attention must sit well below that line, and every figure that shows an
+NMSE also shows it.
+
+\clearpage
+\tableofcontents
+
+\clearpage
+\section*{Notation}
+\addcontentsline{toc}{section}{Notation}
+
+\begin{center}
+\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+Symbol & Meaning \\
+\midrule
+$u_t \in \R^{d_{\mathrm{in}}}$ & input at discrete time $t$ (scalar unless stated) \\
+$y_t$, $\hat y_t$ & target and predicted output \\
+$x_t \in \R^{N_x}$ & classical reservoir state / extracted feature vector \\
+$W_{\mathrm{res}}, W_{\mathrm{in}}, b$ & fixed reservoir, input, and bias weights \\
+$W_{\mathrm{out}}$ & trained linear read-out \\
+$f(\cdot)$ & elementwise activation (typically $\tanh$) \\
+$\alpha$ & leak rate of a leaky-integrator reservoir \\
+$\rho_t$ & reservoir density matrix at time $t$ \\
+$\Hil$, $d=2^n$ & Hilbert space and its dimension for $n$ qubits \\
+$\map{E}_{\theta,u}$ & input-dependent CPTP map (quantum reservoir update) \\
+$K_j$ & Kraus operators, $\sum_j K_j^\dagger K_j = \id$ \\
+$\map{L}$ & Lindblad generator \\
+$O_k$, $x_t^{(k)}=\tr(O_k\rho_t)$ & measured observable and feature \\
+$X_i, Y_i, Z_i$ & Pauli operators on qubit $i$ \\
+$H$, $J_{ij}$, $h_i$ & Hamiltonian, couplings, fields \\
+$\Delta t$ & input injection interval (evolution time per step) \\
+$V$ & number of virtual nodes (temporal multiplexing) \\
+$S$ & number of measurement shots \\
+$L$ (or $W$) & input-window length in restart protocols \\
+$\lambda$ & ridge-regression penalty \\
+$\mathrm{MC}$, $\mathrm{MC}_d$ & total and delay-$d$ linear memory capacity \\
+$\NMSE$ & mean-square error normalised by target variance \\
+$\ev{r}$ & mean level-spacing ratio (chaos diagnostic) \\
+$T_1$, $T_2$ & energy relaxation and dephasing times \\
+\bottomrule
+\end{tabular}
+\end{center}

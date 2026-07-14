@@ -1,0 +1,174 @@
+\parttitle{V}{Hardware Considerations}
+
+\noindent
+This part reads the platform landscape through one question: \emph{which
+hardware properties bind for reservoir computing specifically?} Reservoirs do
+not need deep coherent circuits, error-corrected logic, or trained on-device
+parameters; they need fast repeated state preparation and measurement, good
+mid-circuit measurement and reset where recurrence is wanted, enough shots to
+beat Eq.~\eqref{eq:shot-noise}, and noise of a \emph{kind} that contracts
+without erasing (Section~\ref{sec:channels}). Those priorities rank platforms
+differently from, say, fault-tolerance roadmaps, and the ranking is
+task-dependent. Quantitative gate-fidelity and coherence figures below are
+order-of-magnitude characterisations of current practice; exact values change
+with every calibration cycle and should be read from the provider's live
+calibration data at run time, as the Part~IV pipeline does when pointed at a
+real backend.
+
+\section{IBM superconducting processors (primary target)}
+\label{sec:hw-ibm}
+
+IBM's fixed-frequency transmon processors are this document's primary
+hardware target because they combine the largest publicly accessible
+register counts, the most mature dynamic-circuit support, and the toolchain
+(Part~IV) whose abstractions map one-to-one onto the physics. The
+QRC-relevant profile:
+
+\emph{Gate set and topology.} Native alphabet \code{ecr}/\code{rz}/\code{sx}/\code{x}
+on a heavy-hex lattice: each qubit couples to two or three neighbours. For
+reservoirs this makes brickwork-local circuits (Listings~\ref{lst:cirq} and
+\ref{lst:qiskit}) essentially free to route, while any nonlocal coupling
+costs SWAP chains --- the depth-78/32-\code{ecr} accounting of
+Section~\ref{sec:transpilation} is the honest unit of thinking. Single-qubit
+error rates sit around $10^{-4}$, two-qubit around a few $10^{-3}$; the
+two-qubit count therefore dominates any reservoir step's error budget.
+
+\emph{Coherence and clocks.} Transmon $T_1, T_2$ of order
+$10^2\,\mu$s against $\mu$s-scale gate layers permit circuit
+durations of hundreds of layers before decoherence saturates --- but the
+reservoir-specific point is that NISQRC-style operation
+(Section~\ref{sec:midcircuit}) makes usable \emph{memory} independent of
+this budget, which was demonstrated on exactly this platform
+\citep{hu2024overcoming}. Wall-clock throughput --- circuits
+$\times$ shots per second --- is the binding resource for time-series work,
+and superconducting platforms lead it by orders of magnitude.
+
+\emph{Mid-circuit measurement and reset.} Production capability with
+per-step classical registers and classically conditioned gates
+(\code{if\_else}); measurement durations of order $\mu$s with
+active reset. This is the primitive that separates genuinely recurrent
+hardware reservoirs from windowed feature maps, and its error (read-out
+confusion of order $10^{-2}$, plus measurement-induced dephasing of
+spectators) should be characterised per-qubit before trusting long
+sequences; the natural-reservoir demonstrations of
+\citet{suzuki2022natural,yasuda2023quantum} and the NISQRC experiment
+\citep{hu2024overcoming} are the platform's QRC track record, alongside the
+utility-scale dynamics simulations that certify large-register control
+\citep{kim2023evidence}.
+
+\emph{Error mitigation.} Estimator-level mitigation (read-out
+mitigation, zero-noise extrapolation, probabilistic error cancellation)
+applies directly to feature estimation, at shot-multiplier costs that must be
+budgeted like any other shots~\citep{larose2022mitiq}. For reservoirs a
+cheaper posture often suffices: keep circuits shallow, measure local
+observables, and let the read-out's regularisation absorb residual bias ---
+mitigation is worth its multiplier mainly when features must be compared
+across sessions.
+
+\emph{Access economics.} Queued cloud access with per-second pricing on
+premium plans; batched jobs (Part~IV's shape) amortise queue overhead.
+Session/batch primitives keep calibration approximately fixed within an
+experiment --- important because a noise-defined reservoir drifts between
+calibrations (Section~\ref{sec:arch-dissipative}).
+
+\section{Quantinuum trapped-ion systems}
+\label{sec:hw-quantinuum}
+
+The H-series QCCD architecture transports ions between gate zones, giving
+effective all-to-all connectivity, two-qubit fidelities at the
+$99.8$--$99.9\%$ level, and mid-circuit measurement with conditional logic as
+a routine primitive \citep{moses2023race}. For QRC: the fully connected
+disordered Hamiltonian of Eq.~\eqref{eq:fn-hamiltonian} compiles without
+routing overhead, and measurement/reset quality is the best available ---
+the natural platform for \emph{clean} recurrent-reservoir physics
+experiments (dynamical-regime studies, ESP characterisation) where per-step
+fidelity matters more than throughput. The cost is clock rate: transport and
+cooling make shot rates orders of magnitude below superconducting, so
+long-time-series benchmarks are expensive; restart-protocol studies with
+short windows, or physics studies with modest $T$, fit best. No published
+QRC benchmark at the scale of the superconducting or neutral-atom
+demonstrations exists as of this writing --- flagged as an opportunity in
+Part~VIII.
+
+\section{IonQ trapped-ion systems}
+\label{sec:hw-ionq}
+
+Photonic-interconnect-oriented ion traps with all-to-all gates within a
+chain, accessed via native API and Braket. Similar QRC reasoning to
+Section~\ref{sec:hw-quantinuum} with smaller registers and, historically,
+less exposed mid-circuit control; algorithmic-qubit marketing figures should
+be translated back into raw two-qubit fidelity and shot throughput before
+budgeting an experiment.
+
+\section{Rigetti superconducting processors}
+\label{sec:hw-rigetti}
+
+Tunable-coupler transmons with faster two-qubit gates but historically lower
+fidelities than IBM; native parametric access and low-latency classical
+integration make it a reasonable testbed for feedback reservoirs
+(Section~\ref{sec:arch-measurement}) where round-trip latency to classical
+logic is the experiment. For the pipelines of Part~VII the IBM stack's
+maturity currently wins on reproducibility.
+
+\section{Neutral-atom analog platforms (QuEra, Pasqal)}
+\label{sec:hw-neutral}
+
+Rydberg tweezer arrays (Section~\ref{sec:arch-rydberg}) invert several
+trade-offs: hundreds of qubits with programmable \emph{geometry}, analog
+evolution with no per-gate compilation error, but destructive fluorescence
+read-out --- every time step is a full re-preparation, and there is no
+mid-circuit measurement in the digital sense. The 108-qubit QRC demonstration
+of \citet{kornjaca2024large} is the largest to date and defines the
+platform's role: large feature banks via ensemble/restart operation on
+classification-style or short-window temporal tasks, with geometry and
+detunings as reservoir hyperparameters, and logical-array progress
+\citep{bluvstein2024logical} indicating the control ceiling is still rising.
+Per-step latency (array reload of order tens of ms) makes long
+autoregressive forecasting loops the platform's weak axis.
+
+\section{Photonic platforms (Xanadu-class CV)}
+\label{sec:hw-photonic}
+
+Time-multiplexed squeezed-light processors \citep{madsen2022quantum} and
+tabletop multimode systems (Section~\ref{sec:arch-cv}) offer
+room-temperature operation, natural weak/continuous measurement, and clock
+rates far beyond matter qubits --- attractive for streaming-signal reservoirs
+--- with loss as the dominant decoherence and non-Gaussian resources as the
+scarce ingredient. Experimental optical QRC with controllable memory
+\citep{paparelle2025experimental,garciabeni2023scalable} and large-scale
+Gaussian-boson-sampler feature maps \citep{cimini2025gaussian} are the
+current state of practice; microwave-domain analog circuit QED
+\citep{senanian2024microwave,dudas2023quantum} plays the same role for RF
+signals.
+
+\section{Cross-platform summary}
+
+\begin{table*}[h]
+\centering\small
+\caption{Platform comparison on QRC-binding axes (orders of magnitude,
+mid-2026 practice). ``MCM'' = mid-circuit measurement and reset quality;
+``throughput'' = circuits$\times$shots per wall-clock unit.}
+\label{tab:hw-compare}
+\begin{tabular}{@{}p{2.9cm}p{2.2cm}p{2.0cm}p{2.0cm}p{2.2cm}p{2.6cm}@{}}
+\toprule
+Platform & Connectivity & MCM & Throughput & Noise character & QRC record \\
+\midrule
+IBM superconducting & heavy-hex, local & production & highest & depolarising $+$ read-out; $T_1$ decay & NISQRC; natural reservoirs \citep{hu2024overcoming,suzuki2022natural,yasuda2023quantum} \\
+Quantinuum ion & all-to-all & excellent & low & low, well-characterised & (open) \\
+IonQ ion & all-to-all (chain) & limited exposure & low & low & early studies \\
+Rigetti supercond. & lattice, local & available & high & higher gate error & feedback testbed \\
+QuEra/Pasqal neutral & geometry-program. & none (destructive) & medium (batch) & analog drift; re-prep. & 108-qubit QRC \citep{kornjaca2024large} \\
+Photonic CV & mode-mesh & continuous/weak & very high & loss & optical QRC \citep{paparelle2025experimental,cimini2025gaussian} \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Two decision rules compress the table. If the task is a \emph{long temporal
+sequence} (forecasting loops, streaming), throughput and MCM dominate:
+superconducting first, photonic for native-signal front-ends. If the task is
+a \emph{physics question about reservoirs} (dynamical regimes, ESP,
+coherence's role), fidelity and controllability dominate: trapped ions and
+neutral atoms first, with the analog platforms unique for
+geometry-as-hyperparameter questions. In every case the noise model is part
+of the reservoir: re-characterise it per session, and treat cross-session
+comparisons as different reservoirs unless proven otherwise.

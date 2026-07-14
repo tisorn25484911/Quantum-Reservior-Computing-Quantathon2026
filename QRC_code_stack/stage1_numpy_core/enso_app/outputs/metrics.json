@@ -1,0 +1,74 @@
+{
+  "config": {
+    "mode": "exact",
+    "backend": "aer",
+    "gamma": 0.7853981633974483,
+    "ent_scale": 0.5,
+    "n_qubits": 5,
+    "L": 24,
+    "H": 3,
+    "seed": 7,
+    "shots_per_basis": null,
+    "noise": null,
+    "bands_percentiles": [
+      10.0,
+      90.0
+    ],
+    "selection": "gamma, ent_scale by inner-val sweep (code/experiments.py); test span untouched",
+    "ridge_lambda": {
+      "band_model": 3.1622776601683795,
+      "final_model": 3.1622776601683795
+    }
+  },
+  "data": {
+    "source": "statsmodels elnino (NOAA monthly Nino SST, REAL)",
+    "months": 732,
+    "train_months": 590,
+    "first_test_target": "1999-03"
+  },
+  "qrc_test": {
+    "nmse": 1.2878560035379112,
+    "n": 142,
+    "n_event": 79,
+    "nmse_event": 1.033283916367446
+  },
+  "band_coverage_test": 0.7394366197183099,
+  "future_forecasts": {
+    "2011-01": -0.26949467473163635,
+    "2011-02": -0.9618365071727,
+    "2011-03": -0.567881365310645
+  },
+  "scope": "all results simulation; ENSO data real",
+  "battery": {
+    "mean": {
+      "nmse": 1.0,
+      "n": 142,
+      "n_event": 79,
+      "nmse_event": 1.0
+    },
+    "persistence": {
+      "nmse": 1.4616259426753584,
+      "n": 142,
+      "n_event": 79,
+      "nmse_event": 1.109234265509549
+    },
+    "linear_lags": {
+      "nmse": 1.1847406565404202,
+      "n": 142,
+      "n_event": 79,
+      "nmse_event": 0.8868357460584372
+    },
+    "esn": {
+      "nmse": 1.3451919113916537,
+      "n": 142,
+      "n_event": 79,
+      "nmse_event": 1.000976569344751
+    },
+    "haar": {
+      "nmse": 1.4025872491840201,
+      "n": 142,
+      "n_event": 79,
+      "nmse_event": 1.2704172792735455
+    }
+  }
+}

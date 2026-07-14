@@ -1,0 +1,389 @@
+\parttitle{XI}{From Pipeline to Product: Extreme-Climate Forecasting for Users}
+
+Part~X delivers a validated forecast core. This part wraps it in the full
+system a user would touch --- data plane, hybrid forecast core, decision
+layer, product surfaces, personas --- adds implementation Phases~8--12, and
+integrates a survey of classical ML/DL and agentic-AI post-processing at the
+user boundary. The governance is inherited unchanged: pre-registered
+promotion gates, simulation-scoped claims, every number traceable to a run
+identifier, and the quantum contribution always reported as a delta against
+its own classical ablation.
+
+\section{Product definition}
+\label{sec:prod-def}
+
+\emph{Two tracks, routed by measured memory requirements.} Track~A
+(operational extremes, minutes to hours): solar irradiance and PV-output
+ramp events driven by convective cloud fields, squalls, and haze --- the
+extreme-climate signal at operational timescale, and the regime where the
+evidence of Part~X locates QRC value; short-memory, high-nonlinearity
+targets, served by RF-QRC with virtual nodes. Flagship geography: tropical
+convective regimes (Singapore and South-East Asian rooftop and microgrid
+PV), where ramps are frequent, steep, and costly. Track~B (tactical and
+seasonal extremes, weeks to months): ENSO phase transitions and
+anomalous-heat episodes; long-nonlinear-memory targets, served by the
+recurrent CZ-ring reservoir whose ENSO advantage this handbook measured
+(Part~VII). The Part~X ``ENSO tension'' thereby becomes an
+architecture-selection rule rather than an embarrassment.
+
+\emph{Decisions fed and error costs, in writing.} Track~A feeds battery
+pre-charge and discharge, spinning-reserve commitment, curtailment, and
+intraday positions; a miss costs imbalance penalties, diesel spin-up, or
+voltage excursions, while a false alarm costs battery cycling and reserve
+over-procurement. Track~B feeds seasonal hedging, maintenance windows,
+water and agricultural allocation, and parametric-insurance triggers.
+
+\emph{Incumbents named.} Persistence and smart-persistence (the honest
+one-step champion on solar --- this project's own calibration); NWP-derived
+vendor forecasts; all-sky-imager nowcast systems, whose published ramp
+capture spans roughly $26$--$92\%$ with large false-alarm spreads --- a
+genuinely weak incumbent frontier on ramps; and deep-learning weather
+models, which the product \emph{consumes} as exogenous channels rather than
+competes with. The venture owns three things only: the event-focused hybrid
+feature layer, the calibrated decision layer that converts forecasts into
+cost-optimal alerts, and the benchmark-governance layer --- the
+no-overclaiming discipline packaged as a feature. The quantum module sits
+behind an interface: if its pre-registered delta over the classical-only
+ablation fails at any promotion review, the product ships classical-only
+and the quantum track continues as research. Quantum-optional architecture
+is the de-risking posture.
+
+\emph{Why RF-QRC specifically is the productisable QRC.} Recurrent QRC
+carries quantum state across steps: inference is stateful, sequential,
+non-cacheable, and latency-bound to the quantum backend. RF-QRC step
+features depend only on the current quantised input window; memory is the
+classical leak. Features are therefore memoisable, per-step computation is
+stateless and parallel, and inference latency decouples from the backend.
+At product-relevant sizes ($n\le11$) the exact simulator \emph{is} the
+production backend --- fast, deterministic, and identical in distribution
+to ideal hardware --- while the reuse compiler keeps the hardware path open
+for the regime where simulation fails, at compiled widths independent of
+memory horizon (Section~\ref{sec:rfqrc-reuse-fit}). This is stated plainly
+to users: near-term inference is quantum-inspired simulation; hardware
+execution is a scaling option, not a marketing prop.
+
+\subsection{Personas and their contracts}
+\label{sec:prod-personas}
+
+Every persona contract names its metric before onboarding --- the
+pre-registration discipline applied to customers.
+
+\begin{table*}[h]
+\centering\footnotesize
+\caption{Personas, decisions, and the metric each contract names.}
+\label{tab:prod-personas}
+\begin{tabular}{@{}p{2.9cm}p{3.1cm}p{1.7cm}p{2.6cm}p{3.4cm}@{}}
+\toprule
+Persona & Decision & Horizon & Surface & Metric that matters \\
+\midrule
+microgrid / island-grid operator & battery and genset scheduling & 15\,min--4\,h & alerts (chat/SMS/webhook), dashboard & ramp F$_1$ at a fixed false-alarm budget; lead time \\
+C\&I rooftop energy manager & load shifting, demand-charge avoidance & 30\,min--6\,h & dashboard, weekly digest & avoided cost per month \\
+utility control room / VPP & reserve procurement, curtailment & 1--24\,h & API into EMS/SCADA historian & pinball loss on quantiles; recall at capped false-alarm rate \\
+energy trader & intraday position vs imbalance & 1--12\,h & API, scenario tool & cost-weighted CRPS; volatility-regime hit rate \\
+climate-risk analyst / insurer & parametric triggers, seasonal exposure & weeks--months & reports, API & calibrated exceedance probabilities \\
+researcher tier & benchmarking, method development & --- & open harness, feature API & seed-exact reproducibility \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\section{End-to-end architecture}
+\label{sec:prod-arch}
+
+\begin{strip}
+\begin{lstlisting}[language={},basicstyle=\ttfamily\scriptsize,caption={Six-layer architecture. L6 governance spans the whole pipeline.},label={lst:prod-layers}]
+L1 INGEST      L2 TRANSFORM        L3 FORECAST CORE       L4 DECISION       L5 SURFACES
+SURFRAD/NSRDB  QC (mask, never     classical features     calibration       API (REST/stream)
+ERA5 / NOAA    interpolate)        + RF-QRC+VN features   (conformal,       dashboard
+site SCADA  -> clear-sky index  -> via FeatureProvider -> isotonic)      -> alert engine
+NWP + DL-      k_t (train-span     [sim|hw-batch|cache]   stacker (GBM/     agent assistant
+weather feeds  fit, frozen per     quantile+event heads   shallow DL)
+(exogenous)    version); anomaly   shadow baseline        regime router
+               transforms;         battery (always on)    cost-sensitive
+               feature store                              thresholds
+        L6 GOVERNANCE: drift + calibration monitors, effective-rank health,
+        champion-challenger, promotion gates = pre-registered criteria,
+        model cards, run-ID audit log
+\end{lstlisting}
+\end{strip}
+
+\emph{L1, ingestion and QC.} Connectors per the dataset registry of
+Part~VI plus private site feeds; the vetting checklist applies to every new
+source; missing data is masked, never silently interpolated; gaps longer
+than the autocorrelation time split the series; raw data is immutable and
+versioned.
+
+\emph{L2, transform and feature store.} Physics-derived target transforms
+(solar to clear-sky index; climate to anomalies against training-years
+climatology) live in a transform service holding the frozen train-span
+statistics per model version --- the leakage firewall as an architectural
+component rather than a code-review hope. Calendar and solar-geometry
+features come from lookup: no quantum resource is spent on what a lookup
+table solves.
+
+\emph{L3, forecast core.} The Part~X core behind a narrow interface:
+
+\begin{strip}
+\begin{lstlisting}[language=Python,caption={The forecast core's only coupling to quantum execution.},label={lst:prod-provider}]
+class FeatureProvider(Protocol):
+    def features(self, window: np.ndarray, cfg: RFQRCConfig) -> np.ndarray: ...
+
+# SimProvider      exact Aer snapshots (production default, n <= 11)
+# HardwareProvider reuse-compiled batched jobs (qreuse_batch -> compile_with_reuse),
+#                  gated by the self-calibrated TVD equivalence check as CI
+# CachedProvider   memo keyed by (config_hash, quantised window m); valid because
+#                  RF-QRC step features are stateless; leak applied downstream
+\end{lstlisting}
+\end{strip}
+
+Heads on the shared feature stream: multi-horizon quantile read-outs
+trained on pinball loss (one $W_{\mathrm{out}}$ per horizon), an
+event-probability head, and a per-horizon leak. The shadow battery ---
+persistence, smart-persistence, linear lags, size-matched ESN, NVAR, Haar
+control, classical-only ablation --- runs on every production window
+permanently: champion--challenger is the steady state, not a launch event.
+
+\emph{L4, decision layer.} Calibration wrapper, stacker over the hybrid
+feature block, regime router, and cost-sensitive thresholds per persona
+cost matrix, emitting alert objects that carry their own provenance and
+their delta over persistence:
+
+\begin{strip}
+\begin{lstlisting}[language={},caption={Alert object: honesty as payload.},label={lst:prod-alert}]
+{ "site": "...", "event": "ramp_down", "horizon_min": 60,
+  "p_event": 0.83, "magnitude_q10_q50_q90": [-0.31, -0.22, -0.12],
+  "lead_time_min": 47, "regime": "convective_afternoon",
+  "conformal_coverage_target": 0.9, "run_id": "2026-07-11T04:20Z#a1b2",
+  "model_version": "hybrid-1.3.0",
+  "baseline_delta": {"vs_persistence_F1": +0.11} }
+\end{lstlisting}
+\end{strip}
+
+\emph{L5, surfaces.} REST and streaming API; a dashboard whose benchmark
+table is non-removable by design; alert channels; the agent assistant of
+Section~\ref{sec:prod-survey-agent}.
+
+\emph{L6, governance.} Input-drift and rolling-coverage monitors; feature
+effective rank as a QRC-specific health metric (rank collapse is the
+leading indicator that quantum features have degenerated); alert-fatigue
+counters; retraining with walk-forward re-validation; promotion between
+model versions only through the pre-registered gates.
+
+\section{Implementation Phases 8--12}
+\label{sec:prod-phases}
+
+\paragraph{Phase 8 --- data plane.} Registry connectors and one
+private-feed adapter; QC service implementing the mask policy with gap
+reports; transform service with a frozen-statistics registry keyed by model
+version; a light feature store; a walk-forward replay harness driving
+everything through the same code path as live inference. Accept:
+bit-identical backtest reproduction from raw data with two commands; the
+leakage-audit script passes.
+
+\paragraph{Phase 9 --- serving core.} \code{FeatureProvider}
+implementations (Sim, Cached; Hardware stub wired through the Stage-5
+compiler as CI); quantile and event heads with per-horizon leak; adaptive
+conformal wrapper with a rolling-coverage monitor; shadow-battery service;
+latency budget of sub-second simulated features at $n\le11$ on a 5-minute
+cadence, alerts within 60 seconds of data arrival. Accept: rolling
+empirical coverage within three points of target on held-out streams;
+battery columns present in every stored prediction row; cache-hit
+accounting in logs.
+
+\paragraph{Phase 10 --- decision layer.} Stacker ablation under the
+fairness rule (ridge versus gradient boosting versus shallow TCN/LSTM
+versus a small transformer, all offered to the classical-only ablation);
+regime router (clear-sky classification plus changepoint detection) with
+regime-conditional error reporting; a cost-sensitive threshold optimiser
+taking the persona cost matrix (expected-cost minimisation, not F$_1$
+maximisation); alert engine with deduplication, escalation, and fatigue
+caps. Accept: decision-layer value reported in cost units alongside F$_1$;
+the stacker table includes the classical-only column, and if the quantum
+delta is zero the table says so.
+
+\paragraph{Phase 11 --- surfaces and agent.} API with documentation and
+client snippets; dashboard; the assistant of
+Section~\ref{sec:prod-survey-agent} with its tool registry
+(\code{get\_forecast}, \code{get\_alert\_rationale},
+\code{run\_whatif\_backtest}, \code{get\_benchmark\_table},
+\code{get\_model\_card}, \code{configure\_site\_draft}), retrieval index
+over model cards, run logs, and event post-mortems, the numeric-provenance
+guardrail, and the recommend-never-actuate boundary; report generator;
+onboarding copilot producing draft site configurations for human approval.
+Accept: a grounded-answer evaluation set passes with every numeric claim in
+sampled transcripts tracing to a tool call --- zero fabricated numbers
+tolerated; time-to-first-alert for a new site under one day.
+
+\paragraph{Phase 12 --- pilot and promotion.} One or two design-partner
+sites in shadow mode for at least six weeks against the operator's
+incumbent, producing the honest benchmark table; pilot exit criteria
+written before the pilot starts (for example, ramp F$_1$ at least the
+incumbent's plus $0.05$ at the operator's false-alarm budget, latency SLA
+met, zero provenance violations); activation on pass; quarterly promotion
+reviews re-running the pre-registered gates, including the contractual
+possibility of demoting the quantum feature block. Accept: the pilot
+report itself, whatever it says.
+
+\section{Economics and operational honesty}
+\label{sec:prod-econ}
+
+The cost axis is reported next to every accuracy number: simulated feature
+cost per prediction, cache-hit rate, and --- for any hardware experiment
+--- shots and wallclock per prediction; a model needing $10^9$ shots to
+match a laptop has answered the business question. Public sources
+(SURFRAD, NSRDB, ERA5, NOAA) carry attribution requirements; site SCADA is
+private and stays on the customer boundary, with only derived features
+leaving if contracted. The degrade-graceful ladder --- quantum features,
+then classical-only stacker, then smart-persistence --- keeps the alert
+schema identical at every rung, so downgrades are invisible to
+integrations.
+
+\section{Survey: classical ML/DL and agentic AI at the post-processing end}
+\label{sec:prod-survey}
+
+\subsection{Statistical post-processing}
+Raw regression outputs, reservoir or otherwise, are not calibrated decision
+inputs. The forecasting tradition supplies the fixes: distributional
+regression in the MOS/EMOS lineage, quantile regression on pinball loss,
+isotonic recalibration of event probabilities, CRPS as the proper score for
+the quantile fan. All are computationally trivial, all sit strictly
+downstream of the feature stream, and none care whether the features were
+quantum. Adopted: quantile heads plus isotonic recalibration.
+
+\subsection{Conformal prediction: guarantees instead of accuracy claims}
+Split and adaptive conformal methods wrap any point or quantile forecaster
+and deliver distribution-free finite-sample coverage; adaptive variants
+adjust the miscoverage rate online and so track regime shifts. The
+strategic fit is exact: the product can contractually promise
+``90-percent intervals that cover 90 percent, monitored weekly'' --- a
+guarantee --- while accuracy claims remain comparative and scoped.
+Adopted: an adaptive conformal wrapper as the default interval layer, with
+the rolling-coverage monitor in L6.
+
+\subsection{Machine-learned stackers over hybrid features}
+Gradient-boosted trees remain the strongest tabular learners for stacking
+heterogeneous blocks: reservoir features, classical lags, calendar and
+geometry, NWP and DL-weather channels. The C-QRC preprint is the direct
+precedent --- gate-QRC used as a feature extractor feeding LSTM,
+Transformer, and XGBoost heads, with the honest finding that gains
+concentrate in high-volatility and ramp regimes rather than average point
+accuracy. That is this project's thesis stated by an independent group, and
+it fixes the stacker's role: event-regime lift, not accuracy everywhere.
+Adopted: a gradient-boosted stacker as the default, under the fairness
+rule.
+
+\subsection{Deep heads and foundation models: two distinct roles}
+Sequence heads (TCN, LSTM, small transformers) are alternative stackers
+where horizon-coupled multivariate structure matters, and are evaluated in
+the Phase-10 ablation rather than assumed. Time-series foundation models
+join the \emph{baseline battery}: if a frozen pretrained forecaster matches
+the pipeline on event metrics, the honest table says so. Deep-learning
+weather models and classical NWP enter as \emph{exogenous input providers}
+--- their gridded forecasts become L2 channels --- because the product's
+edge is the event-focused last mile, not global weather modelling. This
+division of labour is the survey's central architectural conclusion.
+
+\subsection{Regime-aware routing}
+Changepoint and hidden-Markov detectors with clear-sky classification gate
+per-regime read-outs and thresholds; regime-conditional error reporting
+doubles as the router's evaluation. The Track~A/B architecture routing of
+Section~\ref{sec:prod-def} is the same idea one level up: measured memory
+requirements select the reservoir.
+
+\subsection{Agentic AI at the user boundary}
+\label{sec:prod-survey-agent}
+The 2024--2026 literature has converged on language-model agents as the
+interpretation and decision-support tier over energy forecasting systems,
+not as forecasters. A 2026 review of LLM-agent renewable forecasting
+(arXiv:2605.25141) proposes a six-layer taxonomy whose top layers are
+uncertainty estimation and natural-language reporting, and names
+hallucination control, drift, and EMS interoperability among twelve open
+challenges; prototype systems --- GridMind for multi-agent power-system
+analysis (arXiv:2509.02494), Grid-Agent for grid control with stepwise
+rationales (arXiv:2508.05702), ``Power Agent'' concept papers, and
+forecasting-process automation frameworks --- cluster into six patterns, of
+which this design adopts five and rejects one:
+
+\begin{enumerate}
+\item a conversational analyst over the forecast and metrics store
+  (retrieval plus metric tools): questions about yesterday's ramp are
+  answered by tool calls whose numbers carry run identifiers ---
+  \emph{adopted};
+\item an alert triage and explanation agent attaching rationale to each
+  alert: regime label, leading feature attributions, retrieved analogue
+  past events with outcomes --- \emph{adopted}, and the single
+  highest-leverage adoption feature, because operators trust alerts they
+  can interrogate;
+\item a what-if and scenario agent orchestrating parameterised backtest
+  calls (replay a monsoon week under a different alert policy and report
+  the cost delta), the decision-theoretic direction of the review
+  literature mapped onto the Phase-10 cost matrices --- \emph{adopted};
+\item a report and compliance generator drafting persona digests,
+  post-event analyses, and re-validation reports from templates and
+  tool-fetched numbers --- \emph{adopted};
+\item an onboarding copilot translating natural language into a draft site
+  configuration for human approval --- \emph{adopted}, the
+  easy-to-adopt lever, with time-to-first-alert measured in hours;
+\item an autonomous control agent actuating switches or dispatch ---
+  \emph{rejected}: the boundary is recommend-never-actuate with a human in
+  the loop, and actuation belongs to the customer's EMS and its safety
+  case, not to a forecasting vendor's language model.
+\end{enumerate}
+
+Guardrails, non-negotiable and recognisably this project's honesty
+discipline transposed: a numeric-provenance rule (the agent may state only
+numbers returned by tools, rendered with run identifiers, enforced by a
+verifier pass and audited with zero tolerance in Phase~11); uncertainty
+phrasing bound to the conformal coverage actually monitored; refusal
+templates for horizons and regimes outside validated scope; the benchmark
+table retrievable in one tool call, so ``how much better than
+persistence?'' is always answerable; and no advantage language --- the
+agent describes quantum features as quantum-inspired simulated reservoir
+features with the measured ablation delta. Orchestration starts with a
+single tool-calling agent; a planner--verifier pair is added only if
+transcript audits show the need; tool interfaces follow an open
+tool-protocol convention so the assistant can later live inside the
+customer's own chat tools.
+
+\subsection{Adoption design}
+An integration ladder in which each rung is a complete product: alerts by
+mail or chat with zero integration; webhook, CSV, and REST pull; EMS and
+SCADA integration through partner historians with adapters on the customer
+side; finally the assistant embedded in the operator's chat tools. Trust
+artefacts shortcut sales: a six-week free shadow mode against the
+operator's incumbent ending in the honest benchmark table --- the
+no-overclaiming discipline as the sales instrument; the open benchmark
+harness, so claims are independently re-runnable; and model cards carrying
+the pre-registered criteria and their outcomes, including nulls. Pricing is
+sketched per site, tiered by alert budget and horizon set, with a
+researcher tier at cost.
+
+\section{Risks specific to the product layer}
+\label{sec:prod-risks}
+
+\begin{table*}[h]
+\centering\small
+\caption{Product-layer risks and responses.}
+\label{tab:prod-risks}
+\begin{tabular}{@{}p{5.4cm}p{8.6cm}@{}}
+\toprule
+Risk & Response \\
+\midrule
+agent states a fabricated number & provenance verifier and zero-tolerance evaluation gate; numbers only via tools \\
+alert fatigue kills adoption & cost-matrix thresholds, fatigue caps, weekly false-alarm budgets per persona \\
+quantum delta $\approx0$ in production & contractual quantum-optional demotion; value rests on decision layer and governance either way \\
+exogenous ramp drivers dominate & NWP and DL-weather channels in L2; sky-imager partnership on the roadmap, not the critical path \\
+a foundation-model baseline matches the pipeline & it joins the battery and the table says so; the moat is then event-regime calibration and the decision layer, and the table proves whether that holds \\
+data-licence creep on private feeds & derived-features-only export; raw stays on the customer boundary \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\section{Deliverables}
+\label{sec:prod-deliverables}
+
+Extending Part~X's D1--D6: D7, the data plane with its replay harness
+(Phase~8); D8, the serving core with its coverage monitor (Phase~9); D9,
+the decision layer with cost-unit evaluation (Phase~10); D10, the surfaces
+with a provenance-audited assistant (Phase~11); D11, the pilot report with
+pre-written exit criteria (Phase~12). Checkpoint handoffs follow D8 and
+D10.

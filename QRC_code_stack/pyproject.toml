@@ -1,0 +1,21 @@
+[project]
+name = "qrc-stack"
+version = "0.1.0"
+description = "Staged QRC repository: NumPy reservoir to product (handbook Parts IX-XI)"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "matplotlib>=3.8",
+    "scikit-learn>=1.3",
+    "statsmodels>=0.14",   # ships the ENSO elnino dataset (stage 1)
+]
+
+[project.optional-dependencies]
+circuits = ["qiskit>=1.0", "qiskit-aer>=0.13", "qiskit-ibm-runtime>=0.20"]  # stages 2-5
+ports = ["cirq-core>=1.3", "pennylane>=0.35"]        # stage 2 optional ports
+dev = ["pytest>=8.0"]
+# note: stage 4 diagnostics are numpy-only (qutip dropped, Phase 3)
+
+[tool.pytest.ini_options]
+testpaths = ["stage0_anchors"]

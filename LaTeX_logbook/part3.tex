@@ -1,0 +1,437 @@
+\parttitle{III}{Architectures for Quantum Reservoirs}
+
+\noindent
+This part surveys the principal quantum reservoir architectures. Each entry
+follows one template --- \emph{model and update; encoding; observables;
+strengths; weaknesses; hardware suitability; extensions} --- so that the
+comparison table (Table~\ref{tab:arch-compare}) can be read as a summary
+rather than a substitute. Throughout, ``update'' refers to the concrete form
+taken by the channel $\map{E}_{\theta,u}$ of Eq.~\eqref{eq:qrc-update}, and
+epistemic labels follow the frontmatter conventions: entries note explicitly
+whether the architecture has been demonstrated on hardware or only in
+simulation.
+
+\section{Ising / disordered-Hamiltonian reservoirs}
+\label{sec:arch-ising}
+
+\emph{Model and update.} The original and still most-studied QRC: $n$ qubits
+under a fixed disordered Hamiltonian, canonically the transverse-field Ising
+form of Eq.~\eqref{eq:fn-hamiltonian}, driven by the injection map
+Eq.~\eqref{eq:fn-update}~\citep{fujii2017harnessing}. One time step is: replace
+the input qubit's state, evolve unitarily for $\Delta t$, read observables
+(optionally at $V$ intermediate times).
+
+\emph{Encoding.} State replacement
+$\ket{\psi_u}=\sqrt{1-u}\ket0+\sqrt{u}\ket1$ (amplitude encoding of a scalar);
+multivariate inputs use several input qubits or a rotation encoding
+$R_Y(\gamma u^{(j)})$ per component.
+
+\emph{Observables.} $\ev{Z_i}$ per virtual node; $\ev{Z_iZ_j}$ at the final
+virtual node; $\ev{X_i}$ where transverse coherences are informative.
+
+\emph{Strengths.} Conceptually clean separation of memory (retained qubits)
+and influx (re-prepared qubit); strong small-system benchmark record ---
+$5$--$7$ qubits emulating ESNs of hundreds of nodes on NARMA and
+Mackey--Glass in exact simulation~\citep{fujii2017harnessing,kutvonen2020optimizing};
+dynamical regime controllable through $(J\Delta t, h/J$, disorder$)$ with the
+performance-optimal region tied to the ergodic--localised boundary
+\citep{martinez2021dynamical} and, in time, to the edge of many-body chaos
+\citep{kobayashi2026edge}.
+
+\emph{Weaknesses.} Exact density-matrix simulation is $O(4^n)$, capping
+honest classical study near $n\!\approx\!12$--$14$; on gate hardware the
+continuous evolution must be Trotterised and the injection realised by
+mid-circuit reset, importing circuit noise; scalar drive on a single input
+qubit yields features with low effective rank unless multiplexing and
+two-body observables are used (measured in Part~IV).
+
+\emph{Hardware suitability.} Natural on platforms with always-on couplings
+(NMR ensembles, where it was demonstrated experimentally
+\citep{negoro2018machine}; spin lattices); digital superconducting/trapped-ion
+realisations via Trotterisation plus mid-circuit reset
+\citep{chen2020temporal,hu2024overcoming,yasuda2023quantum}.
+
+\emph{Extensions.} Higher-order reservoirs coupling multiple registers
+\citep{tran2020higher}; artificial memory restriction to tune the
+memory--nonlinearity balance \citep{cindrak2024enhancing}; engineered
+dissipation replacing the partial trace \citep{sannia2024dissipation}.
+
+\section{Spin-chain reservoirs with local structure}
+\label{sec:arch-chain}
+
+\emph{Model and update.} As Section~\ref{sec:arch-ising} but with
+nearest-neighbour chains or lattices,
+$H=\sum_i J_i\,\sigma_i\sigma_{i+1} + \sum_i h_i Z_i$ (Ising, XX, XXZ, or
+Heisenberg variants), matching hardware connectivity. On-site disorder
+$h_i \sim \mathcal{U}[-W,W]$ provides a clean chaos dial: sweeping $W$ moves
+the level-spacing statistics between Wigner--Dyson ($\ev{r}\!\approx\!0.53$,
+ergodic) and Poisson ($\ev{r}\!\approx\!0.39$, localised), with reservoir
+performance peaking near the crossover
+\citep{martinez2021dynamical,kobayashi2026edge}.
+
+\emph{Encoding/Observables.} As above; local observables are natural because
+information spreads along the chain at a finite (Lieb--Robinson) velocity,
+which also localises the causal cone --- useful for shallow hardware
+implementations.
+
+\emph{Strengths.} Direct map to linear-coupling hardware (superconducting
+chains, ion chains, Rydberg arrays); physically meaningful dynamical-phase
+dial; disorder-free operating points also exist (clean lattices work in
+suitable regimes~\citep{llodra2025atomic}), which matters for analog platforms
+where per-site disorder is hard to program.
+
+\emph{Weaknesses.} Finite information velocity means distant qubits take
+several steps to feel the input --- memory arrives with latency; symmetries of
+clean chains (e.g.\ total-$Z$ conservation in XXZ at zero field) restrict
+which observables respond and pollute chaos diagnostics unless resolved by
+symmetry sector (Part~VIII).
+
+\emph{Hardware suitability.} The best match to fixed-topology digital devices;
+the reference geometry for Part~IV's transpilation study.
+
+\emph{Extensions.} Two-dimensional lattices; quasiperiodic fields;
+programmable-geometry analog arrays (Section~\ref{sec:arch-rydberg}).
+
+\section{Random-circuit reservoirs (restart protocol)}
+\label{sec:arch-circuit}
+
+\emph{Model and update.} A fixed, randomly drawn shallow circuit block $W$
+(random single-qubit rotations plus an entangling brickwork) interleaved with
+input-encoding rotations; the reservoir ``state'' is implicit in the restart
+protocol of Section~\ref{sec:backaction}: for each $t$, a fresh circuit
+re-uploads the last $L$ inputs,
+$\ket{\phi_t} = \prod_{j=1}^{L} \bigl[\,W\, R(u_{t-L+j})\,\bigr]\ket{0}^{\otimes n}$,
+and is measured once~\citep{chen2020temporal}. The recurrence-free variant of
+\citet{ahmed2024prediction} formalises the window as an explicit delay
+embedding and shows it inherits reservoir guarantees while eliminating
+back-action bookkeeping entirely.
+
+\emph{Encoding.} Angle re-uploading $R_Y(\gamma g_i u)$ with fixed random
+gains $g_i$; the output is a truncated Fourier series in the inputs with
+spectrum set by $\gamma$ and the number of repetitions
+\citep{schuld2021effect}.
+
+\emph{Observables.} $\ev{Z_i}$, $\ev{X_i}$, $\ev{Z_iZ_j}$ from terminal
+measurement; all obtainable from two measurement bases.
+
+\emph{Strengths.} Trivially portable across gate hardware --- no mid-circuit
+operations required; state before measurement is exact, so shot noise is the
+only estimator error; window length $L$ is an honest, explicit memory budget;
+the architecture used by most current hardware demonstrations, including the
+energy-forecasting studies of Part~VI~\citep{chen2020temporal,odo2026quantum}.
+
+\emph{Weaknesses.} Cost per time step scales with $L$ (the window is
+re-executed each step); memory is hard-truncated at $L$ rather than fading;
+as a pure feature map it can underperform genuinely recurrent reservoirs on
+long-memory tasks --- quantified in Part~IV, where the windowed PennyLane model
+trails the recurrent simulation on ENSO by a wide margin; deep random blocks
+concentrate (Section~\ref{sec:concentration}), so depth must stay moderate.
+
+\emph{Hardware suitability.} Any gate-model device; the default choice for
+first hardware experiments.
+
+\emph{Extensions.} Encoding-scale tuning by gradient descent (Part~IV);
+classical-lag augmentation into the read-out; noise-as-nonlinearity variants
+(Section~\ref{sec:arch-dissipative}).
+
+\section{Measurement-based and feedback reservoirs}
+\label{sec:arch-measurement}
+
+\emph{Model and update.} Measurement is promoted from read-out to dynamical
+ingredient. In mid-circuit-reset (NISQRC) form, a designated I/O subset is
+measured and reset every step while persistent qubits carry memory
+\citep{hu2024overcoming}; in weak-measurement form, a continuous meter record
+is the feature stream \citep{mujal2023time,franceschetto2024harnessing}; in
+feedback form, measured outcomes condition subsequent gates or drives,
+$\map{E}_{u,m_t}$ with $m_t$ the outcome, injecting explicit nonlinearity and
+enabling closed-loop tasks \citep{kobayashi2024feedback}.
+
+\emph{Encoding/Observables.} As the host architecture; the distinctive output
+is the \emph{record} $\{m_t\}$ or per-step estimated expectations.
+
+\emph{Strengths.} Memory decoupled from $T_1/T_2$ (the NISQRC result ---
+hardware-demonstrated on IBM devices \citep{hu2024overcoming,yasuda2023quantum});
+online operation on a single copy rather than restart; feedback adds
+nonlinearity a linear channel cannot express.
+
+\emph{Weaknesses.} Conditional logic and fast reset are demanding hardware
+primitives with their own error budgets; the conditioned dynamics are harder
+to analyse (the relevant ESP is the subspace/nonstationary form of
+\citet{kobayashi2024extending}); weak-measurement gain must be tuned against
+disturbance.
+
+\emph{Hardware suitability.} Superconducting platforms with dynamic circuits
+(demonstrated); trapped ions with mid-circuit detection; photonics with
+homodyne records (Section~\ref{sec:arch-cv}).
+
+\emph{Extensions.} Back-action-as-resource protocols
+\citep{franceschetto2024harnessing}; reservoir-assisted quantum-state
+measurement, inverting the roles of system and meter
+\citep{angelatos2021reservoir}.
+
+\section{Dissipative and noise-driven reservoirs}
+\label{sec:arch-dissipative}
+
+\emph{Model and update.} The contraction required by
+Definition~\ref{def:qesp} is supplied by engineered or intrinsic open-system
+dynamics: evolve under Eq.~\eqref{eq:lindblad} between injections, or, on
+gate hardware, let the device's own noise channels act
+\citep{chen2019learning,sannia2024dissipation}. In the ``natural quantum
+reservoir'' of \citet{suzuki2022natural}, an IBM processor's intrinsic
+dissipation supplied both the fading memory and useful nonlinearity, with the
+demonstration run on hardware.
+
+\emph{Encoding.} Any of the preceding; dissipation is a property of the
+between-injection dynamics, not the encoding.
+
+\emph{Observables.} As host architecture.
+
+\emph{Strengths.} Turns the platform's unavoidable imperfection into the
+stability mechanism; fixed-point structure is designable --- amplitude-damping
+towards a polarised state preserves input sensitivity
+(Section~\ref{sec:channels}); noise can add task-useful nonlinearity
+\citep{fry2023optimizing,domingo2022optimal}.
+
+\emph{Weaknesses.} The wrong noise erases the signal: dephasing/depolarising
+fixed points near the maximally mixed state contract without coherence influx
+\citep{kobayashi2024coherence,xiong2025role}; device noise drifts over
+calibration cycles, so a reservoir defined by it is not stationary
+week-to-week --- a reproducibility cost quantified only by re-benchmarking.
+
+\emph{Hardware suitability.} Everywhere, by definition; deliberately
+engineered dissipation is most controllable in circuit QED and trapped ions.
+
+\emph{Extensions.} Optimal-dissipation design \citep{sannia2024dissipation};
+dissipative phase transitions as operating points; noise-aware training
+\citep{ahmed2025optimal}.
+
+\section{Continuous-variable and photonic reservoirs}
+\label{sec:arch-cv}
+
+\emph{Model and update.} Modes of the electromagnetic field replace qubits;
+states live in an infinite-dimensional Fock space. Gaussian reservoirs ---
+linear optical networks with squeezing, driven by input-dependent
+displacements or squeezing parameters --- are universal for fading-memory maps
+\citep{nokkala2021gaussian} while remaining efficiently classically
+simulable, making them the cleanest illustration that universality
+$\ne$ advantage. Non-Gaussian resources (Kerr nonlinearities, photon
+counting) lift the simulability barrier.
+
+\emph{Encoding.} Displacement amplitude, squeezing phase/strength, or pump
+modulation per time step; time-multiplexed loops make one physical mode serve
+as many virtual nodes.
+
+\emph{Observables.} Homodyne quadratures $\ev{\hat x_\phi}$, photon numbers,
+correlation functions; measurement is naturally continuous and weak.
+
+\emph{Strengths.} Room-temperature operation, GHz-class clock rates,
+telecom-compatible; deterministic Gaussian dynamics with exact covariance
+bookkeeping; experimental memory control demonstrated in multimode optical
+platforms \citep{paparelle2025experimental,garciabeni2023scalable}; large-scale
+photonic feature maps demonstrated on a Gaussian boson sampler
+\citep{cimini2025gaussian}.
+
+\emph{Weaknesses.} Gaussian-only devices offer no complexity-theoretic edge;
+non-Gaussian elements are lossy and hard to stabilise; loss is the dominant
+decoherence and directly bounds memory.
+
+\emph{Hardware suitability.} Integrated photonics and fibre loops
+(experimental); microwave CV in circuit QED
+(Section~\ref{sec:arch-superconducting}).
+
+\emph{Extensions.} Coherently coupled parametric oscillators
+\citep{dudas2023quantum}; absorption-engineered memory
+\citep{gotting2025connection}; hybrid photonic--electronic read-outs.
+
+\section{Rydberg-atom analog reservoirs}
+\label{sec:arch-rydberg}
+
+\emph{Model and update.} Neutral atoms in optical tweezers under the Rydberg
+Hamiltonian
+\begin{equation}
+\begin{aligned}
+  H \;=\;{}& \frac{\Omega}{2}\sum_i X_i \;-\; \sum_i \Delta_i\, n_i
+  \;+\; \sum_{i<j} \frac{C_6}{r_{ij}^{6}}\, n_i n_j ,\\
+  & n_i = \tfrac{1}{2}(\id - Z_i),
+\end{aligned}
+  \label{eq:rydberg}
+\end{equation}
+evolved analogically between injections; inputs enter through the global
+detuning waveform $\Delta(t)$, per-site detunings $\Delta_i$, or the atom
+geometry $\{r_{ij}\}$ --- three physically distinct encoding knobs
+\citep{bravo2022quantum,kornjaca2024large}.
+
+\emph{Encoding.} Global-detuning encoding is the simplest and, notably, its
+memory capacity is largely size-independent (the drive is a collective mode);
+local detunings and geometry unlock size-extensive feature banks
+\citep{kornjaca2024large}.
+
+\emph{Observables.} Site-resolved occupations $\ev{n_i}$ and correlators
+$\ev{n_in_j}$ from fluorescence imaging --- destructive, so operation is
+restart/ensemble style with whole-array re-preparation.
+
+\emph{Strengths.} The largest QRC hardware demonstration to date --- up to
+108 qubits on QuEra's analog platform with competitive accuracy on
+classification benchmarks \citep{kornjaca2024large}; no per-gate compilation
+error; hundreds of sites already routine
+\citep{bluvstein2024logical}; geometry as a reservoir hyperparameter is unique
+to the platform.
+
+\emph{Weaknesses.} Destructive read-out makes each time step a full
+re-preparation (slow effective clock); limited mid-sequence control;
+$1/r^6$ tails complicate clean nearest-neighbour theory.
+
+\emph{Hardware suitability.} Purpose-built analog neutral-atom machines
+(QuEra, Pasqal class).
+
+\emph{Extensions.} Few-atom cavity variants with optical I/O
+\citep{zhu2025practical}; digital-analog hybrids
+(Section~\ref{sec:arch-hybrid}).
+
+\section{Superconducting-circuit reservoirs}
+\label{sec:arch-superconducting}
+
+\emph{Model and update.} Two distinct traditions. \emph{Digital}: transmon
+processors executing Trotterised or random-circuit reservoirs with mid-circuit
+measurement and reset --- the setting of
+\citet{chen2020temporal,suzuki2022natural,hu2024overcoming,yasuda2023quantum},
+all hardware demonstrations on IBM-class devices. \emph{Analog circuit QED}:
+microwave modes and Josephson nonlinearities driven directly by RF input
+signals, as in the analog quantum reservoir of \citet{senanian2024microwave},
+which processed microwave signals natively --- input in its physical carrier,
+no digitisation round-trip --- and the coupled-parametric-oscillator reservoir
+of \citet{dudas2023quantum}.
+
+\emph{Encoding.} Digital: rotation re-uploading or state replacement. Analog:
+drive amplitude/phase of resonator modes.
+
+\emph{Observables.} Dispersive read-out of $\ev{Z_i}$ and correlators
+(digital); heterodyne records of mode quadratures (analog).
+
+\emph{Strengths.} Fast clocks ($\mu$s-scale steps), mature
+dynamic-circuit toolchains, best-documented noise models --- hence the platform
+Part~IV's hardware-aware pipeline targets; native RF interface is uniquely
+suited to sensing and signal-processing front-ends
+\citep{senanian2024microwave,angelatos2021reservoir}.
+
+\emph{Weaknesses.} Short $T_1/T_2$ make coherence a budget, not a given ---
+exactly the constraint NISQRC's reset protocol relaxes; two-qubit-gate and
+read-out errors dominate; fixed coupling maps force SWAP overhead
+(quantified in Part~IV's transpilation study).
+
+\emph{Hardware suitability.} IBM/Rigetti-class digital processors; laboratory
+circuit-QED analog platforms.
+
+\emph{Extensions.} Feedback reservoirs via real-time classical control
+\citep{kobayashi2024feedback}; error-mitigated feature estimation (Part~V).
+
+\section{Trapped-ion reservoirs}
+\label{sec:arch-ion}
+
+\emph{Model and update.} Ion-chain processors with all-to-all entangling
+gates (M{\o}lmer--S{\o}rensen) executing the same digital reservoir templates
+as Section~\ref{sec:arch-superconducting}, or analog spin models generated by
+laser-mediated interactions with tunable range
+$J_{ij}\propto |i-j|^{-\alpha}$.
+
+\emph{Encoding.} Rotation re-uploading (digital); drive parameters of the
+spin-model generator (analog).
+
+\emph{Observables.} High-fidelity state-resolved fluorescence of every ion;
+mid-circuit measurement with ion shuttling is production capability on
+race-track architectures \citep{moses2023race}.
+
+\emph{Strengths.} Highest gate and read-out fidelities among gate platforms;
+effective all-to-all connectivity eliminates SWAP overhead --- the disordered
+fully connected Hamiltonian of Eq.~\eqref{eq:fn-hamiltonian} is native;
+long coherence times relax (though NISQRC makes less essential) the memory
+budget.
+
+\emph{Weaknesses.} Clock rates orders of magnitude below superconducting
+(gate times of microseconds to milliseconds), so time-series
+throughput and shot budgets are the binding constraint; register sizes
+currently tens of qubits.
+
+\emph{Hardware suitability.} Quantinuum/IonQ-class systems; no published
+QRC-specific hardware benchmark of comparable scale to the platforms above as
+of this writing --- an open opportunity noted in Part~VIII.
+
+\emph{Extensions.} Long-range-interaction reservoirs interpolating chain and
+fully connected regimes; QCCD-based mid-circuit protocols.
+
+\section{Hybrid quantum--classical reservoirs}
+\label{sec:arch-hybrid}
+
+\emph{Model and update.} Deliberate composition of a quantum feature bank with
+classical components: classical lags or an ESN concatenated with quantum
+features at the read-out \citep{settino2025memory,pfeffer2022hybrid}; quantum
+features feeding a classical recurrent memory
+\citep{wudarski2023hybrid}; or knowledge-based models corrected by a
+(quantum) reservoir in the style of \citet{pathak2018hybrid}. The
+digital-analog paradigm \citep{parra2020digital} is the hardware-level
+analogue: analog entangling blocks stitched by digital single-qubit control.
+
+\emph{Encoding/Observables.} Inherited from the quantum member; the defining
+feature is the composition, not the physics.
+
+\emph{Strengths.} Ablation-friendly by construction --- the classical-only
+column is always available, so the quantum contribution is measured, not
+asserted; in this document's own Qiskit experiment the hybrid read-out
+recovered most of the classical baseline that noisy quantum features alone
+missed (Part~IV); memory-augmentation demonstrably lifts windowed quantum
+maps on long-memory tasks \citep{settino2025memory}.
+
+\emph{Weaknesses.} Easy to misreport: a hybrid beating persistence proves
+nothing about its quantum part unless the classical-only ablation is shown;
+engineering complexity of two stacks.
+
+\emph{Hardware suitability.} Universal --- and the recommended default posture
+for applications (Part~VIII).
+
+\emph{Extensions.} Learned fusion weights; physics-informed classical members
+for the energy pipelines of Part~VII.
+
+\section{Comparison}
+\label{sec:arch-comparison}
+
+\begin{table*}[tp]
+\centering\small
+\caption{Architecture comparison. ``Memory mechanism'' names the contraction
+that yields the ESP; ``HW status'' distinguishes hardware demonstrations
+(\textbf{H}) from simulation-only studies (\textbf{S}) as of mid-2026, with a
+representative citation. Clock and size entries are order-of-magnitude
+characterisations of current practice, not limits.}
+\label{tab:arch-compare}
+\begin{tabular}{@{}p{2.6cm}p{2.5cm}p{2.4cm}p{2.2cm}p{1.9cm}p{2.6cm}@{}}
+\toprule
+Architecture & Memory mechanism & Encoding knobs & Observables & HW status & Best-fit regime \\
+\midrule
+Ising / disordered $H$ (\S\ref{sec:arch-ising}) & input-qubit partial trace & state replacement; $\Delta t$ & $\ev{Z_i}$, $\ev{Z_iZ_j}$, virtual nodes & \textbf{H} (NMR) \citep{negoro2018machine} & theory reference; small-$n$ studies \\
+Spin chain (\S\ref{sec:arch-chain}) & as above; locality & disorder $W$; fields & local Paulis & \textbf{S/H} \citep{martinez2021dynamical} & fixed-topology digital HW \\
+Random circuit, restart (\S\ref{sec:arch-circuit}) & window truncation & re-upload scale $\gamma$; depth & terminal Paulis & \textbf{H} \citep{chen2020temporal} & first HW experiments; portability \\
+Measurement / feedback (\S\ref{sec:arch-measurement}) & reset / collapse & host's; feedback law & per-step records & \textbf{H} \citep{hu2024overcoming} & long sequences beyond $T_1$ \\
+Dissipative (\S\ref{sec:arch-dissipative}) & Lindblad gap & host's; noise rates & host's & \textbf{H} \citep{suzuki2022natural} & noise-dominated devices \\
+CV / photonic (\S\ref{sec:arch-cv}) & loss; loop decay & displacement, squeezing & quadratures, $\ev{n}$ & \textbf{H} \citep{paparelle2025experimental,cimini2025gaussian} & high-rate signals; room temp.\ \\
+Rydberg analog (\S\ref{sec:arch-rydberg}) & re-preparation per step & $\Delta(t)$, $\Delta_i$, geometry & $\ev{n_i}$, $\ev{n_in_j}$ & \textbf{H} \citep{kornjaca2024large} & largest registers today \\
+Superconducting (\S\ref{sec:arch-superconducting}) & reset (digital); loss (analog) & re-upload; RF drive & dispersive $\ev{Z}$; heterodyne & \textbf{H} \citep{senanian2024microwave,yasuda2023quantum} & fast clocks; dynamic circuits \\
+Trapped ion (\S\ref{sec:arch-ion}) & reset via shuttling & re-upload; $J_{ij}(\alpha)$ & fluorescence, all qubits & \textbf{S} (QRC-specific) & fidelity-critical studies \\
+Hybrid (\S\ref{sec:arch-hybrid}) & member-dependent & member-dependent & concatenated & \textbf{H} \citep{pfeffer2022hybrid,settino2025memory} & applications; honest ablations \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Three cross-cutting reading of Table~\ref{tab:arch-compare} guide the rest of
+the document. First, every hardware-demonstrated architecture obtains its ESP
+from an \emph{explicitly engineered} contraction --- reset, re-preparation,
+loss, or truncation --- never from hoping intrinsic decoherence lands at a
+useful rate; designs that name their contraction are the ones that replicate.
+Second, the encoding knob is where architectures genuinely differ; the
+reservoir body is interchangeable to a first approximation, which is why
+Part~IV teaches one body and three encodings rather than the reverse. Third,
+no entry in the table earns a quantum-advantage claim: the honest current
+statement, defended quantitatively in Parts~IV and~VIII, is
+\emph{parameter-parity} --- small quantum registers matching much larger
+classical read-outs --- plus platform-specific engineering benefits (native RF
+processing, sensing proximity), with genuine separations an open research
+target rather than an established fact
+\citep{mujal2021opportunities,gotting2023exploring,palacios2024role}.

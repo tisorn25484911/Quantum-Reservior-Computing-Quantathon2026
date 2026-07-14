@@ -1,0 +1,202 @@
+\parttitle{IX}{A Staged Repository: From NumPy Reservoir to Product}
+
+This part designs, from scratch, a single repository that carries the whole
+programme of this document: a small exact quantum reservoir in NumPy; the same
+reservoir expressed as hardware-faithful circuits on an exact simulator; noisy
+simulation of a simple Hamiltonian; a battery of more complex Hamiltonians;
+qubit-reuse compilation of those Hamiltonians; an independent recurrence-free
+reservoir (RF-QRC, Part~X); the integration of RF-QRC with the existing test
+architecture and the reuse compiler; and finally the product pipeline of
+Part~XI. The repository is not hypothetical: Stages~1--5 already exist as
+verified code (the \code{code/} directory shipped with this document and the
+companion qubit-reuse package), and the design below states exactly which
+files move where, so that assembling the repository is a refactor with green
+tests at every step rather than a rewrite.
+
+\section{Design rules the repository inherits}
+\label{sec:repo-rules}
+
+Six rules, all earned earlier in this document or in the companion projects,
+are promoted from habits to repository law.
+
+\emph{R1 --- Anchors first.} No stage accepts code before its validation
+anchors exist and fail meaningfully when sabotaged. The anchor suite of
+Part~IV (inject/rebuild identity, propagator unitarity, $\rho$
+Hermitian/trace-one/PSD, ridge recovery of a known linear map to $10^{-10}$,
+$\NMSE(\text{mean})=1.000$, shot-noise $\sigma \propto S^{-1/2}$) seeds
+\code{stage0\_anchors/}, and every later stage appends its own.
+
+\emph{R2 --- The exact reference defines the ceiling.} The NumPy
+density-matrix reservoir of Stage~1 is the semantic definition of every
+architecture in the repository; framework ports (Qiskit, Cirq, PennyLane) are
+validated \emph{against it at identical seeds}, never against intuition.
+
+\emph{R3 --- One endianness point.} Qiskit count keys are little-endian;
+\code{counts\_to\_features} performs the single \code{key[::-1]} reversal and
+nothing else in the repository may reorder bits.
+
+\emph{R4 --- Printed configuration, fixed seed.} Every experiment script
+prints its full configuration block at runtime; \code{SEED = 7} project-wide;
+no result enters a table unless a script printed it.
+
+\emph{R5 --- Negative controls are first-class.} The all-to-all
+zero-compression rows (SK, SYK$_4$), the Haar-random structureless reservoir,
+and the mean-predictor $\NMSE=1.0$ line ship in the same harness as the
+headline configurations and appear in the same tables.
+
+\emph{R6 --- Promotion gates, not vibes.} A stage is \emph{done} when its
+exit criterion --- a script with an exit code --- passes; downstream stages
+import only from stages that are done. The repository's continuous
+integration is exactly \code{run\_tests.py} run stage by stage.
+
+\section{The stage ladder}
+\label{sec:repo-ladder}
+
+Each stage answers one question and owns one directory.
+Table~\ref{tab:repo-stages} summarises; the subsections that follow give the
+contents, the entry and exit criteria, and the mapping to existing assets.
+
+\begin{table*}[h]
+\centering\small
+\caption{The repository's stage ladder. ``Exists'' names verified code that
+seeds the stage; new files are set in italics.}
+\label{tab:repo-stages}
+\begin{tabular}{@{}clp{4.1cm}p{4.6cm}@{}}
+\toprule
+\# & Question answered & Seed assets & Exit criterion \\
+\midrule
+0 & do our instruments work? & anchor suites of both codebases & all anchors pass; sabotage test fails \\
+1 & exact small-scale QRC (NumPy) & \code{qrc\_core.py}, \code{experiments.py} & NARMA-10/MC results reproduce Part~VII numbers \\
+2 & same reservoir as circuits (exact) & \code{qiskit\_qrc\_hw.py}, \code{cirq\_qrc\_minimal.py} & circuit features $=$ NumPy features at seed 7 \\
+3 & noisy simple Hamiltonian & Part~IV noise pipeline & noisy-vs-exact degradation curves printed; gate-local caveat stated \\
+4 & complex Hamiltonians & seven-family benchmark (reuse repo) & $\langle r\rangle$ diagnostics hit 0.386/0.531 anchors; family scan runs \\
+5 & qubit reuse on those & \code{qreuse\_*} (7 modules) & self-calibrated TVD gate; compression table incl.\ zero-compression rows \\
+6 & independent RF-QRC & \emph{rfqrc\_reservoir/metrics/ baselines.py}, \emph{mfe\_model.py} & Part~X Phase~0--4 acceptance \\
+7 & RF-QRC $\times$ reuse integration & \emph{qreuse\_batch.py} + Stage 5+6 & batch-and-compress validated; width independent of memory horizon \\
+8 & product pipeline & \emph{data\_plane/ serving/ decision/ surfaces/ governance/} & Part~XI Phase~8--12 acceptance \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{strip}
+\begin{lstlisting}[language={},caption={Repository tree. Stages 1--5 are populated by moving verified files; Stages 6--8 are populated by the plans of Parts X--XI.},label={lst:repo-tree}]
+qrc-stack/
+  README.md                 pyproject.toml            configs/
+  run_tests.py              # anchors-first driver; exit 0 iff all stages green
+  stage0_anchors/
+    test_core_anchors.py    test_reuse_anchors.py     test_rfqrc_anchors.py
+  stage1_numpy_core/
+    qrc_core.py             baselines.py              tasks.py
+    datasets.py             eda.py                    figstyle.py
+  stage2_circuits_exact/
+    qiskit_qrc_hw.py        cirq_qrc_minimal.py       pennylane_qrc_hybrid.py
+  stage3_noisy_simple/
+    noise_models.py         exp_tfim1d_noisy.py
+  stage4_hamiltonian_battery/
+    hamiltonians.py         exp_family_scan.py        # 7 families, <r> dial
+  stage5_qubit_reuse/
+    qreuse_ir.py            qreuse_analysis.py        qreuse_scheduler.py
+    qreuse_compiler.py      qreuse_validation.py      qrc_experiment.py
+    exp_reuse_compression.py
+  stage6_rfqrc/
+    rfqrc_reservoir.py      rfqrc_baselines.py        rfqrc_metrics.py
+    mfe_model.py            exp_mfe_extremes.py       exp_lorenz63_check.py
+  stage7_integration/
+    qreuse_batch.py         exp_rfqrc_reuse.py        exp_vn_fusion_proto.py
+    solar_ramps_data.py     exp_solar_ramps.py
+  stage8_product/
+    data_plane/   connectors.py qc.py transforms.py feature_store.py replay.py
+    serving/      feature_provider.py heads.py conformal.py shadow_battery.py
+    decision/     stacker.py regime_router.py thresholds.py alerts.py
+    surfaces/     api.py dashboard/ agent/            # tools, guardrails, RAG
+    governance/   monitors.py promotion_gates.py model_cards.py
+  docs/                     # this handbook, regenerated figures
+\end{lstlisting}
+\end{strip}
+
+\subsection{Stages 0--5: consolidating what exists}
+\label{sec:repo-existing}
+
+\emph{Stage 0.} The two anchor suites merge under one driver. The merged
+driver keeps the qubit-reuse suite's self-calibration idea --- an equivalence
+test passes only if TVD(direct, reuse) $\le 2.5\times$ the shot-noise floor
+TVD(direct, direct-rerun) $+\,0.02$ --- and Part~IV's exact-simulation
+anchors. A deliberate-sabotage mode (flip the endianness reversal, break a
+Kraus normalisation) must turn the suite red; an anchor that cannot fail is
+decoration.
+
+\emph{Stage 1.} \code{qrc\_core.py} moves in unchanged: the Fujii--Nakajima
+density-matrix reservoir \citep{fujii2017harnessing}, the classical baselines,
+and the task generators. Its NARMA-10, memory-capacity, and ENSO numbers
+(Part~VII) are the stage's regression targets. The recurrent 5-qubit CZ-ring
+ENSO reservoir stays here as the long-memory comparator that Stage~6 must
+face honestly.
+
+\emph{Stage 2.} The framework ports (Part~IV) move in with their
+validated-against-reference-at-identical-seed tests. This stage owns the
+transpilation path (native basis, coupling maps) that makes ``hardware
+simulator'' more than a phrase: circuits leave this stage ready for a device
+even though this repository runs none.
+
+\emph{Stage 3.} Noisy Aer on the simplest Hamiltonian family (TFIM-1D):
+depolarising and thermal-relaxation models, degradation curves versus noise
+strength and shots. The stage's documentation carries the caveat this project
+measured the hard way: \emph{gate-local noise models cannot see the
+$3$--$5\times$ depth inflation that qubit reuse introduces}, so Stage~5
+noise claims must never be extrapolated from Stage~3 models alone.
+
+\emph{Stage 4.} The seven-family Hamiltonian battery (TFIM-1D, mixed-field
+Ising, XXZ, XY, TFIM-2D, Sherrington--Kirkpatrick, JW-mapped SYK$_4$) with
+the disorder dial $W$ and level-spacing diagnostics
+\citep{martinez2021dynamical,kobayashi2026edge}; the $\langle r\rangle$
+anchors $0.386$ (Poisson) and $0.531$ (GOE) gate the stage.
+
+\emph{Stage 5.} The reuse compiler's seven modules move in unchanged with
+their compression scans. The stage's headline artefacts are the
+interaction-graph law (nearest-neighbour chains compress $10\to5$ regardless
+of gate count; the 2D lattice less; all-to-all not at all) and the
+equivalence contract: reuse preserves the \emph{classical measurement
+distribution} only --- exactly the contract a QRC read-out needs, and not one
+a protocol needing the unmeasured state may assume (DeCross \emph{et al.},
+Phys.\ Rev.\ X \textbf{13}, 041057 (2023)).
+
+\subsection{Stages 6--8: the new work}
+\label{sec:repo-new}
+
+\emph{Stage 6} implements Part~X Phases~0--4: the recurrence-free reservoir
+with virtual-node readout, its metric battery (predictability horizon,
+event F-score versus prediction time, VPT, effective rank), the expanded
+baseline set (NVAR, QELM ablation, Haar control), and the MFE extreme-event
+anchor study, with the Lorenz-63 side check where the classical reservoir is
+expected to win at matched degrees of freedom
+\citep{ahmed2024prediction,ahmed2025optimal}.
+
+\emph{Stage 7} implements Part~X Phases~5--6: the solar-ramp study on
+registry data, the batch-and-compress path through the Stage-5 compiler
+(\code{qreuse\_batch.py} lays $B$ independent step circuits side by side with
+terminal measurements only, which the existing parser accepts today), the
+structural claim that compiled width is independent of memory horizon
+(contrast the windowed protocol's measured physical $=T{+}1$), and the
+virtual-node fusion prototype behind an IR extension for
+measurement-terminated blocks.
+
+\emph{Stage 8} implements Part~XI Phases~8--12: the data plane with its
+leakage firewall, the serving core behind the \code{FeatureProvider}
+interface, the calibrated decision layer, the product surfaces including the
+provenance-guarded agent, and the governance monitors whose promotion gates
+are the pre-registered criteria of Parts~X--XI.
+
+\section{Promotion protocol}
+\label{sec:repo-promotion}
+
+Work proceeds strictly up the ladder. To promote stage $k$: (i) its anchors
+and exit script pass with exit code 0; (ii) its numbers reproduce the
+regression targets of the documents that earned them (this handbook for
+Stages~1--3, the reuse report for Stages~4--5, Parts~X--XI for Stages~6--8);
+(iii) any interface it exports downstream is frozen and versioned; (iv) a
+short stage report --- configuration block, tables, honest failures ---
+lands in \code{docs/}. Cross-stage experiments (Stage~7 onwards) may only
+import frozen interfaces. The repository is \emph{finished} in the same sense
+this document is: a stranger rebuilds every figure and table with two
+commands, and every claim is scoped theory, simulation, or hardware, with
+surrogate data labelled wherever it appears.

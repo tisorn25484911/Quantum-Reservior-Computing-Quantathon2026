@@ -1,0 +1,365 @@
+\parttitle{X}{Recurrence-Free QRC with Virtual-Node Readout: Theory and Implementation Plan}
+
+This part converts the project's implementation plan for its next
+architectural step into the handbook. The plan is exactly that --- a plan:
+no result below is claimed, every future number is simulation unless scoped
+otherwise, and the success criteria of Section~\ref{sec:rfqrc-prereg} were
+fixed before any test data is touched. Notation: in this part the leak rate
+of the \emph{classical} feature integrator is written $\varepsilon$
+(matching the RF-QRC literature) to avoid collision with the handbook's
+classical-reservoir leak $\alpha$; $V$ denotes the fixed random reservoir
+unitary.
+
+\section{The architectural improvement, precisely stated}
+\label{sec:rfqrc-statement}
+
+The improvement composes three published components, chosen because they
+attack the two bottlenecks this project has itself measured: a
+memory-horizon-coupled circuit depth, and low effective feature rank.
+
+\emph{(a) Recurrence removal with leaky-integrated classical memory
+(RF-QRC).} The windowed restart reservoir of the qubit-reuse experiment
+(Stage~5) encodes the last $T$ inputs in one circuit, so the memory horizon
+\emph{is} the circuit depth; the compile-time cost was measured directly as
+physical qubits $=T{+}1$. RF-QRC \citep{ahmed2024prediction} replaces
+in-circuit memory with a classical leaky integrator over measured features
+(the input map $\Phi$ is uploaded twice):
+\begin{align}
+\ket{\psi_k} &= V\,\Phi(u_k)\,\Phi(u_k)\,\ket{0}^{\otimes n},\label{eq:rfqrc-step}\\
+r_k &= (1-\varepsilon)\,r_{k-1} + \varepsilon\,\phi(u_k),\label{eq:rfqrc-leak}\\
+\hat y_k &= W_{\mathrm{out}}\, r_k,\nonumber
+\end{align}
+where $\phi(u_k)$ collects the measured features of $\ket{\psi_k}$,
+$\varepsilon\in(0,1]$ is the classical leak rate, and $W_{\mathrm{out}}$ is the
+ridge read-out. The
+circuit now encodes one input (optionally a short window $m\le 3$;
+Section~\ref{sec:rfqrc-theory}), its depth is constant in the memory
+horizon, and the $T$ per-step circuits are mutually independent ---
+embarrassingly parallel, and batchable through the reuse compiler.
+
+\emph{(b) Virtual-node (temporally multiplexed) readout.} Features are
+collected at $N_v$ intermediate evolution times $\{t_1,\dots,t_{N_v}\}$
+inside the step circuit --- equivalently, the Heisenberg-evolved observables
+$\{O(t_i)\}$ are measured \citep{fujii2017harnessing,nakajima2019boosting}:
+\begin{equation}
+\begin{aligned}
+\phi(u_k)&=\big[p(t_1);\dots;p(t_{N_v})\big]\in\R^{N_v 2^n}\\
+&\quad\text{or}\quad
+\big[\ev{Z_i(t_j)},\,\ev{Z_iZ_l(t_j)}\big]\in\R^{N_v\left(n+\binom{n}{2}\right)}.
+\end{aligned}
+\end{equation}
+In exact simulation the snapshots are free (probabilities at layer
+barriers); in shots mode the default realisation is $N_v$ truncated
+circuits, with a reuse-fused realisation as a Stage-7 extension.
+
+\emph{(c) Extreme-event evaluation battery and expanded controls.}
+Predictability horizon (PH), precision/recall/F-score versus
+prediction-time offset, and valid prediction time join NMSE; the baseline
+battery gains NVAR (next-generation reservoir computing; Gauthier
+\emph{et al.}, Nat.\ Commun.\ \textbf{12}, 5564 (2021)), a QELM ablation
+($\varepsilon=1$), and this project's own recurrent reservoirs as
+comparators, on top of the standing five (mean $=1.0$ line, persistence,
+linear lags, size-matched ESN, Haar-random control).
+
+\section{Theory: why this should work, and where it can fail}
+\label{sec:rfqrc-theory}
+
+\subsection{The function class and its honest limitation}
+Unrolling Eq.~\eqref{eq:rfqrc-leak} gives a Volterra-like series with an
+exponential kernel \citep{boyd1985fading},
+\begin{equation}
+\hat y_k=\sum_{d\ge 0}\varepsilon(1-\varepsilon)^d\,
+W_{\mathrm{out}}\,\phi(u_{k-d}),
+\label{eq:rfqrc-unroll}
+\end{equation}
+which is \emph{additive across delays}: no cross-delay products
+$\phi(u_{k-d})\otimes\phi(u_{k-d'})$ appear, although recurrent reservoirs
+and NVAR possess exactly those terms and NARMA-$n$ targets contain them
+literally. This limitation is not stated in the RF-QRC literature. Two
+remedies are kept as switchable ablations: (i) a short in-circuit window
+$m\le3$, encoding $(u_k,\dots,u_{k-m+1})$ across qubit groups so the
+Born-rule quadratic and the entangler generate cross-delay products within
+the window ($m=1$ recovers pure RF-QRC); (ii) a nonlinear read-out head
+(degree-2 polynomial or RBF-SVR), offered under a fairness rule to every
+classical baseline in the same table. Extreme events may nevertheless sit in
+the architecture's sweet spot: turbulent bursts and solar ramps are
+threshold-crossing phenomena whose precursors are plausibly low-order
+nonlinear functions of a \emph{short} recent window --- the
+high-nonlinearity/short-memory corner of the memory--nonlinearity trade-off
+\citep{dambre2012information} --- whereas long-nonlinear-memory tasks should
+favour recurrence, as this project's own ENSO comparison (recurrent
+$\NMSE\approx0.60$ versus windowed $\approx0.75$, Part~VII) already
+witnesses.
+
+\subsection{Echo-state property by construction}
+\begin{proposition}[Fading memory of the leaky recurrence-free map]
+For any input sequence and any $r_0,r_0'$, the states generated by
+Eq.~\eqref{eq:rfqrc-leak} obey
+$\lVert r_k-r_k'\rVert\le(1-\varepsilon)^k\lVert r_0-r_0'\rVert$.
+\end{proposition}
+\begin{proof}
+The map $r\mapsto(1-\varepsilon)r+\varepsilon\phi(u)$ is affine in $r$ with
+Lipschitz constant $(1-\varepsilon)<1$, uniformly in $u$; iterate.
+\end{proof}
+The echo-state property therefore holds for every $\varepsilon\in(0,1]$,
+independent of whether the quantum dynamics is dissipative, unital, or
+chaotic --- in contrast with recurrent QRC, whose contraction must be
+engineered and verified (PTM spectral radius, coherence influx; Part~II),
+and with closed-unitary parameter-encoded reservoirs, which have no fading
+memory at all. Washout still discards $N_w$ steps, but only to flush the
+classical $r_0$. The kernel $(1-\varepsilon)^d$ makes $\varepsilon$ a pure
+memory dial, decoupled from the circuit --- a hyperparameter separation the
+recurrent architecture does not offer \citep{jaeger2007optimization}.
+
+\subsection{Capacity and the virtual-node lever}
+Total information-processing capacity is bounded by the number of linearly
+independent read-out functionals \citep{dambre2012information}; single-time
+local-$Z$ readout of $n$ qubits caps them near $n$ regardless of Hilbert
+dimension. Virtual nodes raise the cap: the read-out optimises over
+$\mathrm{span}\{O(t_1),\dots,O(t_{N_v})\}$, since
+$\hat y=\sum_i w_i\tr[\rho_k O(t_i)]=\tr[\rho_k\sum_i w_i O(t_i)]$. The
+correlated-spin NMR experiment of arXiv:2508.12383 extracted $653$ features
+from nine spins this way and attributes its one-to-two-order NARMA
+improvement and its daily-climate result largely to this lever. The caveat
+this project has already measured: nominal feature count is not capacity ---
+the Stage-5 experiment recorded \emph{effective rank} $\approx2.2$ on a
+nominally $2^{12}$-dimensional feature vector under a scalar drive, the
+exponential-concentration problem in miniature
+\citep{xiong2025role,sannia2025exponential}. The participation ratio of the
+feature covariance is therefore a mandatory reported diagnostic, and the
+mitigations are modest $n$ (8--11), multichannel encoding, $N_v$ virtual
+nodes, and operating below the scrambling regime.
+
+\subsection{Nonlinearity, re-uploading, and the encoding-wrap trap}
+The map's nonlinearity stacks the Born-rule quadratic on a truncated Fourier
+series in the encoded input whose accessible frequency ladder grows with the
+number of data-encoding layers \citep{schuld2021effect}; uploading $\Phi$
+twice --- the RF-QRC signature --- doubles the ladder, consistent with the
+published ablation in which only the double-upload fully entangling map
+matched the recurrent architectures \citep{ahmed2024prediction}. Encoding
+gain remains a swept parameter: this project's own sweep found
+$\gamma=\pi$ wraps the RX encoding and destroys the linear read-out
+($\NMSE\approx1.1$) while $\pi/4$ was selected ($\approx0.03$); the
+$\arcsin$ encoding is kept as a wrap-free alternative.
+
+\subsection{Operating point: the two edges}
+The inter-node evolution interval $\tau$ (equivalently $J\Delta t$) is swept
+log-spaced over at least two decades --- the temporal edge, bounded by the
+Thouless time \citep{kobayashi2026edge}; the published $\tau$ sensitivity in
+the NMR experiment is this edge in the wild. Where Hamiltonian-evolution
+entanglers are used (Stage-4 families), on-site disorder $W$ is the
+parametric dial with the $\langle r\rangle$ anchors already unit-tested
+\citep{martinez2021dynamical}.
+
+\subsection{Shot noise}
+Without recurrence, finite-sampling noise is uncorrelated in time and cannot
+compound through a feedback loop --- the mechanism by which sampling noise
+degrades recurrent QRC faster \citep{ahmed2025optimal,hu2024overcoming}. The
+leak is itself a first-order low-pass filter; on top sit SVD low-rank
+truncation of the reservoir matrix and per-feature Savitzky--Golay
+filtering, which reduced training loss by roughly two orders of magnitude in
+the published hardware runs \citep{ahmed2025optimal}. Standing rule: measure
+the noiseless analytic ceiling before any shot study, and report shots and
+wallclock next to accuracy.
+
+\subsection{Failure modes kept in view}
+(i)~Effective-rank collapse despite $N_v$ (the rank-versus-$N_v$ curve is a
+primary figure whatever it shows). (ii)~NVAR dominance at matched feature
+count --- RF-QRC without the leak is a random nonlinear feature map of the
+current input, so NVAR is its sharpest classical analogue and is absent from
+the published comparisons; if it wins, that is the headline.
+(iii)~Exogenous stochastic extremes: solar ramps are cloud-advection driven,
+so the precursor information may be absent from a univariate series; an
+honest null on solar beside a positive MFE anchor is a coherent outcome.
+(iv)~Long-memory tasks: an expected loss to recurrence on ENSO, declared in
+advance.
+
+\subsection{Fit to the qubit-reuse stack}
+\label{sec:rfqrc-reuse-fit}
+The compiler's equivalence contract preserves exactly the classical
+measurement distribution --- all a QRC read-out consumes. RF-QRC step
+circuits have constant depth, so causal cones stay local and the Stage-5
+width-scan result (constant physical count for logical $n=8$--$40$) now
+holds at \emph{any} memory horizon: the measured pathology physical
+$=T{+}1$ disappears because memory moved from a quantum resource to the
+classical $\varepsilon$. Batches of independent step circuits carry terminal
+measurements only and are parser-legal today; virtual-node fusion ---
+$N_v$ truncated circuits joined by measure-and-reset boundaries on one
+register --- shares its primitive with the reuse compiler and with
+reset-based streaming QRC \citep{hu2024overcoming}, and waits behind an IR
+extension for measurement-terminated blocks.
+
+\section{Evidence base}
+\label{sec:rfqrc-evidence}
+
+\begin{table*}[h]
+\centering\footnotesize
+\caption{Published evidence for the adopted components. All are simulation
+except where noted; none runs a Haar-random or NVAR control --- the gap this
+plan fills.}
+\label{tab:rfqrc-evidence}
+\begin{tabular}{@{}p{2.9cm}p{3.3cm}p{3.6cm}p{4.6cm}@{}}
+\toprule
+Source & Model & Task / baseline & Result and caveat \\
+\midrule
+\citet{ahmed2024prediction} & RF-QRC, double upload, leak & MFE extreme events; tuned size-matched leaky ESN & median PH $8.09$ Lyapunov times at 11 qubits vs classical plateau $\approx5.5$; higher F-score; Lorenz-63 loss reported. Noise-free statevector. \\
+\citet{ahmed2025optimal} & RF-QRC $+$ SVD / Savitzky--Golay & shot-noise study; 10 qubits on \code{ibmq\_kyoto} & recurrence-free degrades more slowly under sampling noise; denoising $\sim2$ orders on training loss. Hardware metric is training loss, not PH. \\
+arXiv:2508.12383 & 9-spin NMR, natural dissipation, time-multiplexed FID (653 features) & NARMA 2--20; Delhi daily climate vs ESN(500--10000) & NARMA error down 1--2 orders vs prior QRC experiments; temperature $\ge$ ESN(1000), with RBF-SVR head above ESN(10000). Ensemble NMR is backaction-free. \\
+C-QRC (Research Square preprint, 2025) & gate-QRC features feeding LSTM/Transformer/XGBoost & solar generation, rolling forecast & gains concentrate in high-volatility and ramp regimes, not average accuracy. Preprint; cite only after audit. \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\section{Integration with the existing codebase}
+\label{sec:rfqrc-integration}
+
+The compiler modules are untouched; \code{qrc\_experiment.py}'s circuit
+builder is refactored into a shared step-circuit factory (the windowed
+protocol survives as the \code{recurrent-window} comparator);
+\code{counts\_to\_features} remains the single endianness point; the
+recurrent CZ-ring of \code{qrc\_core.py} is imported as the long-memory
+comparator. New modules are those of repository Stages~6--7
+(Listing~\ref{lst:repo-tree}). The configuration surface:
+
+\begin{strip}
+\begin{lstlisting}[language=Python,caption={Configuration dataclass, printed at runtime (project convention).},label={lst:rfqrc-config}]
+@dataclass
+class RFQRCConfig:
+    n_qubits: int = 10
+    window_m: int = 1            # 1 = pure RF-QRC; 2-3 = short in-circuit window
+    n_uploads: int = 2           # RF-QRC signature; 1 = ablation
+    entangler: str = "brickwork_zz"   # or "ham_trotter:<family>", "haar_control"
+    entangler_layers: int = 2
+    gamma: float = np.pi / 4     # swept {pi/4, pi/2, pi}; or "arcsin"
+    tau: float = 1.0             # J*dt; swept log over >= 2 decades
+    disorder_W: float = 0.0
+    n_virtual_nodes: int = 4     # snapshots at uniform layer boundaries
+    readout: str = "full_probs"  # or "local_z", "local_zz"
+    leak_eps: float = 0.3        # swept log-grid (0.02 .. 1.0]
+    shots: Optional[int] = None  # None = exact snapshots
+    denoise: str = "none"        # "svd:<k>", "savgol:<w>,<p>"
+    ridge_beta: tuple = (1e-6, 1e-9, 1e-12)
+    seed: int = 7
+\end{lstlisting}
+\end{strip}
+
+\section{Phased plan with acceptance criteria}
+\label{sec:rfqrc-phases}
+
+\paragraph{Phase 0 --- anchors.} Environment restored and the untouched
+suites green; then the new anchors of Table~\ref{tab:rfqrc-anchors}, each
+with an exact expected value, appended to \code{run\_tests.py}.
+
+\begin{table*}[t]
+\centering\small
+\caption{New validation anchors (Phase 0). ``Exact'' entries carry no shot
+noise.}
+\label{tab:rfqrc-anchors}
+\begin{tabular}{@{}llp{5.2cm}@{}}
+\toprule
+Component & Anchor & Expected \\
+\midrule
+leak & impulse response & $r_d=\varepsilon(1-\varepsilon)^d$ exactly \\
+leak & memory function, iid input & matches analytic form \\
+virtual nodes & 2-qubit hand-solved circuit & snapshot probabilities $=\tr[\rho(t_i)P]$ \\
+virtual nodes & snapshot vs truncation & identical distributions, TVD $<10^{-12}$ \\
+endianness & known basis state & feature ordering matches statevector \\
+PH ladder & synthetic ramp series & equals hand computation; ladder terminates \\
+F-score & event-free window & degenerate cases handled \\
+NVAR & known quadratic map & exact recovery to $10^{-10}$ \\
+Haar control & two distinct inputs & distinct features; structure-free \\
+NMSE & mean predictor & exactly $1.000$ \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\paragraph{Phase 1 --- core module.} \code{rfqrc\_reservoir.py}: shared
+step-circuit factory; exact path via statevector snapshots at layer
+barriers; shots path via truncated circuits through the existing Aer runner;
+leak applied elementwise after multiplex concatenation; washout. Accept:
+anchors green; exact versus $10^6$-shot truncation agree within shot noise
+on a 4-qubit test.
+
+\paragraph{Phase 2 --- read-out and training.} Ridge with chronological
+splits; $\lambda$ by chronological validation block or GCV via SVD when the
+tail block is thin; denoisers between features and ridge in shots mode;
+optional heads behind the fairness rule. Accept: ridge anchor; one
+evaluation harness applies any head to all models.
+
+\paragraph{Phase 3 --- metrics and battery.} PH frozen to the
+Racca--Magri convention (criterion
+$|k_{\mathrm{pred}}-k_{\mathrm{true}}|/(k_e-\bar k)<0.2$, ladder start
+$10\,\mathrm{LT}$, decrement $0.5\,\mathrm{LT}$); F-scores from
+$\ge10^3$ starting points binned by prediction-time offset; feature-count
+matching rule --- ESN nodes $=$ NVAR features $=$ quantum feature dimension
+$N_v F_{\mathrm{step}}$ --- so all read-outs train equally many weights;
+effective-rank column mandatory. Accept: battery end-to-end on a synthetic
+series, every number printed.
+
+\paragraph{Phase 4 --- MFE anchor study.} Nine-mode MFE shear-flow model,
+$\mathrm{d}t=0.25$, $\Lambda=0.0163$ ($1\,\mathrm{LT}\approx61.3$ time
+units), ensemble of $2000$ series of $65\,\mathrm{LT}$, laminarised series
+discarded ($k>k_l=0.48$), training $25$ series $\times\,20\,\mathrm{LT}$,
+test $500$; extreme event $k\ge k_e=0.1$. Sweeps: $n\in\{8,\dots,11\}$,
+$N_v\in\{1,2,4,8\}$, $\varepsilon$ log-grid, $\tau$ two-decade log grid,
+$\gamma$ set, $m\in\{1,2,3\}$, five seeds; comparators include the
+windowed protocol and the recurrent ring. Accept: the qualitative
+published finding reproduced or its failure reported; the Lorenz-63 check
+run and reported.
+
+\paragraph{Phase 5 --- solar ramp application.} SURFRAD 1-min ground truth
+(aggregated to 5-min) primary, NSRDB 30-min secondary; registry vetting in
+full; clear-sky index $k_t$ fit on the training span only; masking, never
+interpolation. Ramp label $|k_t(t{+}h)-k_t(t)|\ge\rho$ with $\rho$ the
+train-span 95th percentile, horizons 30 minutes to 4 hours; direct
+multi-horizon multitask read-outs; multichannel encoding across qubit
+groups; hybrid posture with quantum-only and classical-only ablation
+columns. Known hazard honoured: one-step point forecasting on solar is a
+four-way statistical tie with persistence, so event-level metrics are
+primary. Secondary honesty check: RF-QRC versus the recurrent ring on ENSO,
+expected loss declared. Accept: Section~\ref{sec:rfqrc-prereg} evaluated
+once on the untouched test span.
+
+\paragraph{Phase 6 --- reuse integration.} (a)~Batch-and-compress through
+the Stage-5 pipeline, gated by the self-calibrated TVD rule; compression
+versus entangler topology including the all-to-all negative control;
+feature-interchangeability check repeated. (b)~Virtual-node fusion
+prototype behind the IR extension, validated blockwise against unfused
+truncation. (c)~Shot study, gated on the analytic-ceiling check, with the
+cost axis reported. Accept: as stated per item.
+
+\paragraph{Phase 7 --- documentation.} This part and its results enter the
+handbook; citation audit before the PDF ships (the C-QRC preprint is cited
+only if it verifies); skills updated; handoff written.
+
+\section{Pre-registered success criteria and claim discipline}
+\label{sec:rfqrc-prereg}
+
+Fixed before test data is touched; evaluated once. (1)~MFE: median PH of
+the best swept configuration at $n=11$ exceeds the size-matched ESN plateau
+by $\ge1.0\,\mathrm{LT}$, exceeds the Haar control by
+$\ge0.5\,\mathrm{LT}$, and is $\ge$ NVAR at matched feature count; any
+clause failing, the corresponding null is the result. (2)~Solar: at
+$h=1$ and $2$ hours, hybrid F$_1$ on ramp events exceeds the classical-only
+ablation by $\ge0.03$ absolute, quantum-only column reported; secondary
+NMSE on $k_t$ with the mean line and persistence row present. (3)~ENSO:
+reported, expected recurrence win. Claims permitted on success: event-level
+improvement at matched read-out capacity; width-efficiency (constant
+compiled width versus memory horizon); simulation-scoped. Claims banned
+regardless: quantum advantage or speed-up; hardware implications from Aer;
+any number not printed by a script.
+
+\section{Compute and risks}
+\label{sec:rfqrc-risks}
+
+Exact simulation to $n=11$ with $N_v$ snapshots is cheap; the MFE ensemble
+and the sweep grid dominate (coarse-then-fine pruning). Feature dimensions
+up to $N_v 2^n\sim8192$ against $10^3$--$10^4$ training rows: ridge/GCV
+suffices, SVD truncation doubling as regularisation. Shots mode multiplies
+executions by $N_v$ in the truncated realisation --- exactly the cost the
+fusion prototype targets. Principal risks and responses: effective rank
+stagnant (report the curve; multichannel encoding is the lever); NVAR wins
+(report as headline; value then rests on width-efficiency and the hardware
+path); solar null (coherent beside a positive MFE anchor); IR extension
+complexity (deferred; batching delivers without it); preprint fails audit
+(drop the citation).
