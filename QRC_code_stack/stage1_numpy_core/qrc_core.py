@@ -23,6 +23,7 @@ import numpy as np
 # ----------------------------------------------------------------------
 I2 = np.eye(2, dtype=complex)
 X = np.array([[0, 1], [1, 0]], dtype=complex)
+Y = np.array([[0, -1j], [1j, 0]], dtype=complex)
 Z = np.array([[1, 0], [0, -1]], dtype=complex)
 
 
@@ -64,6 +65,51 @@ def ising_hamiltonian(n, J=1.0, h=1.0, rng=None):
     return H
 
 
+def xxz_hx_hamiltonian(n, J=1.0, h=1.0, delta=1.0, periodic=False, rng=None):
+    """H = sum_<i,j> J (X_i X_j + Y_i Y_j + delta Z_i Z_j) + h sum_i X_i.
+
+    Nearest-neighbour XXZ chain in a transverse field, mirroring
+    `Quantathon_stack/Hamiltonian_QRC/Hamiltonians.py::XXZ_hx`.
+
+    Parameters
+    ----------
+    n : int
+        Number of qubits (chain sites).
+    J : float
+        In-plane (XX + YY) exchange; the ZZ coupling is ``J * delta``.
+    h : float
+        Uniform transverse field along X (the ``hx`` knob).
+    delta : float
+        ZZ anisotropy. ``delta == 1`` is the isotropic Heisenberg point,
+        ``delta == 0`` the XX model.
+    periodic : bool
+        Add the bond closing the ring (needs ``n > 2``).
+    rng : ignored
+        Accepted for a signature compatible with `ising_hamiltonian`; this
+        Hamiltonian is deterministic (no disorder).
+    """
+    dim = 2 ** n
+    H = np.zeros((dim, dim), dtype=complex)
+    bonds = [(i, i + 1) for i in range(n - 1)]
+    if periodic and n > 2:
+        bonds.append((n - 1, 0))
+    for i, j in bonds:
+        H += J * two_site_op(X, i, X, j, n)
+        H += J * two_site_op(Y, i, Y, j, n)
+        H += J * delta * two_site_op(Z, i, Z, j, n)
+    for i in range(n):
+        H += h * local_op(X, i, n)
+    return H
+
+
+# Registry of selectable reservoir Hamiltonians. Each builder has the signature
+# (n, J, h, rng=...) so `QuantumReservoir` can construct any of them uniformly.
+HAMILTONIANS = {
+    "ising": ising_hamiltonian,
+    "xxz_hx": xxz_hx_hamiltonian,
+}
+
+
 def propagator(H, dt):
     """U = exp(-i H dt) via Hermitian eigendecomposition."""
     evals, evecs = np.linalg.eigh(H)
@@ -103,11 +149,21 @@ class QuantumReservoir:
     """Exact density-matrix simulation of the Fujii--Nakajima protocol."""
 
     def __init__(self, n_qubits=5, J=1.0, h=1.0, dt=2.0, virtual_nodes=4,
-                 use_zz=True, seed=7):
+                 use_zz=True, seed=7, hamiltonian="ising"):
         self.n = n_qubits
         self.V = virtual_nodes
         self.use_zz = use_zz
-        self.H = ising_hamiltonian(n_qubits, J=J, h=h, rng=seed)
+        self.hamiltonian = hamiltonian
+        try:
+            build_H = HAMILTONIANS[hamiltonian]
+        except KeyError:
+            raise ValueError(
+                f"unknown hamiltonian {hamiltonian!r}; "
+                f"choose one of {sorted(HAMILTONIANS)}"
+            )
+        # Every builder takes the same (n, J, h, rng) contract; `h` is the
+        # transverse field (`hx`) for the XXZ choice.
+        self.H = build_H(n_qubits, J=J, h=h, rng=seed)
         self.U_sub = propagator(self.H, dt / virtual_nodes)
         # Observables: local Z at each site (read at each virtual node) and,
         # optionally, all two-point ZZ correlators (read at the last node).
@@ -260,6 +316,18 @@ def run_validation_suite():
         r = res.U_sub @ r @ res.U_sub.conj().T
     assert abs(np.trace(r) - 1.0) < 1e-10
     assert np.all(np.linalg.eigvalsh(r) > -1e-10)          # positivity
+    # 2b. XXZ+hx choice: Hermitian Hamiltonian, and a reservoir built on it
+    #     stays a valid (trace-1, positive) density matrix through a full step.
+    Hx = xxz_hx_hamiltonian(4, J=0.8, h=0.5, delta=1.0)
+    assert np.allclose(Hx, Hx.conj().T, atol=1e-12)
+    res_x = QuantumReservoir(n_qubits=4, J=0.8, h=0.5, seed=0,
+                             hamiltonian="xxz_hx")
+    rx = res_x.initial_state()
+    for u in [0.2, 0.9, 0.4]:
+        rx = inject(rx, u, 4)
+        rx = res_x.U_sub @ rx @ res_x.U_sub.conj().T
+    assert abs(np.trace(rx) - 1.0) < 1e-10
+    assert np.all(np.linalg.eigvalsh(rx) > -1e-10)
     # 3. Ridge anchor: exact recovery of a known affine map.
     rng = np.random.default_rng(1)
     Xf = rng.normal(size=(300, 6))

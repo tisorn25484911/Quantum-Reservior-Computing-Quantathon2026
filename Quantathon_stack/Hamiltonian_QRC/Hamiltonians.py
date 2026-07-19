@@ -148,13 +148,7 @@ def TFIM_to_matrix(num_spin: int, params: dict) -> Qobj:
 
 
 def XXZ_hx(num_spin: int, params: dict) -> Qobj:
-    r"""
-    XXZ spin chain in a transverse field h_x.
-
-        H = sum_i  Jxy (X_i X_{i+1} + Y_i Y_{i+1})
-                 + Jxy * Delta * Z_i Z_{i+1}
-          + hx sum_i X_i
-
+    """
     params:
         Dictionary containing:
             params["Jxy"]      : in-plane (XX + YY) exchange coupling
@@ -306,10 +300,18 @@ def expectation(operator, state):
             val = np.trace(O @ state.full())
     else:
         s = np.asarray(state)
-        if s.ndim == 1:
+        if s.ndim == 1:                              # flat state vector
             val = s.conj() @ O @ s
-        else:
+        elif s.ndim == 2 and 1 in s.shape:           # (N,1) or (1,N) ket/bra
+            v = s.reshape(-1)
+            val = v.conj() @ O @ v
+        elif s.ndim == 2 and s.shape[0] == s.shape[1]:   # square density matrix
             val = np.trace(O @ s)
+        else:
+            raise ValueError(
+                f"Cannot interpret state array of shape {s.shape} as a "
+                "ket, bra, or density matrix."
+            )
 
     val = complex(val)
     return val.real if abs(val.imag) < 1e-12 else val
