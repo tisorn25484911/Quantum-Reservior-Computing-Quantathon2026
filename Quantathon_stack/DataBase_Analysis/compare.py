@@ -36,6 +36,7 @@ import matplotlib.pyplot as plt
 
 import analysis
 import dataloader as dl
+import provenance
 from visualizer import PALETTE, _grid
 
 HERE = Path(__file__).resolve().parent
@@ -229,7 +230,48 @@ def markdown(rows, figs):
             "- **method**: `rosenstein` rows are single-trajectory upper "
             "bounds, roughly factor-2. Only `ensemble` rows are measurements, "
             "and those carry ~31% mean absolute error. See analysis.md.", ""]
+
+    out += _catalogue(rows)
     return "\n".join(out)
+
+
+def _catalogue(rows):
+    """Per-dataset prose: what it is, where it came from, what to watch for."""
+    out = ["## The datasets", "",
+           "Source, physical meaning and known traps for each series, in the "
+           "order the table above uses. Documentation lives in "
+           "`provenance.py`; the measured numbers come from `analysis.py`.", ""]
+
+    by_key = {r["key"]: r for r in rows}
+    for tier in ("real", "surrogate", "chaotic"):
+        keys = [r["key"] for r in sorted(rows, key=lambda r: r["key"])
+                if r["tier"] == tier]
+        if not keys:
+            continue
+        out += [f"### {tier} tier", ""]
+        for key in keys:
+            doc = provenance.DOCS.get(key)
+            r = by_key[key]
+            if doc is None:
+                out += [f"#### `{key}`", "", "_undocumented_", ""]
+                continue
+            u = r["time_unit"] or "sample"
+            out += [
+                f"#### `{key}` — {doc.title}", "",
+                f"- **Source**: {doc.source}",
+                f"- **Observable**: {doc.observable}",
+                f"- **Measured**: N = {r['n']:,}, Δt = {_fmt(r['dt'], '.4g')} "
+                f"{u}, span = {_fmt(r['span'], '.4g')} {u}, "
+                f"λ₁ = {r['lyap']:+.4f} /{u}, T_λ = {_fmt(r['lyap_time'])} {u} "
+                f"({r['lyap_method']})",
+                "",
+                doc.meaning, "",
+            ]
+            if doc.watch_out:
+                out += ["**Watch out**", ""]
+                out += [f"- {w}" for w in doc.watch_out]
+                out += [""]
+    return out
 
 
 def main(argv=None):
