@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% set nav = 'runs' %}
+{% set m = r.metrics %}
+{% set v = r.verdict %}
+{% block title %}{{ r.dataset.name }} forecast{% endblock %}
+{% block body %}
+
+<div class="row">
+  <h1 style="margin:0">{{ r.dataset.name }}</h1>
+  <span class="badge {{ r.dataset.tier }}">{{ r.dataset.tier_label }}</span>
+</div>
+<p class="lede" style="margin-top:10px">
+  {{ r.config.horizon }}-step-ahead forecast &middot;
+  {{ r.config.n_qubits }}-qubit reservoir, {{ r.n_features }} read-out features
+  &middot; run <span class="mono">{{ job.id }}</span>
+</p>
+
+{# ---- verdict: the headline is allowed to be bad news ---- #}
+<div class="note {{ '' if v.beat_persistence else ('bad' if not v.beat_mean_predictor else 'warn') }}">
+  <strong>{{ v.headline }}</strong>
+  {% if v.notes %}
+  <ul>{% for n in v.notes %}<li>{{ n }}</li>{% endfor %}</ul>
+  {% endif %}
+</div>
+
+{% if r.dataset.tier != 'real' %}
+<div class="note warn">
+  <strong>{{ r.dataset.tier_label }}.</strong> {{ r.dataset.tier_note }}
+</div>
+{% endif %}
+
+{# ---- headline stats ---- #}
+<div class="grid c4">
+  <div class="stat {{ 'good' if m.qrc.nmse < 1 else 'bad' }}">
+    <div class="label">QRC NRMSE</div>
+    <div class="value">{{ m.qrc.nrmse|num('.3f') }}</div>
+    <div class="sub">1.00 = mean predictor</div>
+  </div>
+  <div class="stat {{ 'good' if m.qrc.skill_vs_persistence > 0 else 'bad' }}">
+    <div class="label">Skill vs persistence</div>
+    <div class="value">{{ m.qrc.skill_vs_persistence|pct }}</div>
+    <div class="sub">RMSE reduction</div>
+  </div>
+  <div class="stat">
+    <div class="label">vs size-matched ESN</div>
+    <div class="value">{{ v.rmse_ratio_vs_esn|num('.3f') }}</div>
+    <div class="sub">RMSE ratio; &lt;1 favours QRC</div>
+  </div>
+  <div class="stat {{ 'good' if v.band_calibrated else 'bad' }}">
+    <div class="label">Band coverage</div>
+    <div class="value">{{ m.qrc.coverage|pct }}</div>
+    <div class="sub">nominal {{ r.conformal.nominal|pct }}</div>
+  </div>
+</div>
+
+<figure class="card" style="margin-top:18px">
+  <img src="/charts/forecast/{{ job.id }}.png" alt="forecast against observed">
+  <figcaption>
+    Held-out test window. The shaded band is the
+    {{ r.conformal.nominal|pct }} split-conformal interval, calibrated on a
+    slice the read-out never saw.
+  </figcaption>
+</figure>
+
+<h2>Scored against the baselines</h2>
+<div class="card">
+<table>
+  <thead>
+    <tr><th>Predictor</th><th class="num">RMSE</th><th class="num">MAE</th>
+        <th class="num">NRMSE</th><th class="num">R&sup2;</th>
+        <th class="num">Skill vs persist.</th><th class="num">Coverage</th></tr>
+  </thead>
+  <tbody>
+    <tr class="highlight">
+      <td><strong>QRC</strong> ({{ r.config.n_qubits }} qubits)</td>
+      <td class="num">{{ m.qrc.rmse|num('.4g') }}</td>
+      <td class="num">{{ m.qrc.mae|num('.4g') }}</td>
+      <td class="num">{{ m.qrc.nrmse|num('.3f') }}</td>
+      <td class="num">{{ m.qrc.r2|num('.3f') }}</td>
+      <td class="num">{{ m.qrc.skill_vs_persistence|pct }}</td>
+      <td class="num">{{ m.qrc.coverage|pct }}</td>
+    </tr>
+    <tr>
+      <td>ESN, size-matched ({{ r.n_features }} nodes)</td>
+      <td class="num">{{ m.esn.rmse|num('.4g') }}</td>
+      <td class="num">{{ m.esn.mae|num('.4g') }}</td>
+      <td class="num">{{ m.esn.nrmse|num('.3f') }}</td>
+      <td class="num">{{ m.esn.r2|num('.3f') }}</td>
+      <td class="num">{{ m.esn.skill_vs_persistence|pct }}</td>
+      <td class="num">{{ m.esn.coverage|pct }}</td>
+    </tr>
+    <tr>
+      <td>Persistence (last observation)</td>
+      <td class="num">{{ m.persistence.rmse|num('.4g') }}</td>
+      <td class="num">{{ m.persistence.mae|num('.4g') }}</td>
+      <td class="num">{{ m.persistence.nrmse|num('.3f') }}</td>
+      <td class="num">{{ m.persistence.r2|num('.3f') }}</td>
+      <td class="num">&mdash;</td>
+      <td class="num">&mdash;</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p class="muted" style="font-size:13px">
+  The ESN is given exactly {{ r.n_features }} nodes &mdash; the reservoir's
+  feature count &mdash; so both read-outs train the same number of weights.
+  That is what makes the comparison fair, and it is the comparison a
+  quantum-advantage claim would have to survive.
+</p>
+
+<div class="grid c2">
+  <figure class="card">
+    <img src="/charts/scatter/{{ job.id }}.png" alt="predicted versus observed">
+    <figcaption>Predicted against observed. Points off the 1:1 line in a
+      systematic direction indicate bias rather than noise.</figcaption>
+  </figure>
+
+  <div class="card">
+    <h3>Model card</h3>
+    <table>
+      <tbody>
+        <tr><td>Dataset</td><td>{{ r.dataset.name }} <span class="badge {{ r.dataset.tier }}">{{ r.dataset.tier }}</span></td></tr>
+        <tr><td>Horizon</td><td class="num">{{ r.config.horizon }} steps</td></tr>
+        <tr><td>Qubits / virtual nodes</td><td class="num">{{ r.config.n_qubits }} / {{ r.config.virtual_nodes }}</td></tr>
+        <tr><td>Input interval J&Delta;t</td><td class="num">{{ r.config.dt }}</td></tr>
+        <tr><td>ZZ features</td><td>{{ 'yes' if r.config.use_zz else 'no' }}</td></tr>
+        <tr><td>Read-out features</td><td class="num">{{ r.n_features }}</td></tr>
+        <tr><td>Ridge &lambda;</td><td class="num">{{ r.config.lam }}</td></tr>
+        <tr><td>Seed</td><td class="num">{{ r.config.seed }}</td></tr>
+        <tr><td>Split (train/calib/test)</td><td class="num">{{ r.split.train }} / {{ r.split.calib }} / {{ r.split.test }}</td></tr>
+        <tr><td>Scaler</td><td>{{ r.scaler.fitted_on }}</td></tr>
+        <tr><td>Conformal radius</td><td class="num">{{ r.conformal.radius_qrc|num('.4g') }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="note">
+  <strong>Leakage guard.</strong> The scaling constants were fitted on the
+  training span only ({{ r.scaler.lo|num('.4g') }} &hellip;
+  {{ r.scaler.hi|num('.4g') }}), never on the full series. Splits are
+  chronological and never shuffled.
+</div>
+
+<p><a class="btn ghost" href="/forecast?dataset={{ r.config.dataset }}">Run another</a>
+   <a class="btn ghost" href="/api/runs/{{ job.id }}">Raw JSON</a></p>
+{% endblock %}

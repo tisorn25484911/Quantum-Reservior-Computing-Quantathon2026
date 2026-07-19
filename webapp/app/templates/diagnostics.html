@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% set nav = 'diagnostics' %}
+{% block title %}Reservoir diagnostics{% endblock %}
+{% block body %}
+<h1>Reservoir diagnostics</h1>
+<p class="lede">
+  Measure the reservoir on its own terms, independently of any dataset:
+  how much of the input history it retains, and how many independent feature
+  directions the read-out actually has.
+</p>
+
+<form class="card" method="post" action="/diagnostics">
+  <div class="grid c4">
+    <div class="field">
+      <label for="n_qubits">Qubits</label>
+      <input id="n_qubits" type="number" name="n_qubits" value="{{ defaults.n_qubits }}" min="1" max="8">
+    </div>
+    <div class="field">
+      <label for="dt">Input interval J&middot;&Delta;t</label>
+      <input id="dt" type="number" name="dt" value="{{ defaults.dt }}" step="0.25" min="0.05">
+    </div>
+    <div class="field">
+      <label for="virtual_nodes">Virtual nodes</label>
+      <input id="virtual_nodes" type="number" name="virtual_nodes" value="{{ defaults.virtual_nodes }}" min="1" max="16">
+    </div>
+    <div class="field">
+      <label for="max_delay">Max delay probed</label>
+      <input id="max_delay" type="number" name="max_delay" value="25" min="5" max="80">
+    </div>
+  </div>
+  <div class="field checkline">
+    <input id="use_zz" type="checkbox" name="use_zz" value="true" checked>
+    <label for="use_zz">Include two-point &lang;Z<sub>i</sub>Z<sub>j</sub>&rang; features</label>
+  </div>
+  <button type="submit">Measure memory capacity</button>
+</form>
+
+<div class="note">
+  <strong>Try the temporal edge.</strong> Sweep J&Delta;t by hand: short
+  intervals under-mix and long ones scramble past the Thouless time, so memory
+  capacity peaks somewhere in between. That peak is the concrete, falsifiable
+  form of the "edge of chaos" design principle.
+</div>
+{% endblock %}

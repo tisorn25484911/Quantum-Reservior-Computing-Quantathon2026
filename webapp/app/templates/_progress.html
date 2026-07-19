@@ -1,0 +1,18 @@
+{# HTMX partial: polls itself until the job leaves the running state. #}
+<div id="progress"
+     {% if job.status in ('queued', 'running') %}
+     hx-get="/runs/{{ job.id }}/progress" hx-trigger="load delay:600ms" hx-swap="outerHTML"
+     {% endif %}>
+  {% if job.status in ('queued', 'running') %}
+    <div class="bar"><i style="width: {{ (job.progress * 100)|round(1) }}%"></i></div>
+    <p class="muted">{{ job.message }} &middot; {{ (job.progress * 100)|round(0)|int }}%</p>
+  {% elif job.status == 'error' %}
+    <div class="note bad">
+      <strong>Run failed.</strong>
+      <p class="mono" style="margin:6px 0 0">{{ job.error }}</p>
+    </div>
+  {% else %}
+    <div class="note"><strong>Finished.</strong> Loading results&hellip;</div>
+    <script>location.reload();</script>
+  {% endif %}
+</div>

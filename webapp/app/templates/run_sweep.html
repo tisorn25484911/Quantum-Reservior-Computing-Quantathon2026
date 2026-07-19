@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% set nav = 'runs' %}
+{% block title %}{{ r.dataset.name }} horizon sweep{% endblock %}
+{% block body %}
+<div class="row">
+  <h1 style="margin:0">{{ r.dataset.name }} &mdash; horizon sweep</h1>
+  <span class="badge {{ r.dataset.tier }}">{{ r.dataset.tier_label }}</span>
+</div>
+<p class="lede" style="margin-top:10px">
+  How far ahead the forecast stays worth anything.
+  {{ r.config.n_qubits }}-qubit reservoir, seed {{ r.config.seed }}.
+</p>
+
+<div class="note {{ 'warn' if r.usable_horizon else '' }}">
+  <strong>{{ r.usable_note }}</strong>
+</div>
+
+<figure class="card">
+  <img src="/charts/horizon/{{ job.id }}.png" alt="NRMSE against forecast horizon">
+  <figcaption>
+    NRMSE against horizon for all three predictors. The dashed line at 1.0 is
+    the mean predictor: a curve reaching it has stopped forecasting.
+  </figcaption>
+</figure>
+
+<div class="card">
+<table>
+  <thead>
+    <tr><th class="num">Horizon</th><th class="num">QRC NRMSE</th>
+        <th class="num">ESN NRMSE</th><th class="num">Persistence NRMSE</th>
+        <th>Reading</th></tr>
+  </thead>
+  <tbody>
+  {% for h in r.horizons %}
+    {% set i = loop.index0 %}
+    {% set q = r.nrmse.qrc[i] %}
+    <tr {{ 'class=highlight' if q >= 1.0 }}>
+      <td class="num">{{ h }}</td>
+      <td class="num">{{ q|num('.3f') }}</td>
+      <td class="num">{{ r.nrmse.esn[i]|num('.3f') }}</td>
+      <td class="num">{{ r.nrmse.persistence[i]|num('.3f') }}</td>
+      <td class="muted" style="font-size:13px">
+        {% if q >= 1.0 %}no skill left
+        {% elif r.nrmse.qrc[i] > r.nrmse.esn[i] %}ESN ahead
+        {% else %}QRC ahead{% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <strong>Reading this against predictability.</strong> For the chaotic tier the
+  usable horizon can be compared with the Lyapunov time estimated independently
+  in <span class="mono">DataBase_Analysis/lyapunov.py</span>. A model that keeps
+  skill well past that horizon is a sign of leakage, not of a good model.
+</div>
+
+<p><a class="btn ghost" href="/forecast?dataset={{ r.config.dataset }}">Run another</a>
+   <a class="btn ghost" href="/api/runs/{{ job.id }}">Raw JSON</a></p>
+{% endblock %}

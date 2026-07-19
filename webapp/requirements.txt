@@ -1,0 +1,11 @@
+# QRC forecasting demo -- web app dependencies.
+# Versions are the ones the app was built and verified against.
+fastapi==0.139.2
+uvicorn[standard]==0.51.0
+Jinja2==3.1.6
+python-multipart==0.0.32     # required by FastAPI to parse HTML form posts
+
+# Shared with the rest of the project.
+numpy==2.5.1
+pandas==3.0.3                # dataloader reads the CSV tiers
+matplotlib==3.11.1           # server-rendered chart PNGs

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Running &middot; {{ job.label }}{% endblock %}
+{% block body %}
+<h1>{{ job.label }}</h1>
+<p class="lede">Run <span class="mono">{{ job.id }}</span> &middot; {{ job.kind }}</p>
+<div class="card">
+  {% include "_progress.html" %}
+</div>
+<p class="muted">This page refreshes itself when the run finishes.</p>
+{% endblock %}

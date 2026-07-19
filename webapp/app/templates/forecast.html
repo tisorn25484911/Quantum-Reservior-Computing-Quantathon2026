@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% set nav = 'forecast' %}
+{% block title %}Configure a forecast{% endblock %}
+{% block body %}
+<h1>Configure a forecast</h1>
+<p class="lede">
+  Every field here is echoed into the run's model card, so a result can always
+  be traced back to the configuration that produced it.
+</p>
+
+<form class="card" method="post" action="/forecast">
+  <h3>Data</h3>
+  <div class="grid c3">
+    <div class="field">
+      <label for="dataset">Dataset</label>
+      <select id="dataset" name="dataset">
+        {% for d in datasets %}
+          <option value="{{ d.key }}" {{ 'selected' if d.key == defaults.dataset }}>
+            {{ d.name }} &mdash; {{ d.tier }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="horizon">Forecast horizon (steps)</label>
+      <input id="horizon" type="number" name="horizon" value="{{ defaults.horizon }}" min="1" max="200">
+    </div>
+    <div class="field">
+      <label for="max_points">Series window (samples)</label>
+      <input id="max_points" type="number" name="max_points" value="{{ defaults.max_points }}" min="300" max="20000" step="100">
+      <div class="hint">Most recent N samples.</div>
+    </div>
+  </div>
+
+  <h3>Reservoir</h3>
+  <div class="grid c4">
+    <div class="field">
+      <label for="n_qubits">Qubits</label>
+      <input id="n_qubits" type="number" name="n_qubits" value="{{ defaults.n_qubits }}" min="1" max="8">
+      <div class="hint">Exact simulation, cost ~4<sup>n</sup>.</div>
+    </div>
+    <div class="field">
+      <label for="dt">Input interval J&middot;&Delta;t</label>
+      <input id="dt" type="number" name="dt" value="{{ defaults.dt }}" step="0.25" min="0.05">
+      <div class="hint">The temporal edge: too short under-mixes, too long scrambles.</div>
+    </div>
+    <div class="field">
+      <label for="virtual_nodes">Virtual nodes</label>
+      <input id="virtual_nodes" type="number" name="virtual_nodes" value="{{ defaults.virtual_nodes }}" min="1" max="16">
+      <div class="hint">Temporal multiplexing per input step.</div>
+    </div>
+    <div class="field">
+      <label for="seed">Seed</label>
+      <input id="seed" type="number" name="seed" value="{{ defaults.seed }}">
+    </div>
+  </div>
+  <div class="field checkline">
+    <input id="use_zz" type="checkbox" name="use_zz" value="true" checked>
+    <label for="use_zz">Include two-point &lang;Z<sub>i</sub>Z<sub>j</sub>&rang; read-out features</label>
+  </div>
+
+  <h3>Uncertainty</h3>
+  <div class="grid c3">
+    <div class="field">
+      <label for="alpha">Miscoverage &alpha;</label>
+      <input id="alpha" type="number" name="alpha" value="{{ defaults.alpha }}" step="0.05" min="0.01" max="0.5">
+      <div class="hint">Nominal band = 1 &minus; &alpha;. Realised coverage is measured, not assumed.</div>
+    </div>
+    <div class="field">
+      <label for="mode">Run type</label>
+      <select id="mode" name="mode">
+        <option value="single">Single horizon</option>
+        <option value="sweep">Horizon sweep (1, 2, 3, 6, 12, 24)</option>
+      </select>
+    </div>
+  </div>
+
+  <button type="submit">Run</button>
+</form>
+{% endblock %}

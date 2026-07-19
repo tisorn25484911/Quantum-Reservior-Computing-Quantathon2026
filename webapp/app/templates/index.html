@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block body %}
+
+<h1>Forecasting with a quantum reservoir</h1>
+<p class="lede">
+  Drive a real time series through an exactly-simulated quantum reservoir, read
+  out a forecast with a calibrated uncertainty band, and score it against the
+  baselines that decide whether it means anything.
+</p>
+
+<div class="note">
+  Every run is reported against <strong>two reference points</strong>: persistence
+  (repeat the last observation) and a <strong>size-matched echo-state network</strong>
+  trained on the same number of parameters. If the reservoir loses, the page says
+  so &mdash; that is the point of showing them.
+</div>
+
+<h2>Start a forecast</h2>
+<form class="card" method="post" action="/forecast">
+  <div class="grid c4">
+    <div class="field">
+      <label for="dataset">Dataset</label>
+      <select id="dataset" name="dataset">
+        {% for d in featured %}
+          <option value="{{ d.key }}">{{ d.name }} ({{ d.tier }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="horizon">Horizon (steps ahead)</label>
+      <input id="horizon" type="number" name="horizon" value="1" min="1" max="200">
+    </div>
+    <div class="field">
+      <label for="n_qubits">Reservoir qubits</label>
+      <input id="n_qubits" type="number" name="n_qubits" value="{{ defaults.n_qubits }}" min="1" max="8">
+      <div class="hint">Exact simulation; cost grows as 4<sup>n</sup>.</div>
+    </div>
+    <div class="field">
+      <label for="mode">Run</label>
+      <select id="mode" name="mode">
+        <option value="single">Single horizon</option>
+        <option value="sweep">Sweep horizons 1&ndash;24</option>
+      </select>
+    </div>
+  </div>
+  <div class="row">
+    <button type="submit">Run forecast</button>
+    <span class="muted">Typically under 2&nbsp;s. Advanced settings on the
+      <a href="/forecast">full forecast page</a>.</span>
+  </div>
+</form>
+
+<h2>Featured series</h2>
+<div class="grid c2">
+  {% for d in featured %}
+  <div class="card">
+    <div class="row">
+      <h3 style="margin:0"><a href="/datasets/{{ d.key }}">{{ d.name }}</a></h3>
+      <span class="badge {{ d.tier }}">{{ d.tier_label }}</span>
+    </div>
+    <p class="muted" style="font-size:13px;margin:8px 0 0">
+      {{ d.n }} samples &middot; dt = {{ d.dt|num }} {{ d.time_unit }}
+      &middot; lag-1 autocorr {{ d.lag1_autocorr|num('.3f') }}
+    </p>
+  </div>
+  {% endfor %}
+</div>
+<p class="muted">{{ n_datasets }} datasets available &mdash;
+  <a href="/datasets">browse all</a>.</p>
+
+{% if recent %}
+<h2>Recent runs</h2>
+<div class="card">
+  <table>
+    <thead><tr><th>Run</th><th>Kind</th><th>Status</th><th>Started</th></tr></thead>
+    <tbody>
+      {% for j in recent %}
+      <tr>
+        <td><a href="/runs/{{ j.id }}">{{ j.label }}</a></td>
+        <td class="muted">{{ j.kind }}</td>
+        <td>{% if j.status == 'done' %}<span class="badge ok">done</span>
+            {% elif j.status == 'error' %}<span class="badge fail">error</span>
+            {% else %}<span class="badge">{{ j.status }}</span>{% endif %}</td>
+        <td class="mono">{{ j.created_at }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% endblock %}

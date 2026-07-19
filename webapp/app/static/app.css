@@ -1,0 +1,169 @@
+/* app.css -- one stylesheet, no framework.
+   Light and dark are both authored; the dark steps are chosen against the dark
+   surface rather than being an automatic inversion. */
+
+:root {
+  --bg: #fcfcfb;
+  --surface: #ffffff;
+  --border: #e4e4e0;
+  --ink: #1a1a18;
+  --ink-2: #4a4a46;
+  --ink-3: #77776f;
+  --accent: #0072b2;
+  --accent-soft: #e7f1f8;
+  --good: #1a7f52;
+  --warn: #b06a00;
+  --bad: #b3261e;
+  --radius: 10px;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16171a;
+    --surface: #1e1f23;
+    --border: #32343a;
+    --ink: #eceef2;
+    --ink-2: #b7bac2;
+    --ink-3: #888c96;
+    --accent: #5cb3e8;
+    --accent-soft: #17323f;
+    --good: #57c98a;
+    --warn: #e0a145;
+    --bad: #f0776c;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px 64px; }
+
+/* ---- header ---- */
+header.top {
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  margin-bottom: 28px;
+}
+header.top .wrap { display: flex; align-items: center; gap: 22px; padding: 14px 20px; }
+.brand { font-weight: 650; letter-spacing: -0.01em; color: var(--ink); }
+.brand span { color: var(--accent); }
+nav.top-nav { display: flex; gap: 18px; margin-left: auto; flex-wrap: wrap; }
+nav.top-nav a { color: var(--ink-2); font-size: 14px; }
+nav.top-nav a.active { color: var(--accent); font-weight: 600; }
+
+h1 { font-size: 25px; letter-spacing: -0.02em; margin: 0 0 6px; }
+h2 { font-size: 18px; letter-spacing: -0.01em; margin: 30px 0 12px; }
+h3 { font-size: 15px; margin: 0 0 8px; }
+p.lede { color: var(--ink-2); margin: 0 0 22px; max-width: 68ch; }
+
+/* ---- cards ---- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 18px;
+}
+.grid { display: grid; gap: 14px; }
+.grid.c2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.grid.c3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.grid.c4 { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+
+/* ---- stat tiles ---- */
+.stat { background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 14px 16px; }
+.stat .label { font-size: 11.5px; text-transform: uppercase;
+               letter-spacing: 0.06em; color: var(--ink-3); }
+.stat .value { font-size: 24px; font-weight: 620; font-variant-numeric: tabular-nums;
+               letter-spacing: -0.02em; margin-top: 3px; }
+.stat .sub { font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }
+.stat.good .value { color: var(--good); }
+.stat.bad .value { color: var(--bad); }
+
+/* ---- badges ---- */
+.badge {
+  display: inline-block; padding: 2px 9px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 600; letter-spacing: 0.02em;
+  border: 1px solid var(--border); color: var(--ink-2); background: var(--bg);
+  vertical-align: middle;
+}
+.badge.real { color: var(--good); border-color: currentColor; }
+.badge.surrogate { color: var(--warn); border-color: currentColor; }
+.badge.chaotic { color: var(--accent); border-color: currentColor; }
+.badge.ok { color: var(--good); border-color: currentColor; }
+.badge.fail { color: var(--bad); border-color: currentColor; }
+
+/* ---- tables ---- */
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); }
+th { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em;
+     color: var(--ink-3); font-weight: 600; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums;
+                 font-family: var(--mono); font-size: 13px; }
+tr.highlight td { background: var(--accent-soft); }
+tbody tr:last-child td { border-bottom: none; }
+
+/* ---- forms ---- */
+label { display: block; font-size: 12.5px; color: var(--ink-2);
+        margin-bottom: 5px; font-weight: 550; }
+input, select {
+  width: 100%; padding: 8px 10px; font: inherit; font-size: 14px;
+  color: var(--ink); background: var(--bg);
+  border: 1px solid var(--border); border-radius: 7px;
+}
+input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.field { margin-bottom: 14px; }
+.hint { font-size: 12px; color: var(--ink-3); margin-top: 4px; }
+button, .btn {
+  display: inline-block; padding: 9px 18px; font: inherit; font-size: 14px;
+  font-weight: 600; color: #fff; background: var(--accent);
+  border: 1px solid transparent; border-radius: 7px; cursor: pointer;
+}
+button:hover, .btn:hover { filter: brightness(1.08); text-decoration: none; }
+.btn.ghost { background: transparent; color: var(--accent);
+             border-color: var(--border); }
+.checkline { display: flex; align-items: center; gap: 8px; }
+.checkline input { width: auto; }
+.checkline label { margin: 0; }
+
+/* ---- figures ---- */
+figure { margin: 0 0 14px; }
+figure img { width: 100%; height: auto; display: block; border-radius: 7px;
+             background: #fff; }
+figcaption { font-size: 12.5px; color: var(--ink-3); margin-top: 7px; }
+
+/* ---- notes / disclaimers ---- */
+.note {
+  border-left: 3px solid var(--accent); background: var(--accent-soft);
+  padding: 11px 14px; border-radius: 0 7px 7px 0; font-size: 13.5px;
+  color: var(--ink-2); margin: 0 0 16px;
+}
+.note.warn { border-left-color: var(--warn); background: transparent;
+             border: 1px solid var(--border); border-left: 3px solid var(--warn); }
+.note.bad { border-left-color: var(--bad); background: transparent;
+            border: 1px solid var(--border); border-left: 3px solid var(--bad); }
+.note ul { margin: 7px 0 0; padding-left: 19px; }
+.note li { margin-bottom: 5px; }
+
+/* ---- progress ---- */
+.bar { height: 8px; background: var(--border); border-radius: 999px;
+       overflow: hidden; margin: 10px 0 6px; }
+.bar > i { display: block; height: 100%; background: var(--accent);
+           transition: width .35s ease; }
+
+.mono { font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); }
+.muted { color: var(--ink-3); }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.spacer { flex: 1; }
+footer.foot { border-top: 1px solid var(--border); margin-top: 40px;
+              padding-top: 16px; font-size: 12.5px; color: var(--ink-3); }

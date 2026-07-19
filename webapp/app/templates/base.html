@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}QRC Forecasting Demo{% endblock %}</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/htmx.min.js" defer></script>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="/">Quantum<span>RC</span> &middot; forecasting demo</a>
+    <nav class="top-nav">
+      <a href="/forecast" class="{{ 'active' if nav == 'forecast' }}">Forecast</a>
+      <a href="/datasets" class="{{ 'active' if nav == 'datasets' }}">Datasets</a>
+      <a href="/diagnostics" class="{{ 'active' if nav == 'diagnostics' }}">Diagnostics</a>
+      <a href="/runs" class="{{ 'active' if nav == 'runs' }}">Runs</a>
+      <a href="/about" class="{{ 'active' if nav == 'about' }}">Method</a>
+      <a href="/docs">API</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  {% block body %}{% endblock %}
+
+  <footer class="foot">
+    <p><strong>Scope of these numbers.</strong> {{ disclaimer }}</p>
+    <p>Reservoir: exact density-matrix simulation from
+      <span class="mono">stage1_numpy_core/qrc_core.py</span>, the project's
+      reference implementation. Project seed {{ seed }}.</p>
+  </footer>
+</main>
+</body>
+</html>

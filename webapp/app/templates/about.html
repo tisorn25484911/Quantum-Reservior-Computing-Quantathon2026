@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% set nav = 'about' %}
+{% block title %}Method and claims{% endblock %}
+{% block body %}
+
+<h1>Method, and what these numbers are allowed to claim</h1>
+<p class="lede">
+  This page exists because a demo is the easiest place in a project to
+  accidentally overclaim. Everything the app measures is written down here,
+  including the parts that are unflattering.
+</p>
+
+<h2>What is actually being computed</h2>
+<div class="card">
+  <p>
+    A scalar time series is rescaled into [0,&nbsp;1] and injected, one sample
+    per step, into an exactly simulated quantum reservoir: a disordered,
+    fully-connected transverse-field Ising system of
+    <em>n</em> qubits. Each step re-prepares an input qubit and evolves the
+    whole register under a fixed Hamiltonian, reading out
+    &lang;Z<sub>i</sub>&rang; at several virtual nodes plus, optionally, the
+    two-point &lang;Z<sub>i</sub>Z<sub>j</sub>&rang; correlators. Those
+    expectation values are the features; a ridge regression on top of them is
+    the only trained part of the model.
+  </p>
+  <p>
+    The implementation is
+    <span class="mono">QRC_code_stack/stage1_numpy_core/qrc_core.py</span>,
+    which repository law R2 designates as the semantic definition for the whole
+    programme. It is not a mock or a stand-in: this app drives the same
+    propagator the handbook's numbers came from.
+  </p>
+</div>
+
+<h2>What this is not</h2>
+<div class="note bad">
+  <ul style="margin-top:0">
+    <li><strong>Not quantum hardware.</strong> Every figure is classical
+      simulation of a small quantum system, exact to machine precision.</li>
+    <li><strong>Not a speed-up claim.</strong> At these sizes (n &le; 8, so a
+      state space of at most 256) there is no quantum advantage available to
+      demonstrate, and none is asserted.</li>
+    <li><strong>Not a product benchmark.</strong> One seed, one chronological
+      split, one dataset per run. Differences of a few percent between methods
+      are noise, and the app says so rather than ranking them.</li>
+  </ul>
+</div>
+
+<h2>The three guards built into every run</h2>
+<div class="grid c3">
+  <div class="card">
+    <h3>Leakage guard</h3>
+    <p class="muted" style="font-size:13.5px">
+      The scaling constants are fitted on the training span only. Fitting them
+      on the full series would leak the test range backwards into training and
+      quietly inflate skill. Splits are chronological, never shuffled.
+    </p>
+  </div>
+  <div class="card">
+    <h3>Size-matched baseline</h3>
+    <p class="muted" style="font-size:13.5px">
+      An echo-state network is given exactly as many nodes as the reservoir has
+      read-out features, so both models train the same number of weights. It is
+      scored on the identical rows. When it wins, the run page says it won.
+    </p>
+  </div>
+  <div class="card">
+    <h3>Measured coverage</h3>
+    <p class="muted" style="font-size:13.5px">
+      Uncertainty bands are split-conformal, calibrated on a slice the read-out
+      never saw. Realised coverage is then <em>measured</em> on the test split
+      and shown next to the nominal level, because a band that misses its target
+      is a broken forecast, not a tight one.
+    </p>
+  </div>
+</div>
+
+<h2>Reference lines you should look for</h2>
+<div class="card">
+  <table>
+    <thead><tr><th>Line</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">NRMSE = 1.0</td>
+          <td>The mean predictor. At or above this, the model has learned
+              nothing usable, whatever the other numbers say.</td></tr>
+      <tr><td class="mono">persistence</td>
+          <td>Repeat the last observation. On a smooth series this is a strong
+              forecaster, and beating the mean predictor while losing to
+              persistence means the model adds nothing operationally.</td></tr>
+      <tr><td class="mono">ESN, size-matched</td>
+          <td>The classical control at equal trained-parameter count. Parity
+              with it is the defensible claim; losing to it is the common and
+              expected outcome at these sizes.</td></tr>
+      <tr><td class="mono">rank(X)</td>
+          <td>Hard upper bound on memory capacity. An MC touching it reports the
+              size of the feature space, not the reservoir's dynamics.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>Provenance tiers</h2>
+<div class="card">
+  <table>
+    <thead><tr><th>Tier</th><th>What a result on it means</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge real">real record</span></td>
+          <td>Observed data from a public archive. Out-of-sample skill here is a
+              genuine result on a real record.</td></tr>
+      <tr><td><span class="badge surrogate">synthetic surrogate</span></td>
+          <td>Generated for this project. Exercises the pipeline; carries no
+              evidence about real-world performance.</td></tr>
+      <tr><td><span class="badge chaotic">simulated chaotic system</span></td>
+          <td>Numerically integrated system with a known Lyapunov exponent. A
+              controlled testbed, not an application result.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>Memory capacity is measured separately, and on purpose</h2>
+<div class="card">
+  <p>
+    The <a href="/diagnostics">diagnostics page</a> drives the reservoir with an
+    i.i.d. uniform stream rather than any dataset. Memory capacity is only
+    defined for an i.i.d. drive: given an autocorrelated series, a memoryless
+    read-out can infer past inputs from the present one, and the resulting
+    number measures the smoothness of the data rather than the memory of the
+    reservoir. Your real series have lag-1 autocorrelations around 0.95&ndash;0.99,
+    so feeding them to that metric would produce a large and meaningless value.
+  </p>
+</div>
+
+{% endblock %}

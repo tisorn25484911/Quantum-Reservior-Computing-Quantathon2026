@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% set nav = 'datasets' %}
+{% block title %}Datasets{% endblock %}
+{% block body %}
+<h1>Datasets</h1>
+<p class="lede">
+  Every series available to the app, with the provenance tier it belongs to.
+  The tier is not decoration: it decides what a result on that series is
+  allowed to claim.
+</p>
+
+<div class="row" style="margin-bottom:16px">
+  <a class="btn ghost" href="/datasets">All</a>
+  {% for key, label in tiers.items() %}
+    <a class="btn ghost" href="/datasets?tier={{ key }}">{{ label }}</a>
+  {% endfor %}
+</div>
+
+<div class="card">
+<table>
+  <thead>
+    <tr>
+      <th>Series</th><th>Tier</th><th class="num">Samples</th>
+      <th class="num">dt</th><th class="num">lag-1 &rho;</th><th class="num">Missing</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for d in datasets %}
+    <tr>
+      <td>
+        <a href="/datasets/{{ d.key }}">{{ d.name }}</a>
+        {% if d.error %}<span class="badge fail">unreadable</span>{% endif %}
+      </td>
+      <td><span class="badge {{ d.tier }}">{{ d.tier_label }}</span></td>
+      <td class="num">{{ d.n if d.n is defined else '--' }}</td>
+      <td class="num">{{ d.dt|num('.4g') if d.dt is defined else '--' }}</td>
+      <td class="num">{{ d.lag1_autocorr|num('.3f') if d.lag1_autocorr is defined else '--' }}</td>
+      <td class="num">{{ d.n_missing if d.n_missing is defined else '--' }}</td>
+      <td><a href="/forecast?dataset={{ d.key }}">forecast &rarr;</a></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <strong>Why lag-1 &rho; is shown.</strong> It is the fastest read on how much
+  of a series is trivially predictable. A record with &rho; &asymp; 0.99 is
+  smooth enough that persistence is already a strong forecaster, so beating the
+  mean predictor there proves very little &mdash; check the persistence column
+  on the run page instead.
+</div>
+{% endblock %}

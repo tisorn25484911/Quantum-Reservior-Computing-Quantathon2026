@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% set nav = 'datasets' %}
+{% block title %}{{ d.name }}{% endblock %}
+{% block body %}
+<div class="row">
+  <h1 style="margin:0">{{ d.name }}</h1>
+  <span class="badge {{ d.tier }}">{{ d.tier_label }}</span>
+</div>
+<p class="lede" style="margin-top:10px">{{ d.tier_note }}</p>
+
+<figure class="card">
+  <img src="/charts/series/{{ d.key }}.png" alt="{{ d.name }} time series">
+  <figcaption>Most recent samples. Sample spacing dt = {{ d.dt|num }} {{ d.time_unit }}.</figcaption>
+</figure>
+
+<div class="grid c4">
+  <div class="stat"><div class="label">Samples</div><div class="value">{{ d.n }}</div></div>
+  <div class="stat"><div class="label">Lag-1 autocorr</div>
+    <div class="value">{{ d.lag1_autocorr|num('.3f') }}</div>
+    <div class="sub">{% if d.lag1_autocorr > 0.9 %}very smooth{% elif d.lag1_autocorr > 0.5 %}correlated{% else %}weakly correlated{% endif %}</div></div>
+  <div class="stat"><div class="label">Missing</div><div class="value">{{ d.n_missing }}</div>
+    <div class="sub">interpolated on load</div></div>
+  <div class="stat"><div class="label">Mean &plusmn; sd</div>
+    <div class="value" style="font-size:19px">{{ d.mean|num('.4g') }}</div>
+    <div class="sub">&plusmn; {{ d.std|num('.4g') }} {{ d.unit }}</div></div>
+</div>
+
+{% if d.lag1_autocorr > 0.1 %}
+<div class="note warn">
+  <strong>Not valid as a memory-capacity drive.</strong> With lag-1
+  &rho; = {{ d.lag1_autocorr|num('.3f') }}, a memoryless read-out can infer past
+  inputs from the present one. Memory capacity is only defined for an i.i.d.
+  drive, so the <a href="/diagnostics">diagnostics page</a> measures it on
+  synthetic noise instead. This series is for <em>forecasting</em>.
+</div>
+{% endif %}
+
+<h2>Details</h2>
+<div class="card">
+  <table>
+    <tbody>
+      <tr><td>Key</td><td class="mono">{{ d.key }}</td></tr>
+      <tr><td>Tier</td><td>{{ d.tier_label }}</td></tr>
+      <tr><td>Sample spacing</td><td class="num">{{ d.dt|num }} {{ d.time_unit }}</td></tr>
+      <tr><td>Range</td><td class="num">{{ d.min|num('.4g') }} &hellip; {{ d.max|num('.4g') }} {{ d.unit }}</td></tr>
+      <tr><td>Ensemble realizations</td><td class="num">{{ d.n_realizations or '--' }}</td></tr>
+      <tr><td>Published &lambda;<sub>1</sub></td><td class="num">{{ d.lyap_true|num('.4g') }}</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<a class="btn" href="/forecast?dataset={{ d.key }}">Forecast this series</a>
+{% endblock %}

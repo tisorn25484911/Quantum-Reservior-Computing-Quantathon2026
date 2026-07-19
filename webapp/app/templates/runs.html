@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% set nav = 'runs' %}
+{% block title %}Runs{% endblock %}
+{% block body %}
+<h1>Runs</h1>
+<p class="lede">Every run this process has started. Finished runs are also
+  written to <span class="mono">webapp/results/</span> and survive a restart.</p>
+{% if jobs %}
+<div class="card">
+<table>
+  <thead><tr><th>Label</th><th>Kind</th><th>Status</th><th>Progress</th><th>Started</th></tr></thead>
+  <tbody>
+  {% for j in jobs %}
+    <tr>
+      <td><a href="/runs/{{ j.id }}">{{ j.label }}</a>
+          <span class="mono muted">{{ j.id }}</span></td>
+      <td class="muted">{{ j.kind }}</td>
+      <td>{% if j.status == 'done' %}<span class="badge ok">done</span>
+          {% elif j.status == 'error' %}<span class="badge fail">error</span>
+          {% else %}<span class="badge">{{ j.status }}</span>{% endif %}</td>
+      <td class="num">{{ (j.progress * 100)|round(0)|int }}%</td>
+      <td class="mono">{{ j.created_at }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<div class="card"><p class="muted">No runs yet. <a href="/forecast">Start one.</a></p></div>
+{% endif %}
+{% endblock %}

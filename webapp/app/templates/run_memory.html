@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% set nav = 'diagnostics' %}
+{% block title %}Memory capacity{% endblock %}
+{% block body %}
+<h1>Linear memory capacity</h1>
+<p class="lede">
+  A property of the reservoir itself: how many past inputs a linear read-out can
+  still recover. {{ r.config.n_qubits }}-qubit reservoir,
+  J&Delta;t = {{ r.config.dt }}, {{ r.config.virtual_nodes }} virtual nodes.
+</p>
+
+<div class="note">
+  <strong>Driven by {{ r.drive }}.</strong> Memory capacity is only defined for
+  an i.i.d. drive &mdash; an autocorrelated series would let a memoryless
+  read-out infer past inputs from the present one and inflate the number. This
+  measurement therefore does not depend on which dataset you picked.
+</div>
+
+<div class="grid c4">
+  <div class="stat"><div class="label">QRC memory capacity</div>
+    <div class="value">{{ r.qrc.mc|num('.2f') }}</div>
+    <div class="sub">bound rank(X) = {{ r.qrc.rank }}</div></div>
+  <div class="stat"><div class="label">ESN, size-matched</div>
+    <div class="value">{{ r.esn.mc|num('.2f') }}</div>
+    <div class="sub">{{ r.esn.n_features }} nodes</div></div>
+  <div class="stat"><div class="label">Effective rank</div>
+    <div class="value">{{ r.qrc.effective_rank|num('.2f') }}</div>
+    <div class="sub">of {{ r.qrc.n_features }} features</div></div>
+  <div class="stat"><div class="label">Noise floor</div>
+    <div class="value">{{ r.qrc.noise_floor|num('.4f') }}</div>
+    <div class="sub">surrogate, 99th pct</div></div>
+</div>
+
+<figure class="card" style="margin-top:18px">
+  <img src="/charts/memory/{{ job.id }}.png" alt="memory function against delay">
+  <figcaption>Memory function MF<sub>d</sub>. MC is the area above the shaded
+    noise floor; delays below it contribute nothing.</figcaption>
+</figure>
+
+{% if r.qrc.warnings %}
+<div class="note warn">
+  <strong>Caveats on the QRC measurement</strong>
+  <ul>{% for w in r.qrc.warnings %}<li>{{ w }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+<div class="note">
+  <strong>How to read the comparison.</strong> A higher MC is not automatically
+  better: memory and nonlinearity trade off, and a reservoir tuned for maximum
+  linear memory is usually worse at nonlinear tasks. Read this next to the
+  forecast results rather than on its own.
+</div>
+
+<p><a class="btn ghost" href="/diagnostics">Run another</a>
+   <a class="btn ghost" href="/api/runs/{{ job.id }}">Raw JSON</a></p>
+{% endblock %}
