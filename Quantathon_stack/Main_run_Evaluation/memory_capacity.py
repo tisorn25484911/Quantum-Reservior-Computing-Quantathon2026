@@ -48,6 +48,7 @@ __all__ = [
     "MemoryCapacityResult",
     "memory_function",
     "linear_memory_capacity",
+    "delayed_readout",
     "effective_rank",
     "delay_line_features",
     "leaky_integrator_features",
@@ -176,6 +177,54 @@ def memory_function(X: np.ndarray, u: np.ndarray, max_delay: int = 25,
         y = u[wash - d: len(u) - d]
         mf[i] = _fit_score(Xe, y, n_train, lam)
     return delays, mf
+
+
+def delayed_readout(X: np.ndarray, u: np.ndarray, delay: int,
+                    washout: int | None = None, train_frac: float = 0.7,
+                    lam: float = 1e-6, max_delay: int | None = None
+                    ) -> tuple[np.ndarray, np.ndarray, float]:
+    """The reconstruction behind a single ``MF_d``, for inspection or plotting.
+
+    Fits the same ridge read-out :func:`memory_function` uses at one delay and
+    returns what it actually produced, so the scalar ``MF_d`` can be traced
+    back to a reconstruction you can look at.
+
+    Parameters are as in :func:`memory_function`. ``max_delay`` only sets the
+    default washout, so pass the value used for the full sweep to keep the
+    evaluation window identical to the one behind the reported ``MF_d``.
+
+    Returns
+    -------
+    y_true, y_pred : ndarray
+        The delayed input and its linear reconstruction over the held-out
+        window (the whole post-washout window when ``train_frac >= 1``).
+    mf : float
+        The resulting ``MF_d``; matches the sweep for the same arguments.
+    """
+    X = np.asarray(X, dtype=float)
+    u = np.asarray(u, dtype=float).ravel()
+    d = int(delay)
+    d_ref = d if max_delay is None else int(max_delay)
+
+    if len(X) != len(u):
+        raise ValueError(
+            f"X has {len(X)} rows but u has {len(u)} steps; they must match.")
+    if d < 1:
+        raise ValueError("delay must be at least 1.")
+
+    wash = max(2 * d_ref, 100) if washout is None else int(washout)
+    wash = max(wash, d_ref, d)
+
+    Xe = X[wash:]
+    y = u[wash - d: len(u) - d]
+    n_train = len(Xe) if train_frac >= 1.0 else int(train_frac * len(Xe))
+    w = _ridge_weights(Xe[:n_train], y[:n_train], lam)
+
+    if n_train >= len(y):
+        y_true, y_pred = y, _ridge_predict(Xe, w)
+    else:
+        y_true, y_pred = y[n_train:], _ridge_predict(Xe[n_train:], w)
+    return y_true, y_pred, _squared_corr(y_true, y_pred)
 
 
 # ----------------------------------------------------------------------
@@ -511,6 +560,16 @@ def run_validation_suite() -> None:
         except ValueError:
             continue
         raise AssertionError(f"expected a ValueError for: {name}")
+
+    # 9. delayed_readout reproduces the sweep exactly at the same delay -- the
+    #    plotted reconstruction is the one behind the reported MF_d, not a
+    #    separate fit that happens to look similar.
+    d_grid, mf_sweep = memory_function(esn, u, max_delay=12)
+    for probe in (1, 5, 12):
+        _, _, mf_one = delayed_readout(esn, u, probe, max_delay=12)
+        assert abs(mf_one - mf_sweep[d_grid == probe][0]) < 1e-12, probe
+    y_true, y_pred, _ = delayed_readout(esn, u, 1, max_delay=12)
+    assert len(y_true) == len(y_pred)
 
     print("All memory-capacity validation anchors passed.")
 
