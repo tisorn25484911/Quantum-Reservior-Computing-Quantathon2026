@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(conda env *)",
+      "Read(//Users/tisornnaphattalung/miniconda3/**)",
+      "Bash(/opt/anaconda3/envs/qdrug/bin/python -m pip install qutip)",
+      "Bash(/opt/anaconda3/envs/qdrug/bin/python *)",
+      "Bash(echo \"EXIT: $?\")"
+    ]
+  }
+}
