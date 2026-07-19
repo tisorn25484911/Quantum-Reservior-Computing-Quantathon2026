@@ -9,7 +9,7 @@ principle.
 python analysis.py                       # every dataset present on disk
 python analysis.py --dataset nino34      # one
 python analysis.py --tier chaotic        # one tier
-python analysis.py --method rosenstein   # force single-trajectory
+python analysis.py --method rosenstein   # force single-trajectory (see caveats)
 python analysis.py --json out.json       # machine-readable numbers too
 python compare.py                        # cross-dataset figure + comparison.md
 ```
@@ -41,6 +41,17 @@ A secondary objective is calibration. The chaotic tier is the only data here
 with a *published* λ₁, so it doubles as the control that says how much to
 trust the same estimator applied to a real record. Without it, every λ₁ in
 this project would be an unfalsifiable fit.
+
+> **What the calibration returned.** It says the single-trajectory estimator
+> cannot do the job: measured against known λ₁ it misses by ~93%, and on data
+> with realistic observational noise it cannot see the exponential phase at
+> all. **No λ₁ is quoted for any observed record in this directory.** The
+> exponents that survive are the chaotic tier's, where realizations exist.
+> Section [What the calibration proved](#what-the-calibration-proved) is the
+> evidence; [Consequence for the QRC work](#consequence-for-the-qrc-work) is
+> what to do instead. An earlier revision of this document quoted λ₁ for all
+> ten observed records; those numbers were fits to curves with no scaling
+> region and have been withdrawn.
 
 ## What gets computed
 
@@ -97,8 +108,18 @@ merely adjacent in time.
 `estimate()` prefers the ensemble whenever realizations exist and labels which
 estimator produced the number.
 
-λ₁ is the slope of the divergence curve over its scaling region, located by
-**fraction of total rise** (10%–60% by default) rather than by fixed index.
+Before any of that, a **rise guard**: unless the divergence curve climbs at
+least `MIN_RISE_NATS = 3`, λ₁ is reported as *not measurable* rather than
+fitted. Fraction-of-rise windowing is only meaningful on a curve that rises;
+on a flat or oscillating one it lands on an arbitrary wiggle and returns its
+slope. A pure sine wave — not chaotic, λ₁ = 0 by construction — returned
+−0.291 before this check, with R² = 0.918. Neither goodness-of-fit nor the
+returned value can substitute for the test: a short arc of a sinusoid is very
+nearly straight, and the flat-curve cases returned everything from −2.2 to
++0.63. Only the rise distinguishes them.
+
+λ₁ is then the slope of the divergence curve over its scaling region, located
+by **fraction of total rise** (10%–60% by default) rather than by fixed index.
 The curve climbs from ln(ic_eps) to ln(attractor diameter); the bottom of that
 climb is contaminated by re-orientation onto the unstable manifold and the top
 by saturation, so the middle is the exponential stretch. A fixed index window
@@ -143,163 +164,259 @@ figures. The residual error is dominated by where the scaling region is placed,
 not by the divergence curve itself — that placement is the open problem in
 `lyapunov.py`.
 
+### What the calibration proved
+
+The chaotic tier exists to say how far the estimator can be trusted elsewhere.
+Run both estimators on it, where λ₁ is known:
+
+| system | truth | ensemble | err | rosenstein | err |
+|---|---|---|---|---|---|
+| `lorenz63` | 0.9056 | 0.8231 | −9% | 2.3130 | **+155%** |
+| `vallieselnino` | 0.5478 | 0.5200 | −5% | 1.3013 | **+138%** |
+| `lorenz84` | 0.4615 | 0.7499 | +63% | 0.7003 | +52% |
+| `hadley` | 0.2387 | 0.3759 | +58% | 0.1643 | −31% |
+| `rikitake` | 0.1318 | 0.1049 | −20% | 0.2494 | +89% |
+| | | **mean \|err\| 31%** | | **mean \|err\| 93%** | |
+
+Rosenstein was averaged over every member of each system; per-member scatter is
+only a few percent, so those wrong answers are *reproducible* wrong answers.
+Consistency is not accuracy. Under the rise guard, **8 of 44 members** produce
+a curve that rises 3+ nats — and all eight are Lorenz-84, where neither method
+is good.
+
+That is on clean, noise-free, unambiguously chaotic data with the answer known.
+
+### Why observed records cannot work: the noise floor
+
+Take `vallieselnino` — an ENSO oscillator, λ₁ = 0.5478 known — and degrade it
+to the Niño 3.4 record's conditions. If the method cannot recover a known
+answer under those conditions, it cannot produce one on real data either.
+
+**Length is not the obstacle.** With a clean ensemble:
+
+| N | ensemble λ₁ | err | rise |
+|---|---|---|---|
+| 2500 | 0.5200 | −5% | 16.5 |
+| 918 | 0.4886 | −11% | 14.4 |
+| 600 | 0.4774 | −13% | 11.4 |
+| 300 | 2.1400 | +291% | 6.8 |
+
+918 monthly samples is plenty.
+
+**Observational noise is the obstacle**, and the wall is sharp (N = 918):
+
+| noise (% of σ) | ensemble λ₁ | err | rise |
+|---|---|---|---|
+| 0% | 0.4886 | −11% | 14.4 |
+| 1% | 0.0301 | **−94%** | 3.4 |
+| 2% | -- | -- | 2.4 |
+| 5% | -- | -- | 1.8 |
+| 10% | -- | -- | 1.6 |
+
+The reason is structural. The exponential phase lives at separations between
+`ic_eps` and the attractor diameter. Noise puts a *floor* under separation —
+two trajectories can never appear closer than the noise amplitude — so at 1%
+of σ the bottom ~9 nats of the curve are buried, and that is exactly where λ₁
+was measurable. Adding a seasonal cycle removes what little remains.
+
+Real SST carries considerably more than 2% observational uncertainty. **This is
+an information limit, not a code or sampling limit**: no record length and no
+number of members recovers a signal that sits below the noise floor.
+
 ### Real tier
 
-Ten observed records, no realizations anywhere, so every row is Rosenstein and
-every row is an upper bound. Cross-dataset comparison: `python compare.py`,
-written up in [comparison.md](comparison.md).
+Ten observed records, no realizations anywhere. Every one is refused:
 
-![cross-dataset comparison](figures/comparison.png)
+| dataset | N | rise (nats) | λ₁ |
+|---|---|---|---|
+| `brest` sea level | 509 | 1.97 | -- |
+| `solar` GHI *(surrogate)* | 17,520 | 1.99 | -- |
+| `load` system load *(surrogate)* | 26,280 | 1.88 | -- |
+| `lax` LA Tmax | 29,935 | 1.80 | -- |
+| `opsd` German load | 50,401 | 1.62 | -- |
+| `nyc` NYC Tmax | 57,540 | 1.43 | -- |
+| `nino12` raw SST | 732 | 1.37 | -- |
+| `potomac` discharge | 35,203 | 1.29 | -- |
+| `cuxhaven` sea level | 2,058 | 1.19 | -- |
+| `nino34` anomaly | 918 | 1.12 | -- |
+| **white noise (control)** | 2,000 | **1.01** | -- |
+| `tao` 0N140W SST | 1,684 | 0.93 | -- |
+| `potomac15` discharge | 175,284 | 0.79 | -- |
+| **sine wave (control)** | 4,000 | **0.00** | -- |
 
-| dataset | λ₁ | T_λ | T_λ (days) | smp/T_λ | e-folds | dominant | T_λ/period |
-|---|---|---|---|---|---|---|---|
-| `nyc` NYC Tmax | 0.0626 /day | 16.0 day | 16.0 | 16 | 3603 | 364 day | 0.04 |
-| `lax` LA Tmax | 0.0847 /day | 11.8 day | 11.8 | 12 | 2536 | 365 day | 0.03 |
-| `tao` 0N140W SST | 0.0983 /day | 10.2 day | 10.2 | 10 | 166 | 421 day | 0.02 |
-| `potomac` discharge | 0.1829 /day | 5.47 day | 5.5 | **5** | 6439 | 367 day | 0.01 |
-| `potomac15` discharge | 0.1037 /h | 9.65 h | 0.40 | 39 | 4543 | 8760 h | 0.00 |
-| `opsd` German load | 0.0177 /h | 56.5 h | 2.35 | 56 | 892 | 24 h | 2.35 |
-| `nino34` anomaly | 0.1729 /yr | 5.78 yr | 2111 | 69 | 13 | 3.64 yr | 1.59 |
-| `nino12` raw SST | 0.6280 /yr | 1.59 yr | 582 | 19 | 38 | 1.00 yr | 1.59 |
-| `brest` sea level | 0.2915 /yr | 3.43 yr | 1252 | 41 | 12 | 1.01 yr | 3.40 |
-| `cuxhaven` sea level | **−2.2150 /yr** | ∞ | — | — | 0 | 1.00 yr | — |
+Sorted by rise, with the two controls inserted in place. **Every real and
+surrogate record sits in the white-noise band**, and two of them rise *less*
+than pure noise. The chaotic tier, for contrast, spans 10.4–16.5 with nothing
+between 2 and 10.
 
-Four things in that table are worth more than the exponents themselves.
+`nyc` has 57,540 clean daily samples — the best-conditioned record in the
+directory — and still rises only 1.43 nats. Record quality is not the issue.
 
-**The weather stations validate the method.** NYC Tmax gives T_λ = 16 days and
-LA 11.8 days, against a textbook atmospheric predictability limit of roughly
-two weeks. Neither number was tuned to land there. These are also the
-best-conditioned records in the whole directory — 57,540 and 29,935 daily
-samples, essentially no gaps — so the agreement is evidence that the pipeline
-is sound when the data is good, which is exactly what makes the failures below
-interpretable as data problems rather than code problems.
+> **Withdrawn.** An earlier revision read λ₁ = 0.0626 /day for `nyc`, i.e.
+> T_λ = 16 days, and argued that its agreement with the textbook ~2-week
+> atmospheric predictability limit *validated the pipeline*. It does not. That
+> number came from a curve rising 1.43 nats, and the estimator producing it
+> misses by ~93% where truth is known. The agreement was a coincidence, and
+> reading it as validation was the most misleading claim in this document.
+> Similar withdrawals: `opsd` vs `load` "real demand is 2.7× less chaotic",
+> the `potomac`/`potomac15` factor-of-14 disagreement, `cuxhaven`'s negative
+> exponent, and the `T_λ`/period "credibility" column. All were structure read
+> into noise-band curves.
 
-**`cuxhaven` returns a negative exponent, and that is a failure, not a
-finding.** A 171-year monthly record with a strong secular trend and a
-dominant annual line gives embedded neighbours that converge rather than
-diverge; the fit then reports λ₁ < 0 and T_λ = ∞. The honest reading is that
-the estimator does not apply to this series as loaded. Detrend and deseasonalise
-before believing anything about sea-level dynamics. `brest` avoids the same
-fate only because `longest_run` cropped it to 42 years, which drops most of the
-trend along with most of the record.
-
-**`potomac` daily is under-resolved.** Five samples per T_λ is below the ~10
-needed for a scaling region to exist, so 5.47 days is not supported by its own
-data. The 15-minute version of the same gauge has 39 samples per T_λ and gives
-T_λ = 9.65 h — a *different* answer for the same river, at 0.4 days versus 5.5.
-Sampling rate is setting the exponent here, the same failure documented for the
-surrogate load series. Prefer `potomac15`.
-
-**Real load is more predictable than the surrogate.** `opsd` gives T_λ = 56.5 h
-against 21.1 h for `load`, i.e. the synthetic series is over-chaotic by 2.7×.
-Both have a 24 h dominant line, so the surrogate's AR(1) residual is noisier
-than real demand. Anything tuned against the surrogate should be re-checked
-against `opsd` before it is believed.
-
-The `T_λ/period` column is the credibility check. Values near 1 mean the
-predictability horizon coincides with the dominant cycle, which is what
-phase-matching looks like: `nino12` sits at 1.59 with a 1.00 yr dominant line
-and is the clearest artefact in the set. The daily records sit at 0.01–0.04,
-comfortably decoupled from their annual cycle, which is a further reason to
-trust them.
-
-![real-tier spectra](figures/spectra_real.png)
+What survives from the real tier is everything that does not depend on λ₁:
+record length, sampling, gap structure, and the **spectra**, which are
+unaffected by any of this. See [comparison.md](comparison.md).
 
 #### ENSO, in detail
 
-| dataset | λ₁ (/yr) | T_λ (yr) | m, τ | record |
-|---|---|---|---|---|
-| Niño 3.4 anomaly | 0.1729 | 5.78 | 7, 8 | 918 mo, 13.2 e-foldings |
-| Niño 1+2 SST | 0.6280 | 1.59 | 4, 4 | 732 mo, 38.3 e-foldings |
+The spectral result stands and is the useful one:
 
-**The two must be read together.** Same phenomenon, λ₁ differing by 3.6×, and
-the spectra say why: Niño 1+2 is raw SST, so its seasonal cycle dominates at
-four times the amplitude of any other line, while Niño 3.4 is an anomaly with
-the cycle already removed. Rosenstein inflates exactly when a periodic
-component lets embedded neighbours phase-match. The Niño 1+2 number is that
-failure mode running live — 0.628 /yr is the annual cycle, not ENSO dynamics.
+| dataset | dominant periods (amplitude) |
+|---|---|
+| Niño 3.4 anomaly | 3.64 yr (0.483), 4.78 yr (0.420), 2.47 yr (0.396), 12.75 yr (0.322) |
+| Niño 1+2 raw SST | **1.00 yr (2.745)**, 3.59 yr (0.737), 5.08 yr (0.535), 2.18 yr (0.358) |
 
-Use Niño 3.4. And even 0.173 /yr is an upper bound: Rosenstein ran +75% to
-+1210% across the ground-truth systems, and no ensemble exists to correct it
-here. The defensible statement is **T_λ ≳ 6 yr, order a decade, one
-significant figure**.
+Power spread across 2.5–5 yr with no single dominant line is the canonical
+ENSO recurrence, and a broad band rather than a sharp line is the spectral
+signature of irregular rather than periodic behaviour. Niño 1+2 is raw SST, so
+its seasonal cycle dominates at four times any other line; Niño 3.4 is an
+anomaly with that cycle removed. **Use Niño 3.4.** The 12.75 yr peak is about
+six cycles into a 76-year record — under-resolved, do not quote it.
 
-What *is* solid is the band structure. Power spread across 2.5–5 yr with no
-single dominant line is the canonical ENSO recurrence and is the spectral
-signature of chaotic rather than periodic behaviour. The 12.75 yr peak is only
-about six cycles into a 76-year record — under-resolved, do not quote it.
+The timescale argument now rests on this band and on the Vallis ENSO
+oscillator's measured T_λ = 1.92 natural units, *not* on any measurement from
+the observed record.
 
 `tao` is the daily counterpart to those monthly indices, and the only real
-record here with sibling series (five moorings). It is not an initial-condition
-ensemble — the moorings are dynamically coupled along the equator — so it
-cannot drive the ensemble estimator. Its 25–39% missing rate forces
-`longest_run`, which leaves 1,684 of 16,919 days; a 46-year record collapses to
-a 4.6-year working span.
+record here with sibling series (five moorings). It is not an
+initial-condition ensemble — the moorings are dynamically coupled along the
+equator — so it cannot drive the ensemble estimator either.
 
 ### Surrogate tier
 
-Generated series, so λ₁ describes the generator, not any climate.
+Generated series, so any λ₁ would describe the generator, not a climate. Both
+are refused on the same grounds as the real tier (rise 1.99 and 1.88 nats).
 
-| dataset | λ₁ (/h) | T_λ (h) | dominant periods |
-|---|---|---|---|
-| Solar GHI | 0.0178 | 56.1 | 24, 12, 6 h |
-| System load | 0.0474 | 21.1 | 24 h, 8760 h, 168 h, 12 h |
+| dataset | dominant periods |
+|---|---|
+| Solar GHI | 24, 12, 6 h |
+| System load | 24 h, 8760 h, 168 h, 12 h |
 
-The spectra recover the injected structure exactly — diurnal and its
-harmonics for solar; diurnal, annual, and weekly for load — which is the
-end-to-end check that the FFT path is correctly normalised and correctly
-scaled in frequency.
+The spectra recover the injected structure exactly — diurnal and its harmonics
+for solar; diurnal, annual and weekly for load — which is the end-to-end check
+that the FFT path is correctly normalised and correctly scaled in frequency.
+
 
 ## Consequence for the QRC work
 
-For Niño 3.4, a 6–12 month forecast is **0.09–0.17 e-foldings**. That is far
-inside the predictability horizon, so skill shortfalls at that range are model
-problems and worth engineering against. Beyond roughly three years the dynamics
-start to dominate and no reservoir recovers what has been lost.
+The objective at the top asked whether a given forecast horizon is limited by
+the model or by the dynamics. For observed records **that question cannot be
+answered by measuring λ₁** — not with this data, not with a longer record, not
+with more members. The noise floor sits above the exponential phase.
 
-For the surrogate series, day-ahead forecasting is ~0.4 e-foldings (solar) and
-~1.1 (load) — the load task sits right at the boundary, which is where a memory
-argument for a reservoir is most likely to be doing real work. But `opsd` puts
-real German demand at T_λ = 56.5 h, so day-ahead on *real* load is only ~0.4
-e-foldings: comfortably inside the horizon, and an easier task than the
-surrogate implied. Re-tune against `opsd` rather than `load`.
+What to do instead, in the order I would do it:
 
-The daily weather stations are the most promising untried targets. Day-ahead
-Tmax is ~0.06 e-foldings and a two-week forecast is ~0.9 — a task that spans
-the interesting range end to end, on 57,540 clean samples with no gap handling
-required. Nothing else here offers that combination.
+**1. Measure skill decay directly.** Run the QRC and its baselines at leads of
+1, 3, 6, 12, 24 months and find where skill crosses persistence and
+climatology. That *is* the predictability horizon, operationally defined, and
+it needs no chaos theory. For a QRC result this is the more defensible number
+anyway: it is the thing a reader actually cares about.
+
+**2. Run a surrogate test, for the claim you can defend.** Generate IAAFT
+surrogates of Niño 3.4 (same spectrum, same distribution, phases randomised)
+and run the identical pipeline on data and surrogates. If the record's
+statistics sit inside the surrogate distribution, there is no evidence of
+deterministic structure beyond a linear stochastic process — and *that* is
+sayable rigorously, which "T_λ = 5.8 yr" never was.
+
+**3. If a λ₁ is genuinely needed, measure a model's.** An initial-condition
+large ensemble (CESM2-LENS2's 100 members, listed in `../Data/README.md`) is
+structurally the same input `lyapunov_ensemble` already takes — `(R, N)`
+instead of `(12, 4000)`. It works because raw model output has no
+observational noise and genuinely microscopic IC perturbations. Report it as
+*the model's* λ₁, carrying the ±31% from the calibration table. Do not apply
+this to observationally-noised fields (ERA5 EDA style); that hits the same
+wall documented above.
+
+**4. Forecast error-doubling time**, from a hindcast archive such as NMME.
+This measures growth from *realistic* initial error, which lives above the
+noise floor and is therefore measurable — and it is the quantity that actually
+bounds a forecast, rather than the asymptotic infinitesimal-error rate.
+
+What still stands without qualification: the **spectra**. The ENSO 2.5–5 yr
+band, solar's diurnal harmonics, load's diurnal/weekly/annual lines are all
+measured, reproducible, and independent of every Lyapunov caveat here. If a
+reservoir has to capture the target's frequency content, that is characterised.
+
 
 ## Caveats
 
-1. **Every λ₁ from a real record here is an upper bound**, roughly factor-of-2.
-   Single-trajectory Rosenstein is not a measurement. The output labels these
-   rows explicitly.
-2. **Ensemble λ₁ carries ~31% mean absolute error**, so quote one significant
-   figure.
-3. `dt` for the real and surrogate tiers is **declared, not sniffed**. Monthly
+1. **No λ₁ is quoted for any observed record**, and this is enforced in code,
+   not left to the reader. The rise guard returns *not measurable* whenever
+   the divergence curve climbs less than 3 nats. Every real and surrogate
+   series here is in that category.
+2. **A refusal is not a claim the system is non-chaotic.** It says one finite,
+   noisy, scalar record cannot support the measurement. ENSO may well be
+   chaotic; this data cannot show it.
+3. **Ensemble λ₁ carries ~31% mean absolute error**, so quote one significant
+   figure. "T_λ of order 2 natural units", never "1.92".
+4. **The error is dominated by window placement, not by the divergence curve.**
+   On one fixed Lorenz-63 curve, four hand-picked windows give 0.71, 0.82,
+   1.01 and 1.46 — a factor of two with no code change. That spread *is* the
+   uncertainty. See check 4 of `manual_check.py`.
+5. **Reproducibility is not accuracy.** Rosenstein's per-member scatter is a
+   few percent while its error against truth is ~93%; all members share the
+   same systematic flaw, so averaging them tightens a wrong answer.
+6. **Ground truth in the npz files is asserted, not measured.** `lyap=0.9056`
+   is hardcoded in `fetch_data.py` as "the standard published value". It is
+   correct — Benettin tangent-space integration at the generator's own step
+   size gives 0.9080, +0.3% — but nothing in the pipeline was checking, and
+   the four dysts systems have *not* been verified this way. Lorenz-84 and
+   Hadley sit at +58–63% ensemble error; whether that is the estimator or
+   stale metadata is still open.
+7. `dt` for the real and surrogate tiers is **declared, not sniffed**. Monthly
    data on a calendar has unequal spacing in days, and differencing timestamps
    to recover `dt` would inject a spurious 12-month modulation into the
    spectrum.
-4. Rosenstein truncates at `max_n=5000` samples — the neighbour search is a
-   full O(N²) distance matrix, and the hourly records would otherwise need tens
-   of GB. Truncation rather than decimation, because decimating changes `dt`
-   and therefore the exponent's units.
-5. Interior NaN gaps (the injected sensor outages in the solar series) are
+8. Rosenstein truncates at `max_n=5000` samples — the neighbour search is a
+   full O(N²) distance matrix, and the hourly records would otherwise need
+   tens of GB. Truncation rather than decimation, because decimating changes
+   `dt` and therefore the exponent's units.
+9. Interior NaN gaps (the injected sensor outages in the solar series) are
    linearly interpolated. Leaving them would poison both the FFT and the
-   divergence curve. Where the outages are too long for that to be honest --
-   TAO's multi-year holes, Brest's 120-month gap -- the loader instead crops to
+   divergence curve. Where the outages are too long for that to be honest —
+   TAO's multi-year holes, Brest's 120-month gap — the loader instead crops to
    the longest gapless run (`longest_run=True`) and the shortened span is
    reported. Cropping loses record; interpolating invents it.
-6. **A negative λ₁ means the estimator failed, not that the system is
-   non-chaotic.** `cuxhaven` returns −2.2 /yr because a strong trend plus a
-   dominant annual line makes embedded neighbours converge. Detrend and
-   deseasonalise first.
-7. **Check `samples/T_λ` before quoting any exponent.** `potomac` daily sits at
-   5, and its own 15-minute record disagrees with it by a factor of 14. Below
-   ~10 samples per e-folding there is no scaling region to fit.
-8. Discharge is analysed as log10(Q): it spans three orders of magnitude, so a
-   few flood peaks would otherwise set the scale for both the spectrum and the
-   neighbour search.
+10. Discharge is analysed as log10(Q): it spans three orders of magnitude, so a
+    few flood peaks would otherwise set the scale for both the spectrum and
+    the neighbour search.
+
+## Verification
+
+The estimator is checked against answers known independently of it, not
+against another implementation of the same method.
+
+```bash
+python test_lyapunov.py    # 14 anchors, ~2 s
+python manual_check.py     # the same checks, printed step by step
+```
+
+| what | result |
+|---|---|
+| pure exponential, 3 values (isolates the fitter) | exact, 0.0% |
+| tent map, λ = ln 2 analytically | exact, 1e-6 |
+| logistic map, 40 seeds | −1.2%, sd 6% |
+| derivative formula ⟨ln\|f′(x)\|⟩, independent route | 0.693157 vs ln 2 |
+| Benettin tangent-space vs published Lorenz | −0.2% |
+| **sine wave** | correctly refused |
+| **white noise** | correctly refused |
+
+The two null tests are the ones that matter: every positive test above passed
+while the estimator was still returning −0.291 for a sine wave. `test_lyapunov.py`
+also pins each chaotic system's known error to ±2%, so a refactor that moves
+them announces itself.
+
 
 ## Files
 
@@ -311,6 +428,9 @@ required. Nothing else here offers that combination.
 | `visualizer.py` | the four panels and the 2×2 composite figure |
 | `analysis.py` | CLI: run the whole pass, print the table, write the PNGs |
 | `compare.py` | cross-dataset comparison figure + `comparison.md` |
+| `provenance.py` | per-dataset source, observable, known traps |
+| `test_lyapunov.py` | 14 anchors: analytic truths, independent routes, null tests |
+| `manual_check.py` | the same checks printed step by step, to verify by hand |
 
 Dependencies: numpy, scipy, pandas, matplotlib. See `../Data/README.md` for how
 the datasets themselves are built.

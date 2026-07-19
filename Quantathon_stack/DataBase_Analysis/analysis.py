@@ -51,14 +51,19 @@ MAX_UNITS = {"lorenz63": 20.0, "vallieselnino": 20.0, "lorenz84": 20.0,
              "hadley": 20.0, "rikitake": 20.0}
 
 
-def analyse_one(series, method="auto", peaks=5, save=True, show=False):
-    """Full pass over one Series. Returns a dict of the reported numbers."""
+def analyse_one(series, method="auto", peaks=5, save=True, show=False, **kw):
+    """Full pass over one Series. Returns a dict of the reported numbers.
+
+    Extra keywords go through to the Lyapunov estimator (`max_n`, `horizon`,
+    `m`, `tau`, `theiler` for Rosenstein), so a caller can trade the O(N^2)
+    neighbour search against record length.
+    """
     spec = fourier.spectrum(series)
     # drop the lowest few bins before peak-picking: on a short record the
     # residual near-DC leakage outranks every real line.
     fmin = 2.0 / (len(series.x) * series.dt)
     top = fourier.dominant_periods(spec.f, spec.amp, k=peaks, fmin=fmin)
-    est = lyap.estimate(series, method=method)
+    est = lyap.estimate(series, method=method, **kw)
 
     path = viz.figure(series, spec, est, peaks=top,
                       fmax=FMAX.get(series.key),
@@ -74,7 +79,9 @@ def analyse_one(series, method="auto", peaks=5, save=True, show=False):
         "lyap": float(est.lyap), "lyap_time": float(est.lyap_time),
         "lyap_method": est.method, "lyap_truth": est.truth,
         "lyap_error": est.error, "embedding": est.embedding,
-        "e_foldings_in_record": float(span * est.lyap) if est.lyap > 0 else 0.0,
+        "e_foldings_in_record": float(span * est.lyap)
+                                if np.isfinite(est.lyap) and est.lyap > 0
+                                else 0.0,
         "dominant_periods": top,
         "figure": str(path) if path else None,
         "_est": est,
@@ -87,7 +94,8 @@ def _report(r):
     print(f"  N = {r['n']}   dt = {r['dt']:.4g} {u}   span = {r['span']:.4g} {u}"
           + (f"   R = {r['n_realizations']}" if r["n_realizations"] else ""))
     print("  " + r["_est"].summary().replace("\n", "\n  "))
-    print(f"  record length = {r['e_foldings_in_record']:.1f} e-foldings")
+    if r["e_foldings_in_record"]:
+        print(f"  record length = {r['e_foldings_in_record']:.1f} e-foldings")
     if r["dominant_periods"]:
         print("  dominant periods:")
         for p in r["dominant_periods"]:
@@ -105,13 +113,17 @@ def _table(rows):
     print("-" * 78)
     for r in rows:
         err = "" if r["lyap_error"] is None else f"{r['lyap_error']:+.1%}"
-        print(f"{r['key']:16s} {r['tier']:10s} {r['lyap']:10.4f} "
-              f"{r['lyap_time']:9.3g} {u(r):<2s} {r['lyap_method']:>11s} {err:>8s}")
+        if not np.isfinite(r["lyap"]):
+            lam, tl = "        --", f"{'--':>9s}"
+        else:
+            lam, tl = f"{r['lyap']:10.4f}", f"{r['lyap_time']:9.3g}"
+        print(f"{r['key']:16s} {r['tier']:10s} {lam} "
+              f"{tl} {u(r):<2s} {r['lyap_method']:>11s} {err:>8s}")
     print("=" * 78)
     if any(r["lyap_method"] == "rosenstein" for r in rows):
-        print("rosenstein rows are single-trajectory: upper bounds, not "
-              "measurements.\nsee Data/README.md for the ground-truth "
-              "comparison that calibrates them.")
+        print("rosenstein rows are single-trajectory: ~93% mean error where "
+              "truth is known,\nwith inconsistent sign. see Data/README.md "
+              "for the ground-truth comparison.")
 
 
 def main(argv=None):

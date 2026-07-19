@@ -195,43 +195,61 @@ df = load("nino34_anom.csv")
 ## Why the chaotic tier exists
 
 A Lyapunov exponent estimated from a single finite record is a *fit*, and fits
-need a control. This tier is the control. Measured against ground truth with
-`viz_dynamics.lyapunov_ensemble()` + `fit_growth_window()`:
+need a control. This tier is the control — the only data here where λ₁ is
+known in advance. Measured with `DataBase_Analysis/lyapunov.py`:
 
-| system | truth | ensemble | error | Rosenstein, single trajectory |
-|---|---|---|---|---|
-| Lorenz-63 | 0.9056 | 0.823 | −9% | 2.000 (+121%) |
-| Vallis–El Niño | 0.5478 | 0.520 | −5% | 0.957 (+75%) |
-| RikitakeDynamo | 0.1318 | 0.105 | −20% | 0.338 (+157%) |
-| Hadley | 0.2387 | 0.376 | +58% | 3.127 (+1210%) |
-| Lorenz84 | 0.4615 | 0.750 | +63% | 0.464 (+1%) |
+| system | truth | ensemble | error | Rosenstein (mean over members) | error |
+|---|---|---|---|---|---|
+| Lorenz-63 | 0.9056 | 0.8231 | −9% | 2.3130 | +155% |
+| Vallis–El Niño | 0.5478 | 0.5200 | −5% | 1.3013 | +138% |
+| Lorenz84 | 0.4615 | 0.7499 | +63% | 0.7003 | +52% |
+| Hadley | 0.2387 | 0.3759 | +58% | 0.1643 | −31% |
+| RikitakeDynamo | 0.1318 | 0.1049 | −20% | 0.2494 | +89% |
+| | | **mean 31%** | | | **mean 93%** |
 
-**Read this table before trusting any λ₁ in this project.** Two honest
-conclusions, and they are not the same conclusion:
+**Read this table before trusting any λ₁ in this project.** Three conclusions,
+and they are not the same conclusion:
 
-1. **Rosenstein on a single trajectory is unusable as a measurement.** It runs
-   +75% to +1210% across four of five systems. It substitutes spatial
-   neighbours *within one trajectory* for genuinely independent perturbations,
-   so it inherits every delay-embedding artefact and inflates badly whenever a
-   periodic component lets neighbours phase-match. Its one good result
-   (Lorenz84, +1%) is not reproducible skill — the same settings are +1210% on
-   Hadley.
-2. **The ensemble estimator is much better but is still not a precision
-   instrument.** Errors run −20% to +63%, mean absolute error ≈ 31%. It is the
-   right tool when realizations exist, and it beats Rosenstein on 4 of 5
-   systems, but a result like "T_λ = 7.9 yr" should be read as "order 10 years",
-   never as three significant figures.
+1. **Rosenstein on a single trajectory is unusable as a measurement.** Mean
+   absolute error 93%, and the sign is not even consistent — four systems
+   overshoot, one undershoots. It substitutes spatial neighbours *within one
+   trajectory* for genuinely independent perturbations, so it inherits every
+   delay-embedding artefact. Its per-member scatter is only a few percent,
+   which means the wrong answers are *reproducible* wrong answers: consistency
+   across members is not evidence of accuracy.
 
-The residual error is dominated by where the scaling region is placed, not by
-the divergence curve itself. `fit_growth_window()` locates it by fraction of
-total rise, which adapts across systems far better than a fixed index window
-(that variant was +92% on Hadley) but still misjudges systems whose transient
-and exponential phases overlap. Improving this is the open problem in
-`DataBase_Analysis/lyapunov.py`.
+2. **The ensemble estimator is much better but is not a precision
+   instrument.** Errors run −20% to +63%, mean 31%. Right tool when
+   realizations exist, but "T_λ = 1.92" should be read as "order 2", never as
+   three significant figures. The error is dominated by where the scaling
+   region is placed, not by the divergence curve: on one fixed Lorenz-63 curve,
+   four hand-picked windows give 0.71, 0.82, 1.01 and 1.46.
 
-Practical consequence for the climate series: every single-trajectory λ₁ quoted
-elsewhere in this project — ENSO, solar, load — is an upper bound with roughly
-factor-of-2 uncertainty attached, not a measurement.
+3. **Neither works on an observed record, and the reason is noise, not
+   length.** Degrading Vallis–El Niño to Niño 3.4's conditions: at 918 samples
+   with a clean ensemble the estimator still returns −11%, but adding **1%**
+   observational noise takes it to −94%, and **2%** makes it unmeasurable. The
+   exponential phase lives at separations between `ic_eps` and the attractor
+   diameter; noise puts a floor under separation and buries it. Real SST has
+   considerably more than 2% observational uncertainty. This is an information
+   limit — no record length and no number of members recovers it.
+
+Consequently **no λ₁ is quoted for any observed record in this project**. The
+estimator enforces this itself: a `MIN_RISE_NATS = 3` guard reports *not
+measurable* unless the divergence curve actually climbs. Chaotic tier: 10.4 to
+16.5 nats. White noise: 1.0. Every observed record here: 0.8 to 2.0.
+
+The `lyap` and `ic_eps` values stored in these `.npz` files are **asserted, not
+measured** — written in by `fetch_data.py` from published values. Lorenz-63's
+0.9056 has been verified independently (Benettin tangent-space integration at
+the generator's own step size gives 0.9080, +0.3%, and the stored `ic_eps`
+matches the data's actual initial separation). **The four dysts systems have
+not been verified this way.** Lorenz84 and Hadley carry the two largest
+ensemble errors, and whether that is the estimator or stale metadata is open.
+
+See `DataBase_Analysis/analysis.md` for the full evidence and for what to
+measure instead; `test_lyapunov.py` for the anchors that keep it honest.
+
 
 ## Not vendored (too large — fetch directly)
 

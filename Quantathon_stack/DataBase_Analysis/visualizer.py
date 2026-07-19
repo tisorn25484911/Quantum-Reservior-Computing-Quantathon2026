@@ -102,6 +102,12 @@ def plot_divergence(est, ax=None):
                 color=PALETTE["fit"],
                 label=f"fit: $\\lambda_1$={est.lyap:.4f}")
         ax.axvspan(est.t[lo], est.t[hi], color=PALETTE["fit"], alpha=0.10)
+    else:
+        # No fit. Say so on the figure rather than showing a bare curve that
+        # looks like a fit was simply omitted.
+        ax.text(0.5, 0.90, "no fit",
+                ha="center", va="top", transform=ax.transAxes, fontsize=8,
+                bbox=dict(boxstyle="round", fc="#fff3cd", ec="#d9a400", lw=0.6))
     ax.set_xlabel(f"time [{est.time_unit or 'sample'}]")
     ax.set_ylabel("ln separation")
     ax.set_title(f"(c) divergence -- {est.method}")
@@ -118,8 +124,9 @@ def plot_lyapunov_time(series, est, ax=None, max_units=None):
     """
     ax = ax or plt.gca()
     if not np.isfinite(est.lyap) or est.lyap <= 0:
-        ax.text(0.5, 0.5, "no positive $\\lambda_1$\n(no predictability horizon)",
-                ha="center", va="center", transform=ax.transAxes)
+        msg = "no positive $\\lambda_1$\n(no predictability horizon)"
+        ax.text(0.5, 0.5, msg, ha="center", va="center",
+                transform=ax.transAxes)
         ax.set_title("(d) Lyapunov time")
         return ax
     tl = est.lyap * series.t

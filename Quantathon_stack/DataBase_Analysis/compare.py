@@ -73,7 +73,7 @@ def collect(tier=None, method="auto", peaks=5):
         r["tlyap_over_period"] = (
             tl / top[0]["period"] if top and np.isfinite(tl) and top[0]["period"]
             else None)
-        r["positive"] = lam > 0
+        r["positive"] = np.isfinite(lam) and lam > 0
         rows.append(r)
     return rows
 
@@ -106,29 +106,31 @@ def figure(rows, outdir=FIGDIR, dpi=140):
     """Four dimensionless-or-normalised comparisons on one sheet."""
     fig, axes = plt.subplots(2, 2, figsize=(13, 8))
 
-    _bar(axes[0, 0], rows, [r["t_lyap_days"] for r in rows],
-         "(a) predictability horizon, common clock",
-         "$T_\\lambda$ (days)  --  chaotic tier omitted, no physical clock")
+    _bar(axes[0, 0], rows, [r["e_foldings_in_record"] for r in rows],
+         "(a) how many e-foldings does the record hold?",
+         "e-foldings in record  --  below 10 there is little to average over",
+         ref=10, ref_label="10 = marginal")
 
     _bar(axes[0, 1], rows, [r["samples_per_tlyap"] for r in rows],
          "(b) resolution: samples per $T_\\lambda$",
-         "samples per e-folding", ref=10, ref_label="10 = marginal")
+         "samples per e-folding  --  blank where $\\lambda_1$ is unmeasurable",
+         ref=10, ref_label="10 = marginal")
 
     _bar(axes[1, 0], rows, [r["e_foldings_in_record"] for r in rows],
          "(c) statistics: record length in e-foldings",
-         "$\\lambda_1 \\times$ span", ref=10, ref_label="10 = marginal")
+         "$\\lambda_1 \\times$ span  --  blank where $\\lambda_1$ is unmeasurable",
+         ref=10, ref_label="10 = marginal")
 
-    _bar(axes[1, 1], rows, [r["tlyap_over_period"] for r in rows],
-         "(d) credibility: $T_\\lambda$ / dominant period",
-         "ratio  --  near 1 means the exponent may be tracking the cycle",
-         ref=1.0, ref_label="1 = suspect")
+    _bar(axes[1, 1], rows, [r.get("t_lyap_days") or None for r in rows],
+         "(d) predictability horizon, common clock",
+         "$T_\\lambda$ (days)  --  chaotic tier has no physical clock",
+         logx=True)
 
     handles = [plt.Line2D([], [], color=c, lw=6, label=t)
                for t, c in TIER_COLOR.items()]
     fig.legend(handles=handles, loc="lower center", ncol=3, frameon=False,
                fontsize=9, bbox_to_anchor=(0.5, -0.01))
-    fig.suptitle("Cross-dataset comparison  --  "
-                 "panels (b)-(d) are dimensionless", fontsize=12)
+    fig.suptitle("Cross-dataset comparison", fontsize=12)
     fig.tight_layout(rect=(0, 0.03, 1, 0.96))
 
     outdir = Path(outdir)
@@ -198,22 +200,29 @@ def markdown(rows, figs):
         if f:
             out += [f"![{Path(f).stem}](figures/{Path(f).name})", ""]
 
+    out += [
+        "> **Single-trajectory rows are Rosenstein estimates.** Only the "
+        "chaotic tier carries independent realizations, so every other row "
+        "substitutes spatial nearest neighbours for those. Read the "
+        "`method` column before quoting any number. See "
+        "[analysis.md](analysis.md).", ""]
+
     out += ["## All datasets", "",
             "| dataset | tier | N | dt | span | λ₁ | T_λ | T_λ (days) | "
-            "samples/T_λ | e-foldings | dominant period | T_λ/period | method |",
-            "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+            "samples/T_λ | e-foldings | dominant period | method |",
+            "|---|---|---|---|---|---|---|---|---|---|---|---|"]
 
     for r in sorted(rows, key=lambda r: (r["tier"], r["key"])):
         u = r["time_unit"] or "smp"
+        lam = f"{r['lyap']:+.4f} /{u}" if np.isfinite(r["lyap"]) else "**--**"
         out.append(
             f"| `{r['key']}` | {r['tier']} | {r['n']:,} | "
             f"{_fmt(r['dt'], '.4g')} {u} | {_fmt(r['span'], '.4g')} {u} | "
-            f"{r['lyap']:+.4f} /{u} | {_fmt(r['lyap_time'])} {u} | "
+            f"{lam} | {_fmt(r['lyap_time'])} {u} | "
             f"{_fmt(r.get('t_lyap_days'))} | "
             f"{_fmt(r.get('samples_per_tlyap'), '.0f')} | "
-            f"{_fmt(r['e_foldings_in_record'], '.0f')} | "
-            f"{_fmt(r.get('dominant_period'))} {u} | "
-            f"{_fmt(r.get('tlyap_over_period'), '.2f')} | {r['lyap_method']} |")
+            f"{_fmt(r['e_foldings_in_record'] or None, '.0f')} | "
+            f"{_fmt(r.get('dominant_period'))} {u} | {r['lyap_method']} |")
 
     out += ["", "## How to read this", "",
             "- **λ₁, T_λ** are in each dataset's own time unit; **T_λ (days)** "
@@ -224,12 +233,10 @@ def markdown(rows, figs):
             "- **e-foldings** is a statistics check: how many times the record "
             "could have lost its initial condition. Below ~10 there is little "
             "to average over.",
-            "- **T_λ/period** near 1 is the warning sign. It means the "
-            "predictability horizon coincides with the dominant cycle, which "
-            "is what a phase-matching artefact looks like.",
-            "- **method**: `rosenstein` rows are single-trajectory upper "
-            "bounds, roughly factor-2. Only `ensemble` rows are measurements, "
-            "and those carry ~31% mean absolute error. See analysis.md.", ""]
+            "- **method**: only `ensemble` rows can be measurements, and those "
+            "carry ~31% mean absolute error. `rosenstein` misses by ~93% even "
+            "on ground truth, so no `rosenstein` row is quoted as a value.",
+            ""]
 
     out += _catalogue(rows)
     return "\n".join(out)
@@ -262,8 +269,9 @@ def _catalogue(rows):
                 f"- **Observable**: {doc.observable}",
                 f"- **Measured**: N = {r['n']:,}, Δt = {_fmt(r['dt'], '.4g')} "
                 f"{u}, span = {_fmt(r['span'], '.4g')} {u}, "
-                f"λ₁ = {r['lyap']:+.4f} /{u}, T_λ = {_fmt(r['lyap_time'])} {u} "
-                f"({r['lyap_method']})",
+                + (f"λ₁ = {r['lyap']:+.4f} /{u}, "
+                   f"T_λ = {_fmt(r['lyap_time'])} {u} ({r['lyap_method']})"
+                   if np.isfinite(r["lyap"]) else "λ₁ = no fit"),
                 "",
                 doc.meaning, "",
             ]
