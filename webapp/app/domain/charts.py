@@ -155,68 +155,6 @@ def memory_png(result: dict) -> bytes:
     return _png(fig)
 
 
-def chaos_png(a: dict) -> bytes:
-    """Divergence curve with the fitted window, plus the amplitude spectrum.
-
-    Drawing the fit *over the window actually used* keeps the dominant error
-    source visible: lambda_1 is a slope read off a hand-chosen region, and a
-    badly placed window is obvious here while being invisible in the single
-    number it produces.
-    """
-    fig, axes = plt.subplots(1, 2, figsize=(10.5, 3.6))
-
-    ax = axes[0]
-    t = np.asarray(a["t"], float)
-    curve = np.asarray(a["curve"], float)
-    ax.plot(t, curve, lw=1.2, color=QRC, zorder=3, label="ln separation")
-    lo, hi = a["window"]
-    if hi > lo and np.isfinite(a["lambda1"]):
-        tt = t[lo:hi + 1]
-        ax.plot(tt, curve[lo] + a["lambda1"] * (tt - tt[0]), lw=1.9, ls="--",
-                color=ESN, zorder=4,
-                label=f"fit: $\\lambda_1$ = {a['lambda1']:.4g}")
-        ax.axvspan(t[lo], t[hi], color=ESN, alpha=0.10, zorder=1)
-    unit = a["dataset"]["time_unit"]
-    ax.set_xlabel(f"time [{unit}]")
-    ax.set_ylabel("ln separation")
-    ax.set_title(f"divergence -- {a['method']}")
-    ax.legend(fontsize=7.5, loc="lower right")
-    _grid(ax)
-
-    ax = axes[1]
-    f = np.asarray(a["spectrum_f"], float)
-    amp = np.asarray(a["spectrum_amp"], float)
-    ax.plot(f, amp, lw=0.7, color=ESN, zorder=3)
-
-    # Crop to where the signal actually is. On a fast record almost all the
-    # amplitude sits in the first percent of the band, and an uncropped axis
-    # shows a spike at the origin and nothing else.
-    fmax = f.max() if len(f) else 1.0
-    if len(f) > 1 and amp.sum() > 0:
-        cum = np.cumsum(amp) / amp.sum()
-        i99 = int(np.searchsorted(cum, 0.99))
-        fmax = float(f[min(i99, len(f) - 1)]) * 1.5 or fmax
-    ax.set_xlim(0, fmax)
-
-    # Mark the dominant periods but do not label them in-chart: they cluster at
-    # low frequency and the text overprints. The page carries an exact table.
-    shown = [p for p in a["dominant_periods"][:3] if p["f"] <= fmax]
-    for p in shown:
-        ax.axvline(p["f"], color="k", lw=0.6, ls=":", alpha=0.55, zorder=2)
-    if shown:
-        ax.plot([], [], color="k", lw=0.6, ls=":", alpha=0.55,
-                label="dominant periods")
-        ax.legend(fontsize=7.5, loc="upper right")
-    ax.set_ylim(bottom=0)
-    ax.set_xlabel(f"frequency [cycles/{unit}]")
-    ax.set_ylabel("amplitude")
-    ax.set_title("amplitude spectrum")
-    _grid(ax)
-
-    fig.tight_layout()
-    return _png(fig)
-
-
 def anomaly_skill_png(r: dict) -> bytes:
     """Rollout skill decay against the two floors, with the ceiling marked."""
     hs = r["horizons"]

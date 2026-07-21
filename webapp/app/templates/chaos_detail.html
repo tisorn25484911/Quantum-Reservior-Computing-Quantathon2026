@@ -29,7 +29,7 @@
   </div>
   <div class="stat">
     <div class="label">Record length</div>
-    <div class="value">{{ a.record_length_in_T_lambda|num('.1f') }}</div>
+    <div class="value">{{ a.e_foldings_in_record|num('.1f') }}</div>
     <div class="sub">Lyapunov times</div>
   </div>
 </div>
@@ -49,14 +49,36 @@
 </div>
 
 <figure class="card">
-  <img src="/charts/chaos/{{ a.key }}.png" alt="divergence curve and spectrum">
+  <img src="/charts/chaos/{{ a.key }}.png" alt="four-panel analysis figure">
   <figcaption>
-    Left: mean log separation of nearby trajectories; the dashed line is the
-    slope fit, drawn over the window actually used, so a badly placed window is
-    visible rather than hidden inside the number. Right: amplitude spectrum with
-    the dominant periods marked.
+    The canonical four-panel figure from
+    <span class="mono">DataBase_Analysis/visualizer.py</span> &mdash; the same
+    one <span class="mono">python analysis.py --dataset {{ a.key }}</span>
+    writes. (a) the series; (b) its amplitude spectrum; (c) the divergence curve
+    with the fitted window shaded, so a badly placed window is visible rather
+    than hidden inside the number; (d) the series against Lyapunov time, where
+    one unit is one e-folding of initial error.
   </figcaption>
 </figure>
+
+{% if a.provenance %}
+<h2>Provenance</h2>
+<div class="card">
+  <table>
+    <tbody>
+      <tr><td style="width:24%">Source</td><td>{{ a.provenance.source }}</td></tr>
+      <tr><td>Observable</td><td>{{ a.provenance.observable }}</td></tr>
+      <tr><td>Meaning</td><td>{{ a.provenance.meaning }}</td></tr>
+    </tbody>
+  </table>
+</div>
+{% if a.provenance.watch_out %}
+<div class="note warn">
+  <strong>Watch out &mdash; documented gotchas for this record</strong>
+  <ul>{% for w in a.provenance.watch_out %}<li>{{ w }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+{% endif %}
 
 <h2>Dominant periods</h2>
 <div class="card">
@@ -74,7 +96,8 @@
 </div>
 {% if a.embedding %}
 <p class="muted">Embedding: m = {{ a.embedding.m }}, &tau; = {{ a.embedding.tau }}
-  (false-nearest-neighbours and first mutual-information minimum).</p>
+  (false-nearest-neighbours and first mutual-information minimum).
+  Record spans {{ a.e_foldings_in_record|num('.1f') }} e-foldings.</p>
 {% endif %}
 
 <p><a class="btn ghost" href="/anomaly?dataset={{ a.key }}">Forecast this series &rarr;</a>

@@ -49,5 +49,23 @@
   </table>
 </div>
 
+{% if prov %}
+<h2>Provenance</h2>
+<div class="card">
+  <table><tbody>
+    <tr><td style="width:24%">Source</td><td>{{ prov.source }}</td></tr>
+    <tr><td>Observable</td><td>{{ prov.observable }}</td></tr>
+    <tr><td>Meaning</td><td>{{ prov.meaning }}</td></tr>
+  </tbody></table>
+</div>
+{% if prov.watch_out %}
+<div class="note warn">
+  <strong>Watch out</strong>
+  <ul>{% for w in prov.watch_out %}<li>{{ w }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+{% endif %}
+
 <a class="btn" href="/forecast?dataset={{ d.key }}">Forecast this series</a>
+<a class="btn ghost" href="/chaos/{{ d.key }}">Predictability analysis</a>
 {% endblock %}

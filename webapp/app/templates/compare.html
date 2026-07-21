@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% set nav = 'compare' %}
+{% block title %}Cross-dataset comparison{% endblock %}
+{% block body %}
+<h1>Cross-dataset comparison</h1>
+<p class="lede">
+  Runs <span class="mono">DataBase_Analysis/compare.py</span> over every dataset:
+  a full Lyapunov and spectral pass, then the comparison columns that put the
+  tiers on a common footing &mdash; Lyapunov time in days, samples per Lyapunov
+  time, and T&lambda; against the dominant period.
+</p>
+
+<div class="note">
+  <strong>This is the existing analysis, not a re-implementation.</strong> The
+  numbers and figures are produced by the same
+  <span class="mono">compare.collect()</span> /
+  <span class="mono">compare.figure()</span> the CLI uses, so this page and
+  <span class="mono">python compare.py</span> agree by construction.
+</div>
+
+<form class="card" method="post" action="/compare">
+  <div class="grid c3">
+    <div class="field">
+      <label for="tier">Tier</label>
+      <select id="tier" name="tier">
+        <option value="">all tiers</option>
+        <option value="chaotic">chaotic (has published &lambda;&#8321;)</option>
+        <option value="real">real</option>
+        <option value="surrogate">surrogate</option>
+      </select>
+    </div>
+  </div>
+  <button type="submit">Run comparison</button>
+  <p class="hint" style="margin-top:8px">
+    A full pass is a Lyapunov fit per dataset. Measured: ~30&nbsp;s for the
+    chaotic tier, <strong>~3&nbsp;min for all 17</strong>. It runs in the
+    background, so you can leave the page. (The O(N&sup2;) neighbour search is
+    already capped at <span class="mono">max_n=5000</span> by
+    <span class="mono">lyapunov.py</span>, so the 175k-sample records do not
+    dominate.)
+  </p>
+</form>
+
+{% if latest %}
+<div class="card">
+  <p>Most recent: <a href="/runs/{{ latest.id }}">{{ latest.label }}</a>
+    <span class="badge {{ 'ok' if latest.status == 'done' else '' }}">{{ latest.status }}</span>
+    <span class="mono muted">{{ latest.created_at }}</span></p>
+</div>
+{% endif %}
+{% endblock %}

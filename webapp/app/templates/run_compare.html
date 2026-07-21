@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% set nav = 'compare' %}
+{% block title %}Cross-dataset comparison{% endblock %}
+{% block body %}
+<h1>Cross-dataset comparison</h1>
+<p class="lede">
+  {{ r.n }} datasets{% if r.tier %}, tier <strong>{{ r.tier }}</strong>{% endif %}
+  &middot; produced by <span class="mono">DataBase_Analysis/compare.py</span>
+</p>
+
+{% if r.figures.comparison %}
+<figure class="card">
+  <img src="/charts/compare/comparison.png" alt="cross-dataset comparison">
+  <figcaption>Lyapunov time, samples per Lyapunov time, and T&lambda; against the
+    dominant period, by tier.</figcaption>
+</figure>
+{% endif %}
+
+{% if r.figures.spectra %}
+<figure class="card">
+  <img src="/charts/compare/spectra_real.png" alt="spectra of the real tier">
+  <figcaption>Amplitude spectra across the real-tier records.</figcaption>
+</figure>
+{% endif %}
+
+<h2>Table</h2>
+<div class="card" style="overflow-x:auto">
+<table>
+  <thead>
+    <tr><th>Dataset</th><th>Tier</th><th class="num">N</th>
+      <th class="num">&lambda;&#8321;</th><th class="num">T&lambda;</th>
+      <th class="num">T&lambda; (days)</th><th class="num">samples/T&lambda;</th>
+      <th class="num">dominant period</th><th class="num">T&lambda;/period</th>
+      <th>method</th></tr>
+  </thead>
+  <tbody>
+  {% for row in r.rows %}
+    <tr>
+      <td><a href="/chaos/{{ row.key }}">{{ row.name }}</a></td>
+      <td><span class="badge {{ row.tier }}">{{ row.tier }}</span></td>
+      <td class="num">{{ row.n }}</td>
+      <td class="num">{{ row.lyap|num('.4g') }}</td>
+      <td class="num">
+        {% if row.positive %}{{ row.lyap_time|num('.4g') }} {{ row.time_unit }}
+        {% else %}<span class="muted">no positive &lambda;&#8321;</span>{% endif %}
+      </td>
+      <td class="num">{{ row.t_lyap_days|num('.4g') }}</td>
+      <td class="num">{{ row.samples_per_tlyap|num('.4g') }}</td>
+      <td class="num">{{ row.dominant_period|num('.4g') }}</td>
+      <td class="num">{{ row.tlyap_over_period|num('.3g') }}</td>
+      <td class="muted" style="font-size:12.5px">{{ row.lyap_method }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <strong>Rows with no positive &lambda;&#8321;</strong> are not failures: a
+  negative exponent means nearby trajectories <em>converge</em>, so the record is
+  dominated by periodic or damped structure rather than chaos and the dynamics
+  impose no predictability horizon at all. <span class="mono">cuxhaven</span>
+  (tidal sea level) is the clear case.
+</div>
+
+<div class="note warn">
+  <strong>Only the chaotic tier carries a published &lambda;&#8321; to check
+  against.</strong> Rows marked <span class="mono">rosenstein</span> are
+  single-trajectory estimates; the project's own cross-check puts them at ~93%
+  mean error where a truth exists, with inconsistent sign. Compare tiers with
+  that in mind rather than reading the column as measurement.
+</div>
+
+<p><a class="btn ghost" href="/compare">Run another</a>
+   <a class="btn ghost" href="/api/runs/{{ job.id }}">Raw JSON</a></p>
+{% endblock %}

@@ -39,13 +39,32 @@ Then open <http://127.0.0.1:8000>. Interactive API docs are at `/docs`.
 | `/diagnostics` | Memory capacity of the configured reservoir, on an i.i.d. drive. |
 | `/about` | The method, and what these numbers are and are not allowed to claim. |
 
-### Predictability (`/chaos`)
+### Predictability (`/chaos`) and comparison (`/compare`)
 
-Wraps `DataBase_Analysis/lyapunov.py` and `fourier.py`. Answers the question that
-has to be settled before any forecast number is interpretable: how far ahead can
-this series be predicted *at all*, given that the dynamics destroy information at
-rate λ₁? The ceiling is `H_max = (1/λ₁)/dt`. A forecast holding skill well past it
-indicates leakage; one dying far short is underperforming the physics.
+**These pages call `DataBase_Analysis` rather than re-implementing it.**
+`app/domain/chaos.py` is a thin adapter over `analysis.analyse_one()`,
+`visualizer.figure()`, `provenance.DOCS`, and `compare.collect()/figure()`, so the
+web pages and `python analysis.py --dataset <key>` agree by construction — same
+numbers, same 4-panel figure, same per-dataset axis limits (`FMAX`, `MAX_UNITS`).
+
+That delegation is load-bearing, not stylistic. An earlier version called
+`fourier.dominant_periods` directly and omitted the `fmin = 2/(N·dt)` guard that
+`analyse_one` applies before picking peaks. Measured across all 17 datasets,
+omitting it changes the top three periods on **five** (`lorenz63`, `rikitake`,
+`tao`, `nyc`, `cuxhaven`) — `nyc` reports a 57,540-day "dominant period" on a much
+shorter record, which is pure near-DC leakage.
+
+The question these pages answer: how far ahead can a series be predicted *at all*,
+given the dynamics destroy information at rate λ₁? The ceiling is
+`H_max = (1/λ₁)/dt`. Skill surviving well past it indicates leakage; skill dying
+far short means the model, not the physics, is the limit.
+
+`/compare` runs the full cross-dataset pass in the background (a Lyapunov fit per
+dataset, ~2 min for all 17) and renders `comparison.png` and `spectra_real.png`
+from `compare.py`, plus the comparison table.
+
+Both pages also surface `provenance.DOCS` — source, observable, meaning, and the
+per-record `watch_out` gotchas — on the dataset and predictability pages.
 
 The page states how much the estimate can be trusted, because it varies by tier:
 

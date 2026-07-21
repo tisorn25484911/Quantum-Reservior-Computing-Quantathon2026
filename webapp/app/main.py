@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from dataclasses import asdict
 
+import jinja2
 import numpy as np
 from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
@@ -41,8 +42,13 @@ templates.env.globals["seed"] = PROJECT_SEED
 
 
 def _fmt(value, spec=".4g"):
-    """Jinja filter: format a number, or render a dash when it is missing."""
-    if value is None:
+    """Jinja filter: format a number, or render a dash when it is missing.
+
+    Undefined is treated as missing rather than raised. A template referring to
+    a key the payload no longer carries should show a dash, not take the whole
+    page down with a 500.
+    """
+    if value is None or isinstance(value, jinja2.Undefined):
         return "--"
     try:
         f = float(value)
@@ -54,9 +60,18 @@ def _fmt(value, spec=".4g"):
 
 
 templates.env.filters["num"] = _fmt
-templates.env.filters["pct"] = lambda v: ("--" if v is None
-                                          or not np.isfinite(float(v))
-                                          else f"{float(v) * 100:.1f}%")
+def _pct(value):
+    """Percentage, with the same missing-value tolerance as `num`."""
+    if value is None or isinstance(value, jinja2.Undefined):
+        return "--"
+    try:
+        f = float(value)
+    except (TypeError, ValueError):
+        return "--"
+    return "--" if not np.isfinite(f) else f"{f * 100:.1f}%"
+
+
+templates.env.filters["pct"] = _pct
 
 
 def _cfg_from_form(**kw) -> ForecastConfig:
@@ -114,7 +129,8 @@ def dataset_detail(request: Request, key: str):
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
     return templates.TemplateResponse(request, "dataset_detail.html", {
-        "d": meta, "defaults": asdict(ForecastConfig()),
+        "d": meta, "prov": chaos.provenance_doc(key),
+        "defaults": asdict(ForecastConfig()),
     })
 
 
@@ -165,7 +181,8 @@ def run_detail(request: Request, job_id: str):
         raise HTTPException(status_code=404, detail=f"no such run: {job_id}")
     tpl = {"forecast": "run_forecast.html", "sweep": "run_sweep.html",
            "memory": "run_memory.html",
-           "anomaly": "run_anomaly.html"}.get(job.kind, "run_forecast.html")
+           "anomaly": "run_anomaly.html",
+           "compare": "run_compare.html"}.get(job.kind, "run_forecast.html")
     if job.status != "done":
         tpl = "run_pending.html"
     return templates.TemplateResponse(request, tpl, {
@@ -221,6 +238,21 @@ def chaos_detail(request: Request, key: str):
         raise HTTPException(status_code=422,
                             detail=f"predictability estimate failed: {exc}")
     return templates.TemplateResponse(request, "chaos_detail.html", {"a": a})
+
+
+@app.get("/compare", response_class=HTMLResponse)
+def compare_page(request: Request):
+    done = registry.list("compare", limit=1)
+    return templates.TemplateResponse(request, "compare.html", {
+        "latest": done[0] if done else None})
+
+
+@app.post("/compare", response_class=HTMLResponse)
+def compare_submit(tier: str = Form("")):
+    job = registry.submit("compare", f"cross-dataset comparison"
+                          + (f" ({tier})" if tier else ""),
+                          chaos.compare_all, tier or None)
+    return RedirectResponse(f"/runs/{job.id}", status_code=303)
 
 
 # -------------------------------------------------------------- anomaly
@@ -295,10 +327,28 @@ def chart_horizon(job_id: str):
 
 @app.get("/charts/chaos/{key}.png")
 def chart_chaos(key: str):
+    """The canonical 4-panel figure from DataBase_Analysis.visualizer."""
     try:
-        return _png_response(charts.chaos_png(chaos.analyse(key)))
+        path = chaos.figure_path(key)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
+    except Exception as exc:                       # noqa: BLE001
+        raise HTTPException(status_code=422, detail=f"figure failed: {exc}")
+    if path is None:
+        raise HTTPException(status_code=422, detail="figure not produced")
+    return _png_response(path.read_bytes())
+
+
+@app.get("/charts/compare/{name}.png")
+def chart_compare(name: str):
+    """Cross-dataset figures written by DataBase_Analysis.compare."""
+    if name not in ("comparison", "spectra_real"):
+        raise HTTPException(status_code=404, detail="unknown comparison figure")
+    path = chaos.FIGURE_CACHE / f"{name}.png"
+    if not path.exists():
+        raise HTTPException(status_code=409,
+                            detail="not generated yet -- run the comparison")
+    return _png_response(path.read_bytes())
 
 
 @app.get("/charts/anomaly/{job_id}.png")
