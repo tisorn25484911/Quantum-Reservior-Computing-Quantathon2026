@@ -34,8 +34,40 @@ Then open <http://127.0.0.1:8000>. Interactive API docs are at `/docs`.
 | `/datasets/{key}` | One series: preview plot, statistics, and whether it is valid as a memory-capacity drive. |
 | `/forecast` | Full configuration: horizon, qubits, input interval, virtual nodes, band level, seed. |
 | `/runs/{id}` | Results: forecast figure, metric table against both baselines, model card. |
+| `/chaos` | **Predictability**: λ₁, Lyapunov time, `H_max`, divergence curve, spectrum. |
+| `/anomaly` | **Forecast-then-Detect**: recursive rollout and its skill decay. |
 | `/diagnostics` | Memory capacity of the configured reservoir, on an i.i.d. drive. |
 | `/about` | The method, and what these numbers are and are not allowed to claim. |
+
+### Predictability (`/chaos`)
+
+Wraps `DataBase_Analysis/lyapunov.py` and `fourier.py`. Answers the question that
+has to be settled before any forecast number is interpretable: how far ahead can
+this series be predicted *at all*, given that the dynamics destroy information at
+rate λ₁? The ceiling is `H_max = (1/λ₁)/dt`. A forecast holding skill well past it
+indicates leakage; one dying far short is underperforming the physics.
+
+The page states how much the estimate can be trusted, because it varies by tier:
+
+- **simulated chaotic** — ensemble estimate from independent realizations, and
+  checkable against a published λ₁. `lorenz63` gives 0.823 vs published 0.906
+  (−9%), which is the accuracy anchor for the estimator.
+- **real / surrogate** — single-trajectory Rosenstein, reported as an *upper
+  bound*. On a strongly seasonal record it is inflated (it reads the cycle as
+  divergence), and the page marks those "unreliable (seasonal)".
+
+### Anomaly forecast (`/anomaly`)
+
+Wraps `Anomaly_Forecast/forecast.py` (plan.md Steps 1–2): recursive rollout where
+the reservoir is driven by **its own output** after step 1, so errors compound.
+Reports NMSE against lead time versus persistence and a size-matched ESN, the
+usable lead, an example trajectory, and the encoding-clip count.
+
+**Only the forecast half exists.** Steps 3–8 of that plan — stochastic ensembles,
+matrix-profile / isolation-forest scorers, EVT thresholds, event debouncing,
+injected ground truth — are not implemented, so **no anomaly probability is
+shown**. A probability from uncalibrated machinery would be the most misleading
+number this app could display; the page lists exactly what is missing.
 
 Long runs execute on a worker thread; the page polls a progress partial and
 reloads when finished. Completed runs are written to `webapp/results/<id>.json`

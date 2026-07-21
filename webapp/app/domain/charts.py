@@ -155,6 +155,136 @@ def memory_png(result: dict) -> bytes:
     return _png(fig)
 
 
+def chaos_png(a: dict) -> bytes:
+    """Divergence curve with the fitted window, plus the amplitude spectrum.
+
+    Drawing the fit *over the window actually used* keeps the dominant error
+    source visible: lambda_1 is a slope read off a hand-chosen region, and a
+    badly placed window is obvious here while being invisible in the single
+    number it produces.
+    """
+    fig, axes = plt.subplots(1, 2, figsize=(10.5, 3.6))
+
+    ax = axes[0]
+    t = np.asarray(a["t"], float)
+    curve = np.asarray(a["curve"], float)
+    ax.plot(t, curve, lw=1.2, color=QRC, zorder=3, label="ln separation")
+    lo, hi = a["window"]
+    if hi > lo and np.isfinite(a["lambda1"]):
+        tt = t[lo:hi + 1]
+        ax.plot(tt, curve[lo] + a["lambda1"] * (tt - tt[0]), lw=1.9, ls="--",
+                color=ESN, zorder=4,
+                label=f"fit: $\\lambda_1$ = {a['lambda1']:.4g}")
+        ax.axvspan(t[lo], t[hi], color=ESN, alpha=0.10, zorder=1)
+    unit = a["dataset"]["time_unit"]
+    ax.set_xlabel(f"time [{unit}]")
+    ax.set_ylabel("ln separation")
+    ax.set_title(f"divergence -- {a['method']}")
+    ax.legend(fontsize=7.5, loc="lower right")
+    _grid(ax)
+
+    ax = axes[1]
+    f = np.asarray(a["spectrum_f"], float)
+    amp = np.asarray(a["spectrum_amp"], float)
+    ax.plot(f, amp, lw=0.7, color=ESN, zorder=3)
+
+    # Crop to where the signal actually is. On a fast record almost all the
+    # amplitude sits in the first percent of the band, and an uncropped axis
+    # shows a spike at the origin and nothing else.
+    fmax = f.max() if len(f) else 1.0
+    if len(f) > 1 and amp.sum() > 0:
+        cum = np.cumsum(amp) / amp.sum()
+        i99 = int(np.searchsorted(cum, 0.99))
+        fmax = float(f[min(i99, len(f) - 1)]) * 1.5 or fmax
+    ax.set_xlim(0, fmax)
+
+    # Mark the dominant periods but do not label them in-chart: they cluster at
+    # low frequency and the text overprints. The page carries an exact table.
+    shown = [p for p in a["dominant_periods"][:3] if p["f"] <= fmax]
+    for p in shown:
+        ax.axvline(p["f"], color="k", lw=0.6, ls=":", alpha=0.55, zorder=2)
+    if shown:
+        ax.plot([], [], color="k", lw=0.6, ls=":", alpha=0.55,
+                label="dominant periods")
+        ax.legend(fontsize=7.5, loc="upper right")
+    ax.set_ylim(bottom=0)
+    ax.set_xlabel(f"frequency [cycles/{unit}]")
+    ax.set_ylabel("amplitude")
+    ax.set_title("amplitude spectrum")
+    _grid(ax)
+
+    fig.tight_layout()
+    return _png(fig)
+
+
+def anomaly_skill_png(r: dict) -> bytes:
+    """Rollout skill decay against the two floors, with the ceiling marked."""
+    hs = r["horizons"]
+    fig, ax = plt.subplots(figsize=(7.0, 4.0))
+    ax.axhline(1.0, color="k", lw=0.9, ls="--", alpha=0.55, zorder=2)
+    ax.text(hs[0], 1.02, "mean predictor -- no skill", fontsize=7.5,
+            color="#444", va="bottom")
+
+    for key, colour, ls, lbl in (
+            ("reservoir", QRC, "-", f"QRC ({r['config']['kind']})"),
+            ("esn", ESN, "--", "ESN (size-matched)"),
+            ("persistence", PERSIST, ":", "persistence")):
+        ax.plot(hs, r["nmse"][key], marker="o", ms=3.5, color=colour, ls=ls,
+                lw=1.8 if key == "reservoir" else 1.2, zorder=4, label=lbl)
+
+    if r["useful_horizons"]:
+        hi = max(r["useful_horizons"])
+        ax.axvspan(hs[0] - 0.3, hi + 0.3, color=QRC, alpha=0.08, zorder=1)
+        ax.text(hi, 0.04, f" usable lead = {hi}", fontsize=7.5, color=QRC,
+                va="bottom", ha="right")
+
+    hmax = r.get("H_max_steps")
+    if hmax and np.isfinite(hmax) and hs[0] <= hmax <= hs[-1]:
+        ax.axvline(hmax, color="#888", lw=1.0, ls="-.", zorder=2)
+        ax.text(hmax, ax.get_ylim()[1] * 0.95, " $H_{max}$", fontsize=7.5,
+                color="#666", va="top")
+
+    ds = r["dataset"]
+    ax.set_xlabel(f"lead time h (steps of {ds['dt']:.4g} {ds['time_unit']})")
+    ax.set_ylabel("NMSE  (lower is better)")
+    ax.set_title(f"{ds['name']} -- recursive-rollout skill decay "
+                 f"({r['n_origins']} held-out origins)")
+    ax.set_ylim(bottom=0)
+    ax.legend(fontsize=8)
+    _grid(ax)
+    return _png(fig)
+
+
+def anomaly_example_png(r: dict) -> bytes:
+    """One rollout against truth -- where the compounding becomes visible."""
+    ex = r["example"]
+    hist = np.asarray(ex["history"], float)
+    truth = np.asarray(ex["truth"], float)
+    yhat = np.asarray(ex["yhat"], float)
+
+    fig, ax = plt.subplots(figsize=(7.0, 3.4))
+    t_h = np.arange(-len(hist) + 1, 1)
+    t_f = np.arange(1, len(truth) + 1)
+    ax.plot(t_h, hist, lw=1.3, color="#666", zorder=3, label="history (driven)")
+    ax.plot(t_f, truth, lw=2.6, color="k", alpha=0.24, solid_capstyle="round",
+            zorder=3, label="observed")
+    ax.plot(t_f, yhat, lw=1.8, color=QRC, marker="o", ms=3, zorder=4,
+            label="recursive rollout")
+    ax.axvline(0, color=QRC, lw=0.9, ls=":", zorder=2)
+    ax.text(0, ax.get_ylim()[1], " forecast origin", fontsize=7.5,
+            color=QRC, va="top")
+
+    ds = r["dataset"]
+    unit = f" [{ds['unit']}]" if ds.get("unit") else ""
+    ax.set_xlabel(f"steps from origin ({ds['dt']:.4g} {ds['time_unit']} each)")
+    ax.set_ylabel(f"{ds['name']}{unit}", fontsize=8)
+    ax.set_title(f"one rollout from origin {ex['origin']} "
+                 f"-- the reservoir drives on its own output after step 1")
+    ax.legend(fontsize=8)
+    _grid(ax)
+    return _png(fig)
+
+
 def series_png(x: np.ndarray, meta: dict, n_show: int = 1500) -> bytes:
     """A dataset preview for the catalogue page."""
     x = np.asarray(x, float)[-int(n_show):]

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% set nav = 'chaos' %}
+{% block title %}Predictability{% endblock %}
+{% block body %}
+<h1>Predictability &mdash; how far ahead can this series be forecast?</h1>
+<p class="lede">
+  Before any forecast result means anything, you need the ceiling the dynamics
+  themselves impose. That ceiling is the Lyapunov time
+  <span class="mono">T&lambda; = 1/&lambda;&#8321;</span>: the timescale on which
+  an initial error grows by a factor of e. In steps,
+  <span class="mono">H_max = T&lambda; / dt</span>.
+</p>
+
+<div class="note">
+  A forecast that keeps skill well past <span class="mono">H_max</span> is
+  evidence of <strong>leakage</strong>, not of a good model. One that dies far
+  short of it is underperforming the physics rather than hitting a wall.
+</div>
+
+<div class="card">
+<table>
+  <thead><tr><th>Series</th><th>Tier</th><th class="num">Samples</th>
+    <th class="num">lag-1 &rho;</th><th></th></tr></thead>
+  <tbody>
+  {% for d in datasets %}
+    {% if not d.error %}
+    <tr>
+      <td><a href="/chaos/{{ d.key }}">{{ d.name }}</a></td>
+      <td><span class="badge {{ d.tier }}">{{ d.tier_label }}</span></td>
+      <td class="num">{{ d.n }}</td>
+      <td class="num">{{ d.lag1_autocorr|num('.3f') }}</td>
+      <td><a href="/chaos/{{ d.key }}">measure &rarr;</a></td>
+    </tr>
+    {% endif %}
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<div class="note warn">
+  <strong>Only the simulated chaotic tier gives a trustworthy number.</strong>
+  Those series carry independent realizations, so &lambda;&#8321; comes from
+  genuinely separate trajectories and can be checked against a published value.
+  Everything else falls back to a single-trajectory Rosenstein estimate, which
+  cannot tell true divergence from a series moving through its own cycle and is
+  reported as an upper bound.
+</div>
+{% endblock %}

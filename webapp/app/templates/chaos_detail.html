@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% set nav = 'chaos' %}
+{% block title %}{{ a.dataset.name }} &middot; predictability{% endblock %}
+{% block body %}
+<div class="row">
+  <h1 style="margin:0">{{ a.dataset.name }}</h1>
+  <span class="badge {{ a.dataset.tier }}">{{ a.dataset.tier_label }}</span>
+  <span class="badge {{ 'ok' if a.reliable else 'fail' }}">{{ a.verdict }}</span>
+</div>
+<p class="lede" style="margin-top:10px">
+  Largest Lyapunov exponent by the <strong>{{ a.method }}</strong> estimator.
+</p>
+
+<div class="grid c4">
+  <div class="stat">
+    <div class="label">&lambda;&#8321;</div>
+    <div class="value">{{ a.lambda1|num('.4g') }}</div>
+    <div class="sub">per {{ a.dataset.time_unit }}</div>
+  </div>
+  <div class="stat">
+    <div class="label">Lyapunov time T&lambda;</div>
+    <div class="value">{{ a.lyapunov_time|num('.4g') }}</div>
+    <div class="sub">{{ a.dataset.time_unit }}</div>
+  </div>
+  <div class="stat {{ 'good' if a.reliable else '' }}">
+    <div class="label">H_max</div>
+    <div class="value">{{ a.H_max_steps|num('.1f') }}</div>
+    <div class="sub">steps of {{ a.dataset.dt|num('.4g') }} {{ a.dataset.time_unit }}</div>
+  </div>
+  <div class="stat">
+    <div class="label">Record length</div>
+    <div class="value">{{ a.record_length_in_T_lambda|num('.1f') }}</div>
+    <div class="sub">Lyapunov times</div>
+  </div>
+</div>
+
+{% if a.truth is not none %}
+<div class="note">
+  <strong>Accuracy check.</strong> Published &lambda;&#8321; =
+  {{ a.truth|num('.4g') }}; this estimate is off by
+  <strong>{{ (a.error * 100)|round(1) }}%</strong>. Only the simulated tier can
+  offer this, and it is what licenses the estimator elsewhere.
+</div>
+{% endif %}
+
+<div class="note {{ 'warn' if not a.reliable else '' }}">
+  <strong>How much to trust this</strong>
+  <ul>{% for n in a.notes %}<li>{{ n }}</li>{% endfor %}</ul>
+</div>
+
+<figure class="card">
+  <img src="/charts/chaos/{{ a.key }}.png" alt="divergence curve and spectrum">
+  <figcaption>
+    Left: mean log separation of nearby trajectories; the dashed line is the
+    slope fit, drawn over the window actually used, so a badly placed window is
+    visible rather than hidden inside the number. Right: amplitude spectrum with
+    the dominant periods marked.
+  </figcaption>
+</figure>
+
+<h2>Dominant periods</h2>
+<div class="card">
+<table>
+  <thead><tr><th class="num">Period ({{ a.dataset.time_unit }})</th>
+    <th class="num">Frequency</th><th class="num">Amplitude</th></tr></thead>
+  <tbody>
+  {% for p in a.dominant_periods %}
+    <tr><td class="num">{{ p.period|num('.4g') }}</td>
+        <td class="num">{{ p.f|num('.4g') }}</td>
+        <td class="num">{{ p.amp|num('.4g') }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% if a.embedding %}
+<p class="muted">Embedding: m = {{ a.embedding.m }}, &tau; = {{ a.embedding.tau }}
+  (false-nearest-neighbours and first mutual-information minimum).</p>
+{% endif %}
+
+<p><a class="btn ghost" href="/anomaly?dataset={{ a.key }}">Forecast this series &rarr;</a>
+   <a class="btn ghost" href="/api/chaos/{{ a.key }}">Raw JSON</a></p>
+{% endblock %}

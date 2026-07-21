@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% set nav = 'anomaly' %}
+{% block title %}Anomaly forecast{% endblock %}
+{% block body %}
+<h1>Forecast-then-Detect</h1>
+<p class="lede">
+  Run the reservoir forward on its <em>own output</em> to produce a multi-step
+  trajectory, so that anomaly detectors could later be run on the forecast
+  rather than on observed data &mdash; flagging an event <em>before</em> it
+  happens, with warning time up to H.
+</p>
+
+<div class="note warn">
+  <strong>Only the forecast half is built.</strong> This page runs the recursive
+  rollout and measures how far its skill survives. The detection half
+  (stochastic ensembles, matrix-profile / isolation-forest scorers, extreme-value
+  thresholds, event debouncing) is <em>not implemented</em>, so no anomaly
+  probability is shown. A probability from uncalibrated machinery would be the
+  most misleading number this app could display.
+</div>
+
+<form class="card" method="post" action="/anomaly">
+  <div class="grid c4">
+    <div class="field">
+      <label for="dataset">Dataset</label>
+      <select id="dataset" name="dataset">
+        {% for d in datasets %}
+          {% if not d.error %}
+          <option value="{{ d.key }}" {{ 'selected' if d.key == defaults.dataset }}>
+            {{ d.name }} &mdash; {{ d.tier }}
+          </option>
+          {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="horizon">Horizon H (steps)</label>
+      <input id="horizon" type="number" name="horizon" value="{{ defaults.horizon }}" min="1" max="60">
+    </div>
+    <div class="field">
+      <label for="kind">Reservoir</label>
+      <select id="kind" name="kind">
+        <option value="xxz_hx" selected>xxz_hx (XXZ chain + transverse field)</option>
+        <option value="ising">ising (disordered TFIM)</option>
+        <option value="esn">esn (classical control)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="seed">Seed</label>
+      <input id="seed" type="number" name="seed" value="{{ defaults.seed }}">
+      <div class="hint">xxz_hx has no disorder &mdash; seed affects only the ESN.</div>
+    </div>
+  </div>
+  <div class="grid c3">
+    <div class="field">
+      <label for="n_qubits">Qubits</label>
+      <input id="n_qubits" type="number" name="n_qubits" value="{{ defaults.n_qubits }}" min="1" max="8">
+    </div>
+    <div class="field">
+      <label for="dt">Input interval J&middot;&Delta;t</label>
+      <input id="dt" type="number" name="dt" value="{{ defaults.dt }}" step="0.25" min="0.05">
+    </div>
+    <div class="field">
+      <label for="max_points">Series window</label>
+      <input id="max_points" type="number" name="max_points" value="{{ defaults.max_points }}" min="300" step="100">
+    </div>
+  </div>
+  <button type="submit">Run rollout study</button>
+</form>
+
+<div class="note">
+  <strong>Why recursive rollout is the hard case.</strong> After the first step
+  the reservoir is driven by its own prediction, not by data, so errors compound.
+  The resulting skill-decay curve &mdash; not the one-step error &mdash; is what
+  decides whether there is any usable warning time.
+</div>
+{% endblock %}

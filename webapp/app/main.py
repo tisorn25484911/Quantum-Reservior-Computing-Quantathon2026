@@ -22,7 +22,8 @@ from fastapi.templating import Jinja2Templates
 
 from .config import (CLAIM_DISCLAIMER, SEED, SEED as PROJECT_SEED,
                      STATIC_DIR, TEMPLATES_DIR, TIER_LABELS)
-from .domain import catalog, charts
+from .domain import catalog, chaos, charts
+from .domain.anomaly import AnomalyConfig, run_rollout_study
 from .domain.engine import (ForecastConfig, run_forecast, run_horizon_sweep,
                             run_memory_capacity)
 from .domain.jobs import registry
@@ -163,7 +164,8 @@ def run_detail(request: Request, job_id: str):
     if job is None:
         raise HTTPException(status_code=404, detail=f"no such run: {job_id}")
     tpl = {"forecast": "run_forecast.html", "sweep": "run_sweep.html",
-           "memory": "run_memory.html"}.get(job.kind, "run_forecast.html")
+           "memory": "run_memory.html",
+           "anomaly": "run_anomaly.html"}.get(job.kind, "run_forecast.html")
     if job.status != "done":
         tpl = "run_pending.html"
     return templates.TemplateResponse(request, tpl, {
@@ -199,6 +201,57 @@ def diagnostics_submit(
                          use_zz=use_zz, seed=seed)
     job = registry.submit("memory", f"memory capacity, {n_qubits}q",
                           run_memory_capacity, cfg, max_delay=int(max_delay))
+    return RedirectResponse(f"/runs/{job.id}", status_code=303)
+
+
+# ---------------------------------------------------------------- chaos
+@app.get("/chaos", response_class=HTMLResponse)
+def chaos_page(request: Request):
+    return templates.TemplateResponse(request, "chaos.html", {
+        "datasets": catalog.list_datasets()})
+
+
+@app.get("/chaos/{key}", response_class=HTMLResponse)
+def chaos_detail(request: Request, key: str):
+    try:
+        a = chaos.analyse(key)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    except Exception as exc:                       # estimator can legitimately fail
+        raise HTTPException(status_code=422,
+                            detail=f"predictability estimate failed: {exc}")
+    return templates.TemplateResponse(request, "chaos_detail.html", {"a": a})
+
+
+# -------------------------------------------------------------- anomaly
+@app.get("/anomaly", response_class=HTMLResponse)
+def anomaly_page(request: Request, dataset: str = "nino34"):
+    return templates.TemplateResponse(request, "anomaly.html", {
+        "datasets": catalog.list_datasets(),
+        "defaults": {**asdict(AnomalyConfig()), "dataset": dataset}})
+
+
+@app.post("/anomaly", response_class=HTMLResponse)
+def anomaly_submit(
+    dataset: str = Form("nino34"),
+    horizon: int = Form(12),
+    kind: str = Form("xxz_hx"),
+    n_qubits: int = Form(5),
+    dt: float = Form(2.0),
+    virtual_nodes: int = Form(4),
+    seed: int = Form(SEED),
+    max_points: int = Form(2000),
+):
+    try:
+        cfg = AnomalyConfig(dataset=dataset, horizon=horizon, kind=kind,
+                            n_qubits=n_qubits, dt=dt,
+                            virtual_nodes=virtual_nodes, seed=seed,
+                            max_points=max_points)
+        cfg.validate()
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    job = registry.submit("anomaly", f"{dataset} rollout H={horizon}",
+                          run_rollout_study, cfg)
     return RedirectResponse(f"/runs/{job.id}", status_code=303)
 
 
@@ -240,6 +293,26 @@ def chart_horizon(job_id: str):
     return _png_response(charts.horizon_png(_require_result(job_id, "sweep")))
 
 
+@app.get("/charts/chaos/{key}.png")
+def chart_chaos(key: str):
+    try:
+        return _png_response(charts.chaos_png(chaos.analyse(key)))
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@app.get("/charts/anomaly/{job_id}.png")
+def chart_anomaly(job_id: str):
+    return _png_response(
+        charts.anomaly_skill_png(_require_result(job_id, "anomaly")))
+
+
+@app.get("/charts/anomaly-example/{job_id}.png")
+def chart_anomaly_example(job_id: str):
+    return _png_response(
+        charts.anomaly_example_png(_require_result(job_id, "anomaly")))
+
+
 @app.get("/charts/memory/{job_id}.png")
 def chart_memory(job_id: str):
     return _png_response(charts.memory_png(_require_result(job_id, "memory")))
@@ -277,12 +350,32 @@ def api_submit(payload: dict):
     if kind == "memory":
         extra["max_delay"] = int(payload.pop("max_delay", 25))
     cfg = _cfg_from_form(**payload)
+    if kind == "anomaly":
+        try:
+            acfg = AnomalyConfig(**payload)
+            acfg.validate()
+        except (TypeError, ValueError) as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        job = registry.submit("anomaly", f"anomaly: {acfg.dataset}",
+                              run_rollout_study, acfg)
+        return JSONResponse(job.public(), status_code=202)
     fn = {"forecast": run_forecast, "sweep": run_horizon_sweep,
           "memory": run_memory_capacity}.get(kind)
     if fn is None:
         raise HTTPException(status_code=400, detail=f"unknown kind: {kind}")
     job = registry.submit(kind, f"{kind}: {cfg.dataset}", fn, cfg, **extra)
     return JSONResponse(job.public(), status_code=202)
+
+
+@app.get("/api/chaos/{key}")
+def api_chaos(key: str):
+    """Predictability analysis. Curve arrays are omitted; see the PNG."""
+    try:
+        a = chaos.analyse(key)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    return {k: v for k, v in a.items()
+            if k not in ("t", "curve", "spectrum_f", "spectrum_amp")}
 
 
 @app.get("/api/runs")

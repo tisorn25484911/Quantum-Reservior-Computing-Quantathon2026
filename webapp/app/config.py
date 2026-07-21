@@ -20,13 +20,14 @@ PROJECT_ROOT = WEBAPP_DIR.parent
 QRC_CORE_DIR = PROJECT_ROOT / "QRC_code_stack" / "stage1_numpy_core"
 DB_ANALYSIS_DIR = PROJECT_ROOT / "Quantathon_stack" / "DataBase_Analysis"
 EVALUATION_DIR = PROJECT_ROOT / "Quantathon_stack" / "Main_run_Evaluation"
+ANOMALY_DIR = PROJECT_ROOT / "Quantathon_stack" / "Anomaly_Forecast"
 DATA_DIR = PROJECT_ROOT / "Quantathon_stack" / "Data"
 
 RESULTS_DIR = WEBAPP_DIR / "results"
 STATIC_DIR = APP_DIR / "static"
 TEMPLATES_DIR = APP_DIR / "templates"
 
-for _p in (QRC_CORE_DIR, DB_ANALYSIS_DIR, EVALUATION_DIR):
+for _p in (QRC_CORE_DIR, DB_ANALYSIS_DIR, EVALUATION_DIR, ANOMALY_DIR):
     if str(_p) not in sys.path:
         sys.path.insert(0, str(_p))
 

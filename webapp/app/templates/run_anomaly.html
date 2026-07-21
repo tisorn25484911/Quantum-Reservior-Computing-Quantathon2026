@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% set nav = 'anomaly' %}
+{% set v = r.verdict %}
+{% block title %}{{ r.dataset.name }} rollout{% endblock %}
+{% block body %}
+<div class="row">
+  <h1 style="margin:0">{{ r.dataset.name }} &mdash; rollout study</h1>
+  <span class="badge {{ r.dataset.tier }}">{{ r.dataset.tier_label }}</span>
+</div>
+<p class="lede" style="margin-top:10px">
+  H = {{ r.config.horizon }} &middot; {{ r.config.kind }} reservoir
+  ({{ r.config.n_qubits }} qubits) &middot; {{ r.n_origins }} held-out origins
+  &middot; seed {{ r.config.seed }}
+</p>
+
+<div class="note {{ '' if v.usable else ('bad' if not v.has_skill else 'warn') }}">
+  <strong>{{ v.headline }}</strong>
+  {% if v.notes %}<ul>{% for n in v.notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
+</div>
+
+<div class="grid c4">
+  <div class="stat {{ 'good' if r.useful_lead else 'bad' }}">
+    <div class="label">Usable lead</div>
+    <div class="value">{{ r.useful_lead }}</div>
+    <div class="sub">steps ({{ (r.useful_lead * r.dataset.dt)|num('.3g') }} {{ r.dataset.time_unit }})</div>
+  </div>
+  <div class="stat">
+    <div class="label">Skill (NMSE&lt;1) at</div>
+    <div class="value">{{ r.skill_at|length }}</div>
+    <div class="sub">of {{ r.config.horizon }} leads</div>
+  </div>
+  <div class="stat">
+    <div class="label">Beats ESN at</div>
+    <div class="value">{{ r.beats_esn_at|length }}</div>
+    <div class="sub">ESN better at {{ r.esn_beats_at|length }} ({{ (r.material_margin * 100)|int }}% margin)</div>
+  </div>
+  <div class="stat">
+    <div class="label">Physical H_max</div>
+    <div class="value">{{ r.H_max_steps|num('.1f') }}</div>
+    <div class="sub">{{ r.chaos_verdict }}</div>
+  </div>
+</div>
+
+<figure class="card" style="margin-top:18px">
+  <img src="/charts/anomaly/{{ job.id }}.png" alt="rollout skill decay">
+  <figcaption>
+    NMSE against lead time for the reservoir and both floors. The shaded band is
+    the usable lead; the dashed line at 1.0 is the mean predictor.
+  </figcaption>
+</figure>
+
+<figure class="card">
+  <img src="/charts/anomaly-example/{{ job.id }}.png" alt="one rollout trajectory">
+  <figcaption>
+    A single rollout. Left of the origin the reservoir is driven by data; right
+    of it, by its own output &mdash; which is where error compounding becomes
+    visible.
+    {% if r.example.n_clipped %}
+      <strong>{{ r.example.n_clipped }} step(s) hit the encoding bound</strong>
+      and were clipped when fed back.
+    {% endif %}
+  </figcaption>
+</figure>
+
+<h2>Skill by lead time</h2>
+<div class="card">
+<table>
+  <thead><tr><th class="num">h</th><th class="num">QRC NMSE</th>
+    <th class="num">ESN</th><th class="num">Persistence</th><th>Reading</th></tr></thead>
+  <tbody>
+  {% for h in r.horizons %}
+    {% set i = loop.index0 %}
+    <tr {{ 'class=highlight' if h in r.useful_horizons }}>
+      <td class="num">{{ h }}</td>
+      <td class="num">{{ r.nmse.reservoir[i]|num('.4f') }}</td>
+      <td class="num">{{ r.nmse.esn[i]|num('.4f') }}</td>
+      <td class="num">{{ r.nmse.persistence[i]|num('.4f') }}</td>
+      <td class="muted" style="font-size:13px">
+        {% if r.nmse.reservoir[i] >= 1.0 %}no skill
+        {% elif h in r.useful_horizons %}usable
+        {% else %}skill, but a floor is better{% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<div class="note warn">
+  <strong>Not implemented &mdash; what would be needed for actual detection</strong>
+  <ul>{% for n in r.not_implemented %}<li>{{ n }}</li>{% endfor %}</ul>
+</div>
+
+{% if r.clip_rate %}
+<p class="muted">Encoding-bound clipping over the whole sweep:
+  {{ (r.clip_rate * 100)|round(2) }}% of fed-back steps. Clipping truncates
+  exactly the excursions a detector would need, so it is counted rather than
+  silently applied.</p>
+{% endif %}
+
+<p><a class="btn ghost" href="/anomaly?dataset={{ r.config.dataset }}">Run another</a>
+   <a class="btn ghost" href="/chaos/{{ r.config.dataset }}">Predictability of this series</a>
+   <a class="btn ghost" href="/api/runs/{{ job.id }}">Raw JSON</a></p>
+{% endblock %}
