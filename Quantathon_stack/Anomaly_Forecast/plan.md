@@ -2,7 +2,7 @@
 title: Forecast-then-Detect — anomaly prediction on QRC forecasts
 created: 2026-07-21
 updated: 2026-07-21
-status: draft
+status: steps 1-2 verified
 ---
 
 # Forecast-then-Detect
@@ -293,19 +293,28 @@ Already present: `numpy`, `scipy` (has `genpareto`), `pandas`, `matplotlib`, `no
 
 ## 6. Open items — decide when reached, do not guess
 
-1. **`step()` on the reservoir.** Recursive rollout needs single-step state advance;
-   `qrc_core.QuantumReservoir.run()` is whole-array. Start O(H²) (re-run `run()` on the
-   growing sequence), revisit only if slow.
+1. ~~**`step()` on the reservoir.**~~ **RESOLVED (Step 1).** The O(H²) route was not
+   viable: it replays the whole history each step, so one H=24 rollout at origin *t*
+   costs ~Σ(640+i) ≈ 15.7k reservoir steps ≈ 3.5 s, i.e. ~11 min per configuration over
+   ~190 origins — before Step 3 multiplies by *K*. `forecast.py` adds `_QRCDriver` with
+   `step()` + state checkpointing (O(H) per rollout, ~5 ms). Verified identical to
+   `run()` to 1e-12, so it is a performance refactor, not a different model.
 2. **Spec limits `[L, U]` for `nino34`.** Niño 3.4 does have conventional El Niño /
    La Niña thresholds (±0.5 °C anomaly, sustained). Using those makes `s₄` and the
    whole "predict a breach" story concrete and domain-meaningful — **confirm the exact
    convention before hard-coding it.**
-3. **Which Hamiltonian.** `ising` vs `xxz_hx` — pick by Step 2's skill-decay curve, not
-   in advance.
+3. ~~**Which Hamiltonian.**~~ **RESOLVED (Step 2): `xxz_hx`.** Lower mean NMSE than
+   `ising` on both `nino34` and `tao`, and it degrades more gracefully (NMSE 1.33 vs
+   1.72 at h=24 on `nino34`). `ising` never materially beats the ESN at any lead.
 4. **`K` (ensemble size).** Start 200. Raise until `p(h)` is stable to ±0.02 between
    seeds.
-5. **Detrending.** `nino34_anom` is already an anomaly series (climatology removed).
-   Confirm no double-detrending happens in `dataloader`.
+5. ~~**Detrending.**~~ **RESOLVED (Step 2) — and it kills the climatology baseline.**
+   `nino34_anom` is indeed already an anomaly series, so its seasonal mean is ≈0 and
+   the climatology forecast collapses onto the mean predictor (flat NMSE ≈ 1.03,
+   *worse* than persistence at short lead). Climatology is therefore **not a valid
+   baseline on `nino34`** and must not be quoted as the "hard baseline" of §7.4 there.
+   Either use raw Niño-3.4 SST (climatology intact) or drop the baseline for this
+   series. No double-detrending occurs in `dataloader`.
 
 ---
 
@@ -370,6 +379,85 @@ Cheapest first. Each can end the project early and save the rest of the work.
 
 ## 9. Immediate next action
 
-Install deps, then Step 1 + Step 2 only. Step 2 is the cheapest kill-test in the whole
-plan — do not write the scorers, the fuser, or the threshold module before the
-NMSE-vs-horizon curve exists.
+~~Install deps, then Step 1 + Step 2 only.~~ **Done — see §10.** Next action is Step 3
+(stochastic rollout), with `H = 7` and `xxz_hx` fixed by the Step 2 result.
+
+---
+
+## 10. Steps 1–2 results (2026-07-21)
+
+Deps installed into the repo-root `.venv` (`scikit-learn` 1.9.0, `stumpy` 1.14.1).
+Note §5's install path points at a different machine (`/Users/popsuksumetchoengprachya/…`);
+the working venv here is `<repo>/.venv`.
+
+Code: `forecast.py` (Step 1), `run_step2.py` (Step 2). Artefacts in `results/`.
+
+### Step 1 — gates PASSED
+
+- stepwise driving ≡ `run()` to 1e-12, for all three kinds
+- `rollout(H=1)` ≡ `forecast_1step`, same value and index, at 3 origins
+- checkpointed rollout ≡ replayed-history rollout
+- 1-step test NMSE **0.0582 ising / 0.0535 xxz_hx** vs the notebook's reported
+  **0.0577 / 0.0496** — independent cross-check, same ballpark
+
+### Step 2 — kill-test: PASS on the product premise, PARITY vs classical
+
+`nino34`, H=24, 223 held-out origins, seed 7:
+
+| | `nino34` (target) | `tao` (long-N companion) |
+|---|---|---|
+| skill (NMSE<1) | h=1–7 | all 24 |
+| materially beats persistence (>5%) | all 24 | h=6–8 |
+| **useful lead** | **h=1–7 (0.58 yr)** | h=6–8 (8 d) |
+| vs size-matched ESN | QRC better h=1 only; parity h=2–11; **ESN better h=12–24** | QRC better h=3–24 |
+| λ₁ / H_max | 0.173 /yr → 69.4 steps | → 10.2 steps |
+| empirical / physical | **0.10 — discrepant** | 0.79 — consistent |
+
+**Set `H = 7` downstream.**
+
+Three findings that change the plan:
+
+1. **The §2 λ₁ warning was correct.** `nino34` empirical horizon is ~10× shorter than
+   `H_max`; on `tao` the same code gives ratio 0.79. So the discrepancy is a property of
+   the seasonal series, not of the method. `H_max` is a scale on `nino34`, not a
+   measurement — as §2 anticipated.
+2. **§2's "honest horizon = crossing with persistence" does not work here.** Persistence
+   degrades so fast (NMSE 2.69 at h=24) that a reservoir at NMSE 1.72 still "beats" it.
+   The binding constraint is the no-skill line NMSE = 1. Horizon is set from that.
+3. **No quantum advantage on the target — and it is worse than one seed suggested.**
+   See the seed sweep below, which overturned the single-seed reading.
+
+### Seed sweep — this changes the Step 2 conclusion
+
+5 seeds (7, 11, 23, 42, 101), H=12, `xxz_hx` vs size-matched ESN, 5% margin.
+
+**`xxz_hx` is deterministic** (clean NN chain, no disorder — `rng` is documented as
+ignored), so its curve is identical at every seed. Only the ESN varies. A single-seed
+comparison is therefore a *fixed point against one draw of a random variable*, which is
+not a fair test and was silently the test being run.
+
+| | h=1 | h=6 | horizons won (of 12) |
+|---|---|---|---|
+| `xxz_hx` | 0.0525 ± 0.000 | 0.875 ± 0.000 | — |
+| ESN on `nino34` | 0.0586 ± 0.0028 | **0.827 ± 0.064** | ESN wins 10–11/12 at seeds 23, 42, 101 |
+| ESN on `tao` | 0.1105 ± 0.0215 | **0.885 ± 0.502** | QRC wins 10–11/12 at **every** seed |
+
+1. **On `nino34` the ESN is generally the better model.** At h=6 the mean ESN (0.827)
+   beats the QRC (0.875). The seed-7 result that produced "parity h=2–11" was a weak ESN
+   draw; 3 of 5 seeds have the ESN winning almost every horizon. Against plan.md §7.1
+   this is closer to a **FAIL** on the target dataset than to the qualified pass first
+   reported.
+2. **On `tao` the QRC advantage is robust** — 10–11 of 12 horizons at all five seeds,
+   and the ESN is wildly unstable there (σ = 0.50 at h=6; one seed hits NMSE 1.83,
+   i.e. worse than the mean predictor). The QRC's determinism is a genuine reliability
+   argument on this series.
+3. **Any future ESN comparison must be over several seeds**, quoting the ESN
+   mean/spread, not one draw.
+
+### Carried into Step 3
+
+- **Clipping is live.** Fed-back predictions hit the [0,1] encoding bound on 1.6% of
+  `ising` steps (0.0% `xxz_hx`). `rollout()` reports unclipped values and counts clips;
+  the count matters for §3's under-alarm argument, since clipping truncates exactly the
+  excursions the detector needs.
+- Step 3's calibration gate is now the next kill-test.
