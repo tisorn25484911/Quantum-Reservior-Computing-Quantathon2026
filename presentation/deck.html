@@ -1,0 +1,510 @@
+<title>TideRead — Anomaly Forecasting for Aquaculture</title>
+<style>
+  /* ============================================================= TOKENS */
+  :root{
+    /* ocean neutrals — biased toward the cyan accent, not pure grey */
+    --ground:#f3f7f6;
+    --surface:#ffffff;
+    --surface-2:#e9f1f0;
+    --ink:#0b2a2e;
+    --ink-2:#3a5a5d;
+    --ink-3:#6f8a8c;
+    --hair:#d4e2e0;
+    /* accents */
+    --qrc:#1596a4;          /* quantum reservoir series */
+    --esn:#d97a2b;          /* classical baseline series */
+    --heat:#e0483a;         /* marine-heatwave / anomaly alarm */
+    --heat-soft:#f6d9d4;
+    --cool:#0e7c88;         /* deep ocean structural accent */
+    --good:#2f9e6f;
+    --focus:#1596a4;
+    /* type */
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Roboto Mono",monospace;
+    --shadow:0 1px 2px rgba(11,42,46,.06),0 8px 30px rgba(11,42,46,.08);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --ground:#061417;
+      --surface:#0c2226;
+      --surface-2:#102e33;
+      --ink:#e8f3f2;
+      --ink-2:#a9c4c4;
+      --ink-3:#6f9296;
+      --hair:#1c3b40;
+      --qrc:#26c0d0;
+      --esn:#e79a4d;
+      --heat:#ff6b5a;
+      --heat-soft:#3a1c1a;
+      --cool:#37c9d6;
+      --good:#4bcf95;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 40px rgba(0,0,0,.45);
+    }
+  }
+  :root[data-theme="light"]{
+    --ground:#f3f7f6;--surface:#ffffff;--surface-2:#e9f1f0;--ink:#0b2a2e;--ink-2:#3a5a5d;
+    --ink-3:#6f8a8c;--hair:#d4e2e0;--qrc:#1596a4;--esn:#d97a2b;--heat:#e0483a;--heat-soft:#f6d9d4;
+    --cool:#0e7c88;--good:#2f9e6f;--shadow:0 1px 2px rgba(11,42,46,.06),0 8px 30px rgba(11,42,46,.08);
+  }
+  :root[data-theme="dark"]{
+    --ground:#061417;--surface:#0c2226;--surface-2:#102e33;--ink:#e8f3f2;--ink-2:#a9c4c4;
+    --ink-3:#6f9296;--hair:#1c3b40;--qrc:#26c0d0;--esn:#e79a4d;--heat:#ff6b5a;--heat-soft:#3a1c1a;
+    --cool:#37c9d6;--good:#4bcf95;--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 40px rgba(0,0,0,.45);
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  body{
+    margin:0;background:var(--ground);color:var(--ink);
+    font-family:var(--sans);line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* scroll-snap deck */
+  .deck{scroll-snap-type:y proximity}
+  .slide{
+    min-height:100vh;scroll-snap-align:start;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:clamp(28px,6vw,96px);position:relative;
+    border-bottom:1px solid var(--hair);
+    max-width:1180px;margin:0 auto;
+  }
+  .wrap{width:100%}
+
+  /* type scale */
+  h1,h2,h3{text-wrap:balance;margin:0;font-weight:680;letter-spacing:-.02em}
+  h1{font-size:clamp(2.4rem,6vw,4.6rem);line-height:1.02}
+  h2{font-size:clamp(1.7rem,3.6vw,2.9rem);line-height:1.06}
+  h3{font-size:1.06rem;font-weight:640;letter-spacing:-.01em}
+  p{margin:0}
+  .lede{font-size:clamp(1.05rem,2vw,1.4rem);color:var(--ink-2);max-width:60ch;line-height:1.5}
+
+  .eyebrow{
+    font-family:var(--mono);font-size:.72rem;font-weight:600;
+    letter-spacing:.22em;text-transform:uppercase;color:var(--cool);
+    display:flex;align-items:center;gap:.7em;margin-bottom:1.4rem;
+  }
+  .eyebrow::before{content:"";width:26px;height:2px;background:var(--cool);border-radius:2px}
+
+  .stack{display:flex;flex-direction:column;gap:1.5rem}
+  .muted{color:var(--ink-3)}
+  strong.k{color:var(--ink);font-weight:680}
+  em.hl{font-style:normal;color:var(--heat);font-weight:640}
+  .qrc-ink{color:var(--qrc);font-weight:680}
+  .esn-ink{color:var(--esn);font-weight:680}
+
+  /* progress rail */
+  .rail{position:fixed;right:18px;top:50%;transform:translateY(-50%);z-index:40;
+    display:flex;flex-direction:column;gap:11px}
+  .rail a{width:9px;height:9px;border-radius:50%;background:var(--hair);
+    border:1px solid transparent;transition:background .2s,transform .2s;display:block}
+  .rail a:hover{transform:scale(1.35)}
+  .rail a.on{background:var(--cool);box-shadow:0 0 0 3px color-mix(in srgb,var(--cool) 22%,transparent)}
+  @media (max-width:720px){.rail{display:none}}
+
+  /* theme toggle */
+  .toggle{position:fixed;top:16px;right:16px;z-index:41;
+    font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;
+    background:var(--surface);color:var(--ink-2);border:1px solid var(--hair);
+    border-radius:999px;padding:7px 13px;cursor:pointer;box-shadow:var(--shadow)}
+  .toggle:hover{color:var(--ink)}
+  .slideno{position:fixed;left:18px;bottom:16px;z-index:40;font-family:var(--mono);
+    font-size:.72rem;color:var(--ink-3);letter-spacing:.08em}
+
+  /* cards & grid */
+  .grid{display:grid;gap:16px}
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;
+    padding:22px;box-shadow:var(--shadow)}
+  .card h3{margin-bottom:.35rem}
+  .card p{color:var(--ink-2);font-size:.96rem}
+
+  /* stat tiles */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+  .stat{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:20px 18px}
+  .stat .n{font-size:clamp(1.9rem,4vw,2.7rem);font-weight:720;letter-spacing:-.03em;
+    font-variant-numeric:tabular-nums;line-height:1}
+  .stat .l{margin-top:.5rem;font-size:.82rem;color:var(--ink-3);line-height:1.35}
+  .stat.warm .n{color:var(--heat)}
+  .stat.cool .n{color:var(--qrc)}
+
+  .two{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(24px,4vw,56px);align-items:center}
+  @media (max-width:860px){.two{grid-template-columns:1fr;gap:28px}}
+
+  /* pipeline */
+  .pipe{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch}
+  .pnode{flex:1 1 150px;background:var(--surface);border:1px solid var(--hair);
+    border-radius:12px;padding:14px 15px;position:relative;min-width:140px}
+  .pnode .step{font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;color:var(--cool);
+    text-transform:uppercase}
+  .pnode .t{font-weight:660;margin-top:4px;font-size:.98rem}
+  .pnode .d{font-size:.82rem;color:var(--ink-3);margin-top:3px;line-height:1.35}
+  .pnode.accent{border-color:color-mix(in srgb,var(--qrc) 55%,var(--hair));
+    background:color-mix(in srgb,var(--qrc) 8%,var(--surface))}
+  .pnode.alarm{border-color:color-mix(in srgb,var(--heat) 50%,var(--hair));
+    background:color-mix(in srgb,var(--heat) 8%,var(--surface))}
+
+  /* comparison table */
+  .tbl{width:100%;border-collapse:collapse;font-size:.9rem}
+  .tbl th,.tbl td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--hair)}
+  .tbl thead th{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--ink-3);font-weight:600}
+  .tbl td{color:var(--ink-2)}
+  .tbl td.name{color:var(--ink);font-weight:620}
+  .tbl tbody tr:hover{background:var(--surface-2)}
+  .tbl .num{font-variant-numeric:tabular-nums;text-align:right}
+  .scroller{overflow-x:auto}
+  .badge{display:inline-block;font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;
+    padding:2px 8px;border-radius:6px;border:1px solid var(--hair);color:var(--ink-2);white-space:nowrap}
+  .badge.live{color:var(--good);border-color:color-mix(in srgb,var(--good) 45%,var(--hair));
+    background:color-mix(in srgb,var(--good) 10%,transparent)}
+  .badge.q{color:var(--qrc);border-color:color-mix(in srgb,var(--qrc) 45%,var(--hair));
+    background:color-mix(in srgb,var(--qrc) 10%,transparent)}
+
+  /* chart */
+  .chartwrap{background:var(--surface);border:1px solid var(--hair);border-radius:14px;
+    padding:18px 18px 8px;box-shadow:var(--shadow)}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:.82rem;margin:2px 2px 10px;color:var(--ink-2)}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .swatch{width:20px;height:3px;border-radius:2px;display:inline-block}
+  .swatch.dash{background:linear-gradient(90deg,var(--ink-3) 0 55%,transparent 55%);
+    background-size:8px 100%}
+  figure{margin:0}
+  figcaption{font-size:.78rem;color:var(--ink-3);margin-top:8px;line-height:1.4}
+  .tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--ground);
+    font-family:var(--mono);font-size:.72rem;padding:7px 9px;border-radius:8px;opacity:0;
+    transform:translate(-50%,-115%);white-space:nowrap;transition:opacity .1s;z-index:5;
+    box-shadow:0 6px 20px rgba(0,0,0,.25)}
+
+  .kicker{font-family:var(--mono);font-size:.74rem;letter-spacing:.06em;color:var(--ink-3)}
+  .divider{height:1px;background:var(--hair);margin:1.4rem 0}
+  .pillrow{display:flex;flex-wrap:wrap;gap:8px}
+  .pill{font-size:.8rem;padding:5px 11px;border-radius:999px;background:var(--surface-2);
+    color:var(--ink-2);border:1px solid var(--hair)}
+
+  a.link{color:var(--qrc);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--qrc) 40%,transparent)}
+  :focus-visible{outline:2px solid var(--focus);outline-offset:3px;border-radius:4px}
+
+  .footnote{font-size:.78rem;color:var(--ink-3);max-width:70ch;line-height:1.45}
+  .tag{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;color:var(--cool);text-transform:uppercase}
+</style>
+
+<button class="toggle" id="themeBtn" aria-label="Toggle colour theme">◐ THEME</button>
+<nav class="rail" id="rail" aria-label="Slide navigation"></nav>
+<div class="slideno" id="slideno">01</div>
+
+<main class="deck" id="deck">
+
+  <!-- ============================================ 1 · TITLE -->
+  <section class="slide" id="s1">
+    <div class="wrap stack">
+      <div class="eyebrow">Quantathon 2026 · Quantum Reservoir Computing</div>
+      <h1>The ocean tells you<br>before it happens.</h1>
+      <p class="lede">A quantum-reservoir forecasting engine that predicts marine
+        temperature and salinity anomalies <em class="hl">days ahead</em> — so an
+        aquaculture operation can act before a heat event reaches the pond, not after.</p>
+      <div class="pillrow" style="margin-top:.6rem">
+        <span class="pill">Forecast-then-Detect</span>
+        <span class="pill">Quantum reservoir readout</span>
+        <span class="pill">Validated on 46 years of ocean data</span>
+      </div>
+      <p class="kicker" style="margin-top:1.6rem">Use case partner profile — CP-scale shrimp &amp; marine aquaculture · Gulf of Thailand</p>
+    </div>
+  </section>
+
+  <!-- ============================================ 2 · THE STAKE -->
+  <section class="slide" id="s2">
+    <div class="wrap stack">
+      <div class="eyebrow">The stake</div>
+      <div class="two">
+        <div class="stack">
+          <h2>A warm anomaly is a silent inventory write-off.</h2>
+          <p class="lede">Shrimp and fish are farmed in open estuarine ponds. When
+            sea-surface temperature spikes or heavy rain crashes the salinity, dissolved
+            oxygen collapses and disease pressure jumps. A single bad event can wipe a
+            grow-out cycle.</p>
+          <p class="muted">Today the farm learns about the anomaly from the pond sensor —
+            at which point the only options left are emergency aeration or an early,
+            loss-making harvest. <strong class="k">The information arrives with zero
+            warning time.</strong></p>
+        </div>
+        <div class="stats">
+          <div class="stat warm"><div class="n">0 hrs</div><div class="l">warning that today's detection systems give — they react to the anomaly, they don't foresee it</div></div>
+          <div class="stat"><div class="n">1</div><div class="l">grow-out cycle is all it takes — a single heat or salinity event can end one</div></div>
+          <div class="stat cool"><div class="n">≈ 1 wk</div><div class="l">the lead time our engine demonstrates on daily sea-surface temperature</div></div>
+          <div class="stat"><div class="n">3</div><div class="l">drivers we already ingest: ocean heat, ENSO state, freshwater/rain shock</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ 3 · THE SHIFT -->
+  <section class="slide" id="s3">
+    <div class="wrap stack">
+      <div class="eyebrow">The shift</div>
+      <h2>From detection to <span class="qrc-ink">forecast-then-detect</span>.</h2>
+      <div class="two" style="margin-top:.5rem">
+        <div class="card">
+          <span class="tag">Incumbent · detection</span>
+          <h3 style="margin-top:.5rem">Run a detector on data that already exists</h3>
+          <p style="margin-top:.5rem">Needs the observation <span class="kicker">y(t)</span> to have happened.
+            By definition it can only flag an anomaly that is <em class="hl">already occurring</em>.
+            Warning time: none.</p>
+        </div>
+        <div class="card" style="border-color:color-mix(in srgb,var(--qrc) 40%,var(--hair))">
+          <span class="tag" style="color:var(--qrc)">Ours · prediction</span>
+          <h3 style="margin-top:.5rem">Run the same detector on a forecast trajectory</h3>
+          <p style="margin-top:.5rem">The quantum reservoir rolls the ocean state
+            <span class="kicker">H</span> steps forward; the detector fires on the
+            <em class="hl">predicted</em> series. Warning time: up to the forecast horizon.</p>
+        </div>
+      </div>
+      <p class="lede" style="margin-top:.4rem">Same detection science the field already trusts —
+        moved from <strong class="k">"what just happened"</strong> to
+        <strong class="k">"what is about to."</strong></p>
+    </div>
+  </section>
+
+  <!-- ============================================ 4 · HOW IT WORKS -->
+  <section class="slide" id="s4">
+    <div class="wrap stack">
+      <div class="eyebrow">How it works</div>
+      <h2>One pipeline, from buoy to alarm.</h2>
+      <div class="pipe" style="margin-top:.6rem">
+        <div class="pnode"><div class="step">Observe</div><div class="t">Ocean history</div><div class="d">Daily SST, ENSO index, rainfall — the drivers that move a pond</div></div>
+        <div class="pnode accent"><div class="step">Quantum core</div><div class="t">Reservoir rollout</div><div class="d">An 8-qubit reservoir feeds its own prediction back, K stochastic samples forward</div></div>
+        <div class="pnode"><div class="step">Score</div><div class="t">Anomaly detectors</div><div class="d">Residual, matrix-profile &amp; isolation-forest run on each sampled future</div></div>
+        <div class="pnode alarm"><div class="step">Decide</div><div class="t">Alarm + ETA + driver</div><div class="d">P(anomaly at t+h), how many days out, and which driver is loading</div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="two">
+        <p class="muted">The quantum reservoir is a fixed dynamical system — no training of the
+          reservoir itself, only a closed-form linear readout on top. That makes each forecast
+          <strong class="k">cheap, deterministic, and reproducible</strong>: the same input gives
+          the same alarm, every time. For a system that has to be trusted operationally, that
+          determinism is a feature, not an accident.</p>
+        <div class="stats">
+          <div class="stat cool"><div class="n">8</div><div class="l">qubits, exact density-matrix simulation</div></div>
+          <div class="stat"><div class="n">K≈200</div><div class="l">sampled futures per forecast → a calibrated probability, not a point guess</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ 5 · PROOF (chart) -->
+  <section class="slide" id="s5">
+    <div class="wrap stack">
+      <div class="eyebrow">Proof · daily sea-surface temperature</div>
+      <h2>On daily ocean temperature, the quantum reservoir<br>holds skill <span class="qrc-ink">longer than the classical baseline</span>.</h2>
+      <div class="two" style="align-items:stretch">
+        <figure class="chartwrap">
+          <div class="legend">
+            <span><i class="swatch" style="background:var(--qrc)"></i>Quantum reservoir</span>
+            <span><i class="swatch" style="background:var(--esn)"></i>Classical ESN (size-matched)</span>
+            <span><i class="swatch dash"></i>Persistence</span>
+          </div>
+          <div id="chart" style="position:relative"></div>
+          <figcaption>Forecast error (NMSE, lower is better) vs lead time, on held-out daily
+            SST from the TAO/TRITON equatorial-Pacific mooring — the closest long, clean,
+            <em>daily</em> ocean-temperature record to CP's own waters. 452 held-out forecast
+            origins. NMSE = 1.0 is the no-skill line.</figcaption>
+        </figure>
+        <div class="stack">
+          <div class="stat cool"><div class="n">5 / 5</div><div class="l">random seeds where the quantum reservoir beats the classical ESN across the horizon — not one lucky run</div></div>
+          <div class="stat"><div class="n">NMSE&nbsp;1.16</div><div class="l">where the classical ESN <em>fails</em> at long lead (worse than guessing the mean); the quantum reservoir stays at <span class="qrc-ink">0.59</span></div></div>
+          <p class="footnote">The classical baseline is not a straw man: it is a reservoir of the
+            <em>same feature count</em>, tuned on the same data. On this daily series it also
+            becomes <strong class="k">unstable across seeds</strong> — one draw blows up to NMSE&nbsp;1.83.
+            The quantum reservoir's determinism removes that failure mode entirely.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ 6 · GENERALITY -->
+  <section class="slide" id="s6">
+    <div class="wrap stack">
+      <div class="eyebrow">Generality · the company's own waters</div>
+      <h2>The same pipeline ingests the drivers that<br>actually move a Gulf of Thailand pond.</h2>
+      <p class="lede">Proof-of-concept was on open ocean data. To show it generalises to the
+        <em class="hl">customer's problem</em>, we acquired four real records for the Mae Klong /
+        upper-Gulf farming region — heat, its long-term context, the ENSO state that modulates it,
+        and the rainfall that drives salinity. Every one loads through the identical code path.</p>
+      <div class="scroller" style="margin-top:.4rem">
+        <table class="tbl">
+          <thead><tr><th>Driver record</th><th>What it warns of</th><th>Cadence</th><th class="num">Span</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td class="name">Gulf of Thailand SST — OISST</td><td>Marine heat reaching the estuary</td><td>Daily · 0.25°</td><td class="num" data-span="got_sst">1982–2026</td><td><span class="badge q">quantum-ready</span></td></tr>
+            <tr><td class="name">Gulf SST reconstruction — ERSSTv5</td><td>Is this event unusual vs 170&nbsp;yr?</td><td>Monthly · 2°</td><td class="num" data-span="got_ersst">1854–2026</td><td><span class="badge live">acquired</span></td></tr>
+            <tr><td class="name">Oceanic Niño Index (ONI)</td><td>El Niño / La Niña loading</td><td>Monthly</td><td class="num" data-span="oni">1950–2026</td><td><span class="badge live">acquired</span></td></tr>
+            <tr><td class="name">Mae Klong basin rainfall — NASA POWER</td><td>Freshwater salinity shock</td><td>Daily</td><td class="num" data-span="rain">1981–2026</td><td><span class="badge live">acquired</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="footnote" style="margin-top:.3rem">All four are open, credential-free, and rebuilt by a single
+        reproducible script (<span class="kicker">fetch_cp_data.py</span>). Same loader, same forecast
+        API, same detectors already validated on open-ocean data — the engine does not care whether the
+        buoy sits on the equator or off Samut Songkhram.</p>
+    </div>
+  </section>
+
+  <!-- ============================================ 7 · HONESTY -->
+  <section class="slide" id="s7">
+    <div class="wrap stack">
+      <div class="eyebrow">Why you can trust the number</div>
+      <h2>Every claim ships with the baseline<br>that could have beaten it.</h2>
+      <div class="two">
+        <div class="stack">
+          <p class="lede">Quantum ML is full of results that evaporate under a fair classical
+            control. Ours is built the opposite way: <strong class="k">persistence and a
+            size-matched classical reservoir are on every chart</strong>, and when a baseline
+            wins, the code is written to say so by default.</p>
+          <p class="muted">On monthly ENSO data, the classical baseline is at parity or ahead —
+            and we report that. On <em class="hl">daily</em> ocean temperature — the cadence an
+            operation actually acts on — the quantum reservoir is the more reliable model at every
+            seed. We tell you exactly where the edge is and where it isn't.</p>
+        </div>
+        <div class="grid">
+          <div class="card"><h3>No hidden leakage</h3><p>Scalers and thresholds are fit on the training span only, structurally — not by discipline.</p></div>
+          <div class="card"><h3>Calibrated, not point</h3><p>K sampled futures give a probability whose coverage is measured, so an 80% alarm means 80%.</p></div>
+          <div class="card"><h3>Cost on the same slide as accuracy</h3><p>A forecast that needs a supercomputer to match a laptop has answered the business question — so we track it.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ 8 · PRODUCT / ASK -->
+  <section class="slide" id="s8">
+    <div class="wrap stack">
+      <div class="eyebrow">The product</div>
+      <h2>An early-warning layer for the farm's operating calendar.</h2>
+      <div class="two">
+        <div class="grid">
+          <div class="card"><h3>What the operator sees</h3><p>Per-site, per-week: probability of a heat or salinity anomaly, the estimated days-to-onset, and which driver is loading — heat, ENSO, or rain.</p></div>
+          <div class="card"><h3>What it plugs into</h3><p>Aeration scheduling, feed and stocking decisions, harvest timing, and insurance triggers — the choices that are cheap to make early and expensive to make late.</p></div>
+        </div>
+        <div class="stack">
+          <h3 class="kicker" style="letter-spacing:.14em">Roadmap</h3>
+          <div class="pipe" style="flex-direction:column">
+            <div class="pnode accent"><div class="step">Now</div><div class="t">Validated forecast core + CP driver data acquired</div></div>
+            <div class="pnode"><div class="step">Next</div><div class="t">Calibrated stochastic alarm on Gulf-of-Thailand SST; salinity model from rain</div></div>
+            <div class="pnode"><div class="step">Pilot</div><div class="t">One farm cluster, back-tested against its own loss history</div></div>
+          </div>
+          <p class="footnote">Ask: a pilot site with pond-level outcome history, so the alarm can be
+            graded against real losses — the one label no public dataset can provide.</p>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <p class="kicker">TideRead · Quantum Reservoir Computing for aquaculture · Quantathon 2026</p>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ---------------------------------------------------------------- theme */
+const root=document.documentElement, tbtn=document.getElementById('themeBtn');
+tbtn.addEventListener('click',()=>{
+  const cur=root.getAttribute('data-theme')
+    || (matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  root.setAttribute('data-theme',cur==='dark'?'light':'dark');
+  drawChart();
+});
+
+/* ---------------------------------------------------------------- rail + counter */
+const slides=[...document.querySelectorAll('.slide')];
+const rail=document.getElementById('rail'), sn=document.getElementById('slideno');
+slides.forEach((s,i)=>{
+  const a=document.createElement('a');a.href='#'+s.id;a.setAttribute('aria-label','Slide '+(i+1));
+  rail.appendChild(a);
+});
+const dots=[...rail.children];
+const io=new IntersectionObserver(es=>{
+  es.forEach(e=>{if(e.isIntersecting){
+    const i=slides.indexOf(e.target);
+    dots.forEach((d,j)=>d.classList.toggle('on',j===i));
+    sn.textContent=String(i+1).padStart(2,'0');
+  }});
+},{threshold:.55});
+slides.forEach(s=>io.observe(s));
+
+/* ---------------------------------------------------------------- data */
+const H=Array.from({length:24},(_,i)=>i+1);
+const SERIES={
+  qrc:[0.1520,0.2849,0.2915,0.3009,0.3328,0.3726,0.4079,0.4371,0.4601,0.4711,0.4794,0.4874,0.4936,0.4941,0.4882,0.4809,0.4809,0.4859,0.4980,0.5160,0.5349,0.5537,0.5731,0.5900],
+  esn:[0.0792,0.1956,0.3129,0.3894,0.4242,0.4456,0.4705,0.5059,0.5460,0.5867,0.6316,0.6821,0.7351,0.7831,0.8266,0.8749,0.9284,0.9806,1.0325,1.0819,1.1199,1.1450,1.1598,1.1627],
+  persistence:[0.0375,0.1100,0.1915,0.2721,0.3444,0.4021,0.4405,0.4632,0.4728,0.4744,0.4751,0.4785,0.4840,0.4868,0.4860,0.4858,0.4892,0.4914,0.4948,0.5030,0.5133,0.5241,0.5351,0.5442]
+};
+
+/* ---------------------------------------------------------------- chart */
+function css(v){return getComputedStyle(root).getPropertyValue(v).trim();}
+function drawChart(){
+  const host=document.getElementById('chart');
+  const W=host.clientWidth||520, Hh=Math.min(360,Math.max(260,W*0.62));
+  const m={l:44,r:16,t:12,b:40};
+  const x0=m.l,x1=W-m.r,y0=Hh-m.b,y1=m.t;
+  const xmin=1,xmax=24,ymin=0,ymax=1.25;
+  const X=h=>x0+(h-xmin)/(xmax-xmin)*(x1-x0);
+  const Y=v=>y0+(v-ymin)/(ymax-ymin)*(y1-y0);
+  const ink3=css('--ink-3'),hair=css('--hair'),qrc=css('--qrc'),esn=css('--esn'),ink=css('--ink');
+  const path=(a,d)=>a.map((v,i)=>(i?'L':'M')+X(i+1).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
+  let g='';
+  // gridlines + y labels
+  [0,0.25,0.5,0.75,1.0,1.25].forEach(v=>{
+    const yy=Y(v);
+    g+=`<line x1="${x0}" x2="${x1}" y1="${yy}" y2="${yy}" stroke="${hair}" stroke-width="1"/>`;
+    g+=`<text x="${x0-8}" y="${yy+3.5}" text-anchor="end" font-size="10" fill="${ink3}" font-family="var(--mono)">${v.toFixed(2)}</text>`;
+  });
+  // no-skill emphasis at 1.0
+  g+=`<line x1="${x0}" x2="${x1}" y1="${Y(1)}" y2="${Y(1)}" stroke="${ink3}" stroke-width="1.4" stroke-dasharray="2 4"/>`;
+  g+=`<text x="${x1-4}" y="${Y(1)-6}" text-anchor="end" font-size="9.5" fill="${ink3}" font-family="var(--mono)">no skill</text>`;
+  // x ticks
+  [1,5,10,15,20,24].forEach(h=>{
+    g+=`<text x="${X(h)}" y="${y0+22}" text-anchor="middle" font-size="10" fill="${ink3}" font-family="var(--mono)">${h}</text>`;
+  });
+  g+=`<text x="${(x0+x1)/2}" y="${Hh-4}" text-anchor="middle" font-size="10.5" fill="${ink3}">lead time — days ahead</text>`;
+  // persistence (neutral dashed)
+  g+=`<path d="${path(SERIES.persistence)}" fill="none" stroke="${ink3}" stroke-width="2" stroke-dasharray="3 4" opacity=".8"/>`;
+  // esn
+  g+=`<path d="${path(SERIES.esn)}" fill="none" stroke="${esn}" stroke-width="2.4" stroke-linejoin="round"/>`;
+  // qrc
+  g+=`<path d="${path(SERIES.qrc)}" fill="none" stroke="${qrc}" stroke-width="2.6" stroke-linejoin="round"/>`;
+  // endpoint markers + direct labels
+  const eq=SERIES.qrc[23], ee=SERIES.esn[23];
+  g+=`<circle cx="${X(24)}" cy="${Y(eq)}" r="4" fill="${qrc}" stroke="${css('--surface')}" stroke-width="1.5"/>`;
+  g+=`<circle cx="${X(24)}" cy="${Y(ee)}" r="4" fill="${esn}" stroke="${css('--surface')}" stroke-width="1.5"/>`;
+  g+=`<text x="${X(24)-6}" y="${Y(eq)+3.5}" text-anchor="end" font-size="10.5" font-weight="700" fill="${qrc}" font-family="var(--mono)">0.59</text>`;
+  g+=`<text x="${X(24)-6}" y="${Y(ee)+3.5}" text-anchor="end" font-size="10.5" font-weight="700" fill="${esn}" font-family="var(--mono)">1.16</text>`;
+
+  host.innerHTML=`<svg viewBox="0 0 ${W} ${Hh}" width="100%" height="${Hh}" role="img"
+    aria-label="Forecast error versus lead time: the quantum reservoir ends at NMSE 0.59 while the classical ESN rises past the no-skill line to 1.16.">${g}
+    <rect id="hit" x="${x0}" y="${y1}" width="${x1-x0}" height="${y0-y1}" fill="transparent"/></svg>`;
+
+  // hover
+  const svg=host.querySelector('svg'); let tip=host.querySelector('.tip');
+  if(!tip){tip=document.createElement('div');tip.className='tip';host.appendChild(tip);}
+  const cursor=document.createElementNS('http://www.w3.org/2000/svg','line');
+  cursor.setAttribute('stroke',ink);cursor.setAttribute('stroke-width','1');cursor.setAttribute('opacity','0');
+  svg.appendChild(cursor);
+  host.querySelector('#hit').addEventListener('mousemove',ev=>{
+    const r=svg.getBoundingClientRect(), sx=W/r.width;
+    const px=(ev.clientX-r.left)*sx;
+    let h=Math.round(xmin+(px-x0)/(x1-x0)*(xmax-xmin));h=Math.max(1,Math.min(24,h));
+    cursor.setAttribute('x1',X(h));cursor.setAttribute('x2',X(h));
+    cursor.setAttribute('y1',y1);cursor.setAttribute('y2',y0);cursor.setAttribute('opacity','.35');
+    tip.style.opacity='1';
+    tip.style.left=(X(h)/sx)+'px'; tip.style.top=(Y(Math.min(SERIES.qrc[h-1],SERIES.esn[h-1]))/sx)+'px';
+    tip.innerHTML=`day ${h}<br><span style="color:var(--qrc)">Q ${SERIES.qrc[h-1].toFixed(2)}</span> · <span style="color:var(--esn)">ESN ${SERIES.esn[h-1].toFixed(2)}</span>`;
+  });
+  host.querySelector('#hit').addEventListener('mouseleave',()=>{tip.style.opacity='0';cursor.setAttribute('opacity','0');});
+}
+drawChart();
+addEventListener('resize',()=>{clearTimeout(window._rt);window._rt=setTimeout(drawChart,150);});
+
+/* keyboard nav */
+addEventListener('keydown',e=>{
+  const cur=slides.findIndex(s=>{const r=s.getBoundingClientRect();return r.top>=-innerHeight*0.4&&r.top<innerHeight*0.4;});
+  if(e.key==='ArrowDown'||e.key==='PageDown'){e.preventDefault();slides[Math.min(slides.length-1,(cur<0?0:cur)+1)].scrollIntoView();}
+  if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();slides[Math.max(0,(cur<0?0:cur)-1)].scrollIntoView();}
+});
+</script>

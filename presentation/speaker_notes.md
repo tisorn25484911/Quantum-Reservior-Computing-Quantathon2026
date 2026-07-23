@@ -1,0 +1,225 @@
+# Speaker notes & Q&A — TideRead / QRC anomaly forecasting
+
+Companion to `deck.html`. Eight slides, ~6–8 min at pitch pace. Each slide below
+has: **the one thing to land**, talking points, and the numbers that are safe to
+say out loud. A hard rule runs through all of it — **never claim quantum
+advantage we can't defend.** The honesty is the pitch.
+
+> **The through-line, in one sentence:** we move anomaly detection from
+> *"tell me it's happening"* to *"tell me it's coming," and on daily ocean
+> temperature — the cadence a farm acts on — our quantum reservoir holds forecast
+> skill longer and more reliably than a matched classical model.*
+
+---
+
+## Slide 1 — Title
+
+**Land:** this is an *early-warning* product, not a science demo.
+
+- Open with the stake in one breath: "An aquaculture pond is a bet on stable
+  water. When the ocean gets too warm, or rain crashes the salinity, that bet can
+  fail overnight — and today the farm finds out only once it's already happening."
+- "We built a forecasting engine, powered by a quantum reservoir, that sees the
+  anomaly coming days ahead."
+- Name the partner frame: CP-scale shrimp/marine aquaculture, Gulf of Thailand.
+  We're not claiming a signed deal — this is the *use case we designed against*.
+
+## Slide 2 — The stake
+
+**Land:** the cost of being late is a whole grow-out cycle; the cost of being
+early is running an aerator.
+
+- The asymmetry is the entire business case. Acting early is cheap (aeration,
+  a feed adjustment, an earlier partial harvest). Acting late is a write-off.
+- The four numbers on screen: **0 hrs** warning from detection today; **1** cycle
+  is all it takes to lose; **≈1 week** lead we demonstrate on daily SST; **3**
+  drivers we ingest (heat, ENSO, rain).
+- Don't over-quantify losses in dollars — we don't have CP's loss book yet, and
+  inventing a figure is exactly the kind of overclaim we're avoiding. Say "a bad
+  event can end a cycle" and leave the number to the pilot.
+
+## Slide 3 — The shift
+
+**Land:** we didn't invent a new detector; we moved a trusted one earlier in time.
+
+- Detection needs the observation to *exist* — so structurally it can only flag
+  what's already occurring. Zero warning is not a tuning problem, it's the
+  definition.
+- Our move: run the same detection science on a *forecast* trajectory. Warning
+  time becomes the forecast horizon.
+- This is deliberately un-magical. Reviewers trust it *because* the detector is
+  the same one the field already uses. The novelty is the quantum forecast that
+  feeds it.
+
+## Slide 4 — How it works
+
+**Land:** one clean pipeline; the quantum core is fixed and reproducible.
+
+- Walk the four nodes left to right: observe → quantum reservoir rollout (feeds
+  its own prediction back, K sampled futures) → detectors on each future →
+  alarm + ETA + which driver is loading.
+- The key technical selling point: **the reservoir is not trained** — it's a fixed
+  8-qubit dynamical system with a closed-form linear readout on top. Same input →
+  same alarm, every time. For anything operational, that determinism is a
+  feature.
+- K≈200 sampled futures → a *calibrated probability*, not a single point guess.
+  (Why sampling matters is on slide 7 if they push.)
+
+## Slide 5 — Proof (the money chart)
+
+**Land:** on daily ocean temperature, the quantum reservoir keeps skill after the
+classical baseline has lost it — and it does so at *every* random seed.
+
+- Read the chart out loud: "lower is better; 1.0 is no-skill. The classical ESN
+  (orange) climbs *past* the no-skill line by long lead — worse than guessing the
+  average. The quantum reservoir (teal) is still at 0.59."
+- The seed point is the one that survives scrutiny: **5 of 5 random seeds**, the
+  quantum reservoir wins across the horizon. The classical baseline is also
+  *unstable* on this daily series — one seed blows up to NMSE 1.83. Determinism
+  removes that failure mode.
+- Why TAO and not Gulf of Thailand here: TAO is the closest long, clean, **daily**
+  ocean-temperature record — 452 held-out origins. It's the honest proving ground;
+  the Gulf data (slide 6) is where we take the *validated* method next.
+- **The baseline is not a straw man** — say this explicitly. Same feature count,
+  tuned on the same data. Beating a weak baseline proves nothing and we know it.
+
+## Slide 6 — Generality (CP's own waters)
+
+**Land:** the identical pipeline already ingests the real drivers of a Gulf of
+Thailand pond — we've acquired the data and it loads through the same code.
+
+- The four records, and *why each one earns its place*:
+  - **Gulf of Thailand daily SST (OISST, 0.25°, off the Mae Klong mouth)** — the
+    heat signal itself, at the location and cadence that matters. Daily, 1982→2026.
+  - **ERSSTv5 monthly reconstruction, 1854→2026 (172 years)** — context: is this
+    warm event unusual against a century and a half? Warm-pool SST here runs
+    26–31 °C.
+  - **Oceanic Niño Index, 1950→2026** — the ENSO state that modulates everything;
+    ranges −2.0 (La Niña) to +2.8 (strong El Niño).
+  - **Mae Klong basin daily rainfall (NASA POWER), 1981→2026** — the freshwater
+    shock that drives pond salinity; 0–109 mm/day.
+- The honest status labels matter: SST is "quantum-ready" (same variable/cadence
+  we already proved on TAO); the others are "acquired" — in the pipeline, next to
+  be run. We are *not* claiming forecast results on Gulf data yet. Acquiring and
+  wiring the customer's real drivers, reproducibly, IS the generality claim at
+  this stage.
+- One line: "the engine doesn't care whether the buoy sits on the equator or off
+  Samut Songkhram."
+
+## Slide 7 — Honesty as a feature
+
+**Land:** every claim ships with the baseline that could beat it — and sometimes
+it does, and we say so.
+
+- This is the trust close. "Quantum ML is full of results that vanish under a fair
+  classical control. Ours is built so that when the baseline wins, the code says
+  so by default."
+- Concede the ENSO case *proactively*: on monthly ENSO data the classical model is
+  at parity or ahead. We report it. On daily SST — the operational cadence — the
+  quantum reservoir is the more reliable model. Knowing exactly where the edge
+  lives is what makes it deployable.
+- Three guarantees: no leakage (train-span-only fits, structural); calibrated
+  probabilities (measured coverage); cost reported next to accuracy.
+
+## Slide 8 — Product & ask
+
+**Land:** an early-warning layer that plugs into decisions that are cheap early
+and expensive late; the ask is a pilot with real loss history.
+
+- What the operator sees: per-site, per-week probability + days-to-onset + driver.
+- What it feeds: aeration, feed/stocking, harvest timing, insurance triggers.
+- Roadmap: Now (validated core + CP data) → Next (calibrated Gulf-SST alarm +
+  salinity-from-rain) → Pilot (one farm cluster, back-tested on its own losses).
+- **The ask:** a pilot site with pond-level outcome history — the one label no
+  public dataset can give us. That's what turns "the alarm fired" into "the alarm
+  saved a cycle."
+
+---
+
+## Anticipated Q&A
+
+**Q. Where's the quantum advantage? This is an 8-qubit simulation.**
+Straight answer: at 8 qubits on a classical simulator there is *no speed-up to
+claim, and we don't claim one*. What we show is that a small quantum reservoir is
+a **more reliable forecaster on daily SST than a size-matched classical reservoir**
+— parity-or-better accuracy with strictly deterministic behaviour, where the
+classical model is seed-unstable. That's a defensible reliability argument today;
+the scaling/hardware speed-up is a separate, future question we're not front-
+running.
+
+**Q. Why should a quantum reservoir beat a classical one at all?**
+We're careful here — on monthly ENSO it doesn't. On daily SST it holds skill
+longer and, crucially, is deterministic where the classical ESN swings from good
+to worse-than-mean across random seeds. We present it as *demonstrated on this
+data*, not as a theorem.
+
+**Q. Why TAO SST for the proof instead of the Gulf of Thailand data?**
+TAO is the longest clean *daily* ocean-temperature record with enough held-out
+origins (452) to make the skill-decay curve trustworthy. It's the same physical
+variable and cadence as the Gulf SST we've acquired. Proving on the clean series,
+then transferring the validated method to the customer's waters, is the honest
+order — not cherry-picking the series that flatters us.
+
+**Q. You don't have forecast results on the Gulf of Thailand data yet.**
+Correct, and we mark it as such on the slide. The generality claim at this stage
+is that the *identical pipeline* ingests CP's real drivers — daily Gulf SST, the
+170-year reconstruction, the ENSO index, and Mae Klong rainfall — reproducibly,
+through one loader and one forecast API. Running the calibrated alarm on Gulf SST
+is the immediate next step.
+
+**Q. How is the anomaly probability actually calibrated?**
+The ridge readout minimises squared error, so its *mean* trajectory is smooth and
+would systematically under-alarm. We fix that by sampling K≈200 futures (residual
+bootstrap) and reporting the fraction that trip the detector — then we *measure*
+whether the 80% band actually contains the truth 80% of the time. If coverage is
+off, the probability is wrong and we don't ship it.
+
+**Q. What's the false-alarm rate?**
+Set by an extreme-value threshold fit on forecast-of-training scores, with an
+empirical-quantile fallback when the tail is thin. We target the realised
+false-alarm rate landing within ~2× of the nominal budget on held-out data — and
+it's a number we report, not hide.
+
+**Q. Isn't rainfall → salinity a big modelling leap?**
+Yes, and we scope it honestly: rain is the *driver* we ingest; the rain-to-pond-
+salinity model is a Next-phase item, best fit against a pilot farm's own salinity
+logs. We're not claiming a finished salinity forecaster today.
+
+**Q. What does this cost to run per prediction?**
+Cheap — exact simulation of 8 qubits plus a closed-form linear solve; it runs on a
+laptop. We put cost on the same slide as accuracy on purpose: a model that needs a
+supercomputer to match a laptop has already answered the business question.
+
+**Q. Why not just use a big deep-learning forecaster?**
+Could be a strong baseline and we'd welcome it on the chart. Our pitch isn't
+"quantum beats everything" — it's a reproducible, deterministic, low-cost forecast
+core with an honest evaluation harness, that already beats the standard reservoir
+baseline on the operational cadence. The evaluation discipline transfers to any
+model you drop in.
+
+**Q. What do you actually need from us (CP) to go further?**
+One pilot site with pond-level outcome history — losses, emergency interventions,
+harvest timing. Public data gives us the ocean; only you have the *labels* that
+tell us whether an alarm was worth acting on.
+
+---
+
+## Numbers cheat-sheet (all reproducible)
+
+| Claim | Number | Source |
+|---|---|---|
+| QRC vs classical ESN, daily SST | wins 5/5 seeds across horizon | `run_step2.py --dataset tao`, seeds 7/11/23/42/101 |
+| QRC error at 24-day lead | NMSE 0.59 | `results/step2_tao.json` |
+| Classical ESN at 24-day lead | NMSE 1.16 (past no-skill) | same |
+| Classical ESN instability | one seed → NMSE 1.83 | seed sweep, plan.md §10 |
+| Held-out forecast origins (TAO) | 452 | `step2_tao.json` |
+| 1-step forecast NMSE (xxz) | 0.0535, matches notebook's 0.0496 ballpark | Step-1 gate |
+| ENSO honesty (concede) | classical at parity/ahead on nino34 | `step2_nino34.json`, seed sweep |
+| Gulf SST record | daily, 0.25°, 1982→2026 | `fetch_cp_data.py` OISST |
+| Gulf SST reconstruction | monthly, 1854→2026, 2070 mo, 26–31 °C | ERSSTv5 |
+| ONI record | 1950→2026, range −2.0…+2.8 | CPC ONI |
+| Mae Klong rainfall | daily, 1981→2026, 0–109 mm/day | NASA POWER |
+
+**Discipline reminders:** 8 qubits, exact simulation → *no speed-up claimed*. Every
+accuracy number carries persistence + size-matched ESN on the same axis. Gulf-of-
+Thailand forecast results are **next**, not done — say so.

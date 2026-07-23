@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(md5 -q Quantathon_stack/Hamiltonian_QRC/qrc_core.py QRC_code_stack/stage1_numpy_core/qrc_core.py)",
+      "Bash(.venv/bin/pip install *)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(.venv/bin/python -c \"import sklearn,stumpy,scipy;print\\('sklearn',sklearn.__version__\\);print\\('stumpy',stumpy.__version__\\);print\\('scipy',scipy.__version__\\)\")",
+      "Bash(time ../../.venv/bin/python forecast.py)",
+      "Bash(../../.venv/bin/python -)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(time ../../.venv/bin/python run_step2.py)",
+      "Bash(../../.venv/bin/python run_step2.py)",
+      "Bash(../../.venv/bin/python run_step2.py --dataset tao)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(../../.venv/bin/python forecast.py)",
+      "Bash(git rev-list *)",
+      "Bash(time .venv/bin/python -c ' *)",
+      "Bash(../.venv/bin/python -)",
+      "Bash(curl -s -o /tmp/chaos_l63.png http://127.0.0.1:8078/charts/chaos/lorenz63.png)",
+      "Read(//tmp/**)",
+      "Read(//private/tmp/**)",
+      "Bash(timeout 120 ../../.venv/bin/python analysis.py --dataset nino34)",
+      "Bash(../../../.venv/bin/python -)",
+      "Bash(grep -B3 -A8 \"Error\\\\|error\" /tmp/uv4.log | grep -v \"^INFO\" | tail -20)",
+      "Bash(curl -s -o /dev/null -w \"server alive: %{http_code}\\\\n\" http://127.0.0.1:8079/api/health)",
+      "Bash(../../.venv/bin/python -c ' *)",
+      "Bash(curl -sS --max-time 15 \"https://power.larc.nasa.gov/api/temporal/daily/point?parameters=PRECTOTCORR&community=AG&longitude=99.75&latitude=13.75&start=20240101&end=20240110&format=CSV\")",
+      "Bash(curl -sS --max-time 30 \"https://www.ncei.noaa.gov/erddap/griddap/ncdcOisst21Agg_LonPM180.csv?sst%5B\\(2024-01-01T12:00:00Z\\):\\(2024-01-05T12:00:00Z\\)%5D%5B\\(0.0\\)%5D%5B\\(13.125\\)%5D%5B\\(100.125\\)%5D\")",
+      "Bash(curl -sS --max-time 30 \"https://www.ncei.noaa.gov/erddap/griddap/ncdcOisst21Agg_LonPM180.csv?sst%5B\\(2024-01-01T12:00:00Z\\):\\(2024-01-05T12:00:00Z\\)%5D%5B\\(0.0\\)%5D%5B\\(12.875\\)%5D%5B\\(100.375\\)%5D\")",
+      "Bash(curl -sS --max-time 30 \"https://www.ncei.noaa.gov/erddap/griddap/nceiErsstv5.csv?sst%5B\\(2020-01-01\\):\\(2020-06-01\\)%5D%5B\\(0.0\\)%5D%5B\\(12\\)%5D%5B\\(100\\)%5D\")",
+      "Bash(curl -sS --max-time 30 \"https://www.ncei.noaa.gov/erddap/griddap/nceiErsstv5.csv?sst%5B\\(2020-01-01\\):\\(2020-06-01\\)%5D%5B\\(0.0\\)%5D%5B\\(10\\)%5D%5B\\(102\\)%5D\")",
+      "Bash(curl -sS --max-time 30 \"https://coastwatch.pfeg.noaa.gov/erddap/search/index.csv?searchFor=OISST+daily+v2.1&itemsPerPage=10\")",
+      "Bash(curl -sS --max-time 30 \"https://coastwatch.pfeg.noaa.gov/erddap/search/index.json?searchFor=OISST&itemsPerPage=15\")",
+      "Bash(curl -sS -o /dev/null -w \"%{http_code}\\\\n\" --max-time 15 \"https://coastwatch.pfeg.noaa.gov/erddap/index.html\")",
+      "Bash(curl -sS --max-time 30 \"https://coastwatch.pfeg.noaa.gov/erddap/griddap/ncdcOisst21Agg_LonPM180.csv?sst%5B\\(2024-01-01T12:00:00Z\\):\\(2024-01-05T12:00:00Z\\)%5D%5B\\(0.0\\)%5D%5B\\(13.125\\)%5D%5B\\(100.125\\)%5D\")",
+      "Bash(curl -sS --max-time 30 \"https://upwell.pfeg.noaa.gov/erddap/griddap/ncdcOisst21Agg_LonPM180.csv?sst%5B\\(2024-01-01T12:00:00Z\\):\\(2024-01-03T12:00:00Z\\)%5D%5B\\(0.0\\)%5D%5B\\(13.125\\)%5D%5B\\(100.125\\)%5D\")"
+    ]
+  }
+}

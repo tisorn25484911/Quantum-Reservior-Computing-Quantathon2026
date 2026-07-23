@@ -156,11 +156,35 @@ _TABULAR = {
         index="date", dt=1.0 / 12.0, time_unit="yr", unit="mm", tier="real",
         name="Cuxhaven sea level (monthly)",
     ),
+    # ---- CP aquaculture use case (fetch_cp_data.py) ------------------------
+    # Upper Gulf of Thailand off the Mae Klong estuary -- the CP-waters
+    # counterpart to `tao`: same variable and cadence, company-relevant site.
+    "got_sst": dict(
+        path="real/oisst_gulf_thailand_daily_sst.csv", column="sst",
+        index="date", dt=1.0, time_unit="day", unit="degC", tier="real",
+        name="Gulf of Thailand SST (OISST daily)", longest_run=True,
+    ),
+    "got_ersst": dict(
+        path="real/ersst_gulf_thailand_monthly_sst.csv", column="sst",
+        index="date", dt=1.0 / 12.0, time_unit="yr", unit="degC", tier="real",
+        name="Gulf of Thailand SST (ERSSTv5 monthly reconstruction)",
+    ),
+    "oni": dict(
+        path="real/oni_index.csv", column="oni", index="date",
+        dt=1.0 / 12.0, time_unit="yr", unit="degC", tier="real",
+        name="Oceanic Nino Index (3-mo running mean)",
+    ),
+    "maeklong_rain": dict(
+        path="real/nasa_power_mae_klong_daily_rain.csv", column="rain_mm",
+        index="date", dt=1.0, time_unit="day", unit="mm", tier="real",
+        name="Mae Klong basin rainfall (NASA POWER daily)",
+    ),
 }
 
 CHAOTIC_KEYS = tuple(_CHAOTIC)
 REAL_KEYS = ("nino34", "nino12", "tao", "nyc", "lax", "potomac", "potomac15",
-             "opsd", "brest", "cuxhaven")
+             "opsd", "brest", "cuxhaven",
+             "got_sst", "got_ersst", "oni", "maeklong_rain")
 SURROGATE_KEYS = ("solar", "load")
 ALL_KEYS = CHAOTIC_KEYS + REAL_KEYS + SURROGATE_KEYS
 
