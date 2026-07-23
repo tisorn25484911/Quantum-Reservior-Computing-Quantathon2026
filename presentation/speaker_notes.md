@@ -86,11 +86,16 @@ classical baseline has lost it — and it does so at *every* random seed.
 ## Slide 6 — Generality (CP's own waters)
 
 **Land:** the identical pipeline already ingests the real drivers of a Gulf of
-Thailand pond — we've acquired the data and it loads through the same code.
+Thailand pond — and now has a measured forecast result on the customer's own
+heat record, not just acquired data.
 
-- The four records, and *why each one earns its place*:
+- The six records, and *why each one earns its place*:
   - **Gulf of Thailand daily SST (OISST, 0.25°, off the Mae Klong mouth)** — the
-    heat signal itself, at the location and cadence that matters. Daily, 1982→2026.
+    heat signal itself, at the location and cadence that matters. Daily,
+    1981-09→2026-07, 16,394 days, the full record.
+  - **HadISST1 monthly, 1870→2026** — an independent cross-check on that same
+    heat signal (different interpolation/sea-ice treatment than ERSSTv5); a
+    warm-event signature showing up in both is not a reconstruction artifact.
   - **ERSSTv5 monthly reconstruction, 1854→2026 (172 years)** — context: is this
     warm event unusual against a century and a half? Warm-pool SST here runs
     26–31 °C.
@@ -98,13 +103,22 @@ Thailand pond — we've acquired the data and it loads through the same code.
     ranges −2.0 (La Niña) to +2.8 (strong El Niño).
   - **Mae Klong basin daily rainfall (NASA POWER), 1981→2026** — the freshwater
     shock that drives pond salinity; 0–109 mm/day.
-- The honest status labels matter: SST is "quantum-ready" (same variable/cadence
-  we already proved on TAO); the others are "acquired" — in the pipeline, next to
-  be run. We are *not* claiming forecast results on Gulf data yet. Acquiring and
-  wiring the customer's real drivers, reproducibly, IS the generality claim at
-  this stage.
+  - **Mae Klong SPEI-03 drought index, 1901→2015** — folds evapotranspiration
+    into the rain signal; a sharper drought/salinity-risk number, though this
+    vintage stops in 2015 and needs a bias-corrected join to bring current.
+- **The Gulf SST result, stated carefully:** on the full 45-year record, 5 seeds,
+  24-day horizon — the same kill-test as slide 5 — the reservoir has real skill
+  at every lead day, materially beats persistence from day 12 on, and is never
+  materially beaten by the size-matched ESN (beats its mean curve at 16 of 24
+  horizons). **Two honest differences from the slide-5 TAO result, say both if
+  asked:** (1) the reservoir kind that wins here is the *disordered* one, which
+  is itself seed-dependent — so we score it as a distribution too, and its
+  edge over the ESN holds at only 3 of 5 seeds at a typical horizon, not 5 of 5;
+  (2) a real seasonal-mean baseline (climatology) is available on raw SST — the
+  reservoir clears it out to about day 20, then dips back under it. So the
+  honest usable lead is **~2-3 weeks**, not "day 24."
 - One line: "the engine doesn't care whether the buoy sits on the equator or off
-  Samut Songkhram."
+  Samut Songkhram — and now we've checked, not just claimed it."
 
 ## Slide 7 — Honesty as a feature
 
@@ -160,12 +174,23 @@ variable and cadence as the Gulf SST we've acquired. Proving on the clean series
 then transferring the validated method to the customer's waters, is the honest
 order — not cherry-picking the series that flatters us.
 
-**Q. You don't have forecast results on the Gulf of Thailand data yet.**
-Correct, and we mark it as such on the slide. The generality claim at this stage
-is that the *identical pipeline* ingests CP's real drivers — daily Gulf SST, the
-170-year reconstruction, the ENSO index, and Mae Klong rainfall — reproducibly,
-through one loader and one forecast API. Running the calibrated alarm on Gulf SST
-is the immediate next step.
+**Q. Do you have forecast results on the Gulf of Thailand data now?**
+Yes — full 45-year daily record, 5 seeds, same kill-test as the TAO proof. Real
+skill at every lead out to 24 days, materially beats persistence from day 12 on,
+never materially beaten by the size-matched ESN. Two things we say unprompted:
+the winning reservoir kind here is seed-dependent (unlike TAO's deterministic
+one), and its edge over the ESN holds at 3 of 5 seeds, not 5 of 5 — a real but
+more modest edge than the proof slide. And the honest usable lead is nearer
+20 days than 24 — a real seasonal-mean baseline exists on raw SST, and every
+model, reservoir included, converges to it by the far end of the horizon.
+
+**Q. Why is the Gulf-SST quantum kind different from the TAO one?**
+`ising` (disordered couplings) won on Gulf SST; `xxz_hx` (deterministic) won on
+TAO. We didn't pick whichever looks best after the fact and call it "the"
+reservoir — both are in the evaluation harness, both get run, and this run just
+found a different winner on a different series. It's the same discipline as the
+ESN seed sweep: score what actually wins, as a distribution, not a single
+flattering draw.
 
 **Q. How is the anomaly probability actually calibrated?**
 The ridge readout minimises squared error, so its *mean* trajectory is smooth and
@@ -215,11 +240,18 @@ tell us whether an alarm was worth acting on.
 | Held-out forecast origins (TAO) | 452 | `step2_tao.json` |
 | 1-step forecast NMSE (xxz) | 0.0535, matches notebook's 0.0496 ballpark | Step-1 gate |
 | ENSO honesty (concede) | classical at parity/ahead on nino34 | `step2_nino34.json`, seed sweep |
-| Gulf SST record | daily, 0.25°, 1982→2026 | `fetch_cp_data.py` OISST |
+| Gulf SST record | daily, 1981-09→2026-07, 16394 d, full record used | `fetch_cp_data.py` OISST (local `new_data/` archive) |
+| Gulf SST cross-check | monthly, 1870→2026, 1877 mo | HadISST1 |
 | Gulf SST reconstruction | monthly, 1854→2026, 2070 mo, 26–31 °C | ERSSTv5 |
 | ONI record | 1950→2026, range −2.0…+2.8 | CPC ONI |
 | Mae Klong rainfall | daily, 1981→2026, 0–109 mm/day | NASA POWER |
+| Mae Klong SPEI-03 | monthly, 1901→2015 (vintage stops there) | SPEIbase |
+| Gulf SST kill-test | PASS: skill all 24 lead-days, beats persistence day 12-24, ESN never materially wins back | `seed_sweep.py --dataset got_sst`, seeds 7/11/23/42/101, `results/step2_seedsweep_got_sst.json` |
+| Gulf SST vs classical ESN | QRC (`ising`) beats mean-ESN curve at 16/24 horizons; per-seed win rate ≈3/5 at a typical horizon | same file |
+| Gulf SST honest horizon | ~day 20 (climatology floor catches every model from ~day 21) | same file |
 
 **Discipline reminders:** 8 qubits, exact simulation → *no speed-up claimed*. Every
-accuracy number carries persistence + size-matched ESN on the same axis. Gulf-of-
-Thailand forecast results are **next**, not done — say so.
+accuracy number carries persistence + size-matched ESN on the same axis, over
+multiple seeds. Gulf-of-Thailand forecast results are now measured (above) —
+report the seed-dependence and climatology caveats every time, don't just quote
+the 16/24 headline alone.

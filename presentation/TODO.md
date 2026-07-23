@@ -1,7 +1,8 @@
 # TODO — CP Aquaculture Use Case
 
 Next steps, ordered. Read `presentation/README.md` first for the full state.
-Checkboxes reflect status as of **2026-07-23**.
+Checkboxes reflect status as of **2026-07-23** (Gulf-SST result added same day,
+after a `new_data/` raw-archive drop landed — see below).
 
 ---
 
@@ -15,34 +16,46 @@ Checkboxes reflect status as of **2026-07-23**.
       load through `dataloader.load()`.
 - [x] Build `presentation/deck.html` (8-slide pitch, published as an Artifact).
 - [x] Write `presentation/speaker_notes.md` (talking points + Q&A + numbers).
-
-## In progress ⏳
-
-- [ ] **Finish the Gulf of Thailand daily SST download.** Resume with:
-      `cd Quantathon_stack/Data && ../../.venv/bin/python fetch_cp_data.py`
-      (picks up from cached year-chunks; assembles
-      `real/oisst_gulf_thailand_daily_sst.csv` when done). Then confirm:
-      `../../.venv/bin/python -c "from DataBase_Analysis.dataloader import load; print(load('got_sst'))"`
-      (or run from the `DataBase_Analysis` dir).
-
-## Next — turn generality into a real Gulf result 🎯
-
-- [ ] **Run the Step-2 skill-decay kill-test on `got_sst`** once it's downloaded:
-      `cd Quantathon_stack/Anomaly_Forecast && ../../.venv/bin/python run_step2.py --dataset got_sst`
-      This produces the QRC-vs-ESN-vs-persistence NMSE curve on CP's own waters.
-      `run_step2.py` accepts any `dataloader` key via `--dataset` (no code change
-      needed). Two flags to consider: `--max-points` (default 2000; the OISST record
-      is ~16000 days, so raise it to use more history) and note that `got_sst` is
-      *raw* SST, so the **climatology baseline is intact here** (unlike `nino34`,
-      which is already an anomaly series — see `plan.md` §6 open-item 5).
-      **Run it multi-seed** (the ESN must be a distribution, not one draw — see
-      `Anomaly_Forecast/plan.md` §10).
-- [ ] **If Gulf SST shows skill**, add a real result panel to `deck.html` slide 6
-      (replace the "acquired / next" framing for `got_sst` with the measured curve).
-      Keep the honesty invariant: report persistence + ESN on the same axis.
-- [ ] **If it does not beat the baselines**, say so — pick the strongest honest
-      framing (e.g. determinism/reliability) and update the deck + notes. Do not
-      overclaim.
+- [x] **Finish the Gulf of Thailand daily SST record.** A `new_data/oisst_v2.1/`
+      raw archive (46 yearly OISST v2.1 NetCDFs, same source) showed up locally;
+      `fetch_cp_data.py` now extracts the Gulf point directly from it instead of
+      the slow ERDDAP year-by-year fetch. `got_sst` is complete: 1981-09→2026-07,
+      16,394 days, 0% missing. The ERDDAP path is kept as the fallback for a
+      clone without `new_data/`.
+- [x] **Run the Step-2 skill-decay kill-test on `got_sst`, multi-seed.** Full
+      record, H=24, seeds 7/11/23/42/101 (`Anomaly_Forecast/seed_sweep.py`,
+      written because the winning kind here — `ising` — is itself seed-dependent,
+      unlike TAO's deterministic `xxz_hx`, so a single seed isn't valid).
+      **Result: PASS**, and it does beat the baselines, with real caveats:
+      - Skill (NMSE<1) at all 24 lead days.
+      - Materially beats persistence at day 1, then continuously day 12→24
+        (persistence is hard at short lead because SST barely moves day to day,
+        then its error compounds linearly while the reservoir's does not).
+      - Never materially beaten by the size-matched ESN at any horizon; beats its
+        mean curve at 16/24 horizons. But the **per-seed win rate is only ~3/5**
+        at a typical horizon (`ising`'s own seed variance is real, unlike the
+        deterministic TAO case) — report this, not just the 16/24 headline.
+      - `climatology` (period=365, seasonal-mean) is a real, non-degenerate floor
+        here (unlike `nino34`) — the reservoir clears it only through ~day 20;
+        by day 21-24 all three models (reservoir, ESN, persistence) converge to
+        it. **The honest usable lead is ~20 days, not 24.**
+      - Full artifacts: `Anomaly_Forecast/results/step2_seedsweep_got_sst.json`,
+        `step2_got_sst.json` / `step2_skill_got_sst.png` (single-seed=7 view).
+- [x] **Added a real result panel to `deck.html` slide 6** replacing the
+      "acquired / next" framing for `got_sst` with the measured result above
+      (badge changed `quantum-ready` → `measured`); `speaker_notes.md` slide 6
+      section and Q&A updated to match, including the two honest caveats
+      (seed-dependent kind, climatology floor).
+- [x] **Integrated the rest of the `new_data/` drop where it fit the use case:**
+      `got_hadisst` (HadISST1, independent cross-check on the Gulf heat signal)
+      and `maeklong_spei` (SPEI-03 drought index, same point as `maeklong_rain`)
+      registered in `dataloader.py` and added to the slide-6 driver table.
+      `mrc_discharge/` was deliberately **not** wired in — every station in it is
+      on the Mun River / Mekong mainstem (drains to the South China Sea, not the
+      Gulf of Thailand) — see `new_data/README.md` for the reasoning. Extra
+      `enso_indices/` files were left unregistered as duplicative of `nino34`/`oni`.
+- [x] Gitignored `new_data/` (was untracked but not ignored — ~21GB of raw
+      archives; fixed with an exception so `new_data/README.md` stays tracked).
 
 ## Then — Step 3 of the Forecast-then-Detect plan 🔬
 
@@ -68,11 +81,14 @@ Per `Anomaly_Forecast/plan.md` §3 (the next kill-test in the original line):
 
 ## Housekeeping before pushing to GitHub
 
-- [ ] Gitignore the intermediate cache and machine-local settings:
-      `printf '_oisst_chunks/\n.claude/settings.local.json\n' >> .gitignore`
-      then `git rm --cached .claude/settings.local.json`.
-- [ ] Commit the recipe + completed CSVs + `presentation/` now; commit
-      `oisst_gulf_thailand_daily_sst.csv` separately once its download finishes.
+- [x] Gitignore the intermediate cache, machine-local settings, and the
+      manually-placed `new_data/` archive (~21GB; kept `new_data/README.md`
+      tracked via a `!` exception). `.claude/settings.local.json` was never
+      tracked, so no `git rm --cached` was needed.
+- [ ] Commit the recipe + completed CSVs (including
+      `oisst_gulf_thailand_daily_sst.csv`, `hadisst_gulf_thailand_monthly_sst.csv`,
+      `spei03_mae_klong_monthly.csv`) + `presentation/` + `Anomaly_Forecast/seed_sweep.py`
+      + the new `results/step2_seedsweep_got_sst.json` and its sibling artifacts.
 
 ---
 
@@ -81,6 +97,11 @@ Per `Anomaly_Forecast/plan.md` §3 (the next kill-test in the original line):
 - **No quantum-advantage claim** at 8 qubits / exact simulation. Parity-or-better
   vs a *size-matched* classical baseline is the ceiling of what may be claimed.
 - **Every accuracy number ships with persistence + size-matched ESN** on the same
-  axis, over **multiple seeds** (the ESN is a random draw; `xxz_hx` is deterministic).
-- **Gulf-of-Thailand forecast results are NOT done** until `run_step2.py --dataset
-  got_sst` has been run and reviewed. Until then the deck says "acquired / next".
+  axis, over **multiple seeds** (the ESN is always a random draw; the quantum
+  kind is only deterministic when it's `xxz_hx` — on `got_sst` the winning kind
+  is `ising`, which is seed-dependent too, so it gets swept exactly like the ESN).
+- **Gulf-of-Thailand forecast results are done**, multi-seed, full record — see
+  "Done" above and `deck.html` slide 6. Any future re-run of `got_sst` (new
+  history added, different H, different qubit count) must go back through
+  `seed_sweep.py`, not a single `run_step2.py` seed, before the deck number
+  changes — the whole point of §10's lesson was that one seed reversed a verdict.

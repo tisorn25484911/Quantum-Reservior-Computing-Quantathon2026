@@ -5,3 +5,5 @@ __pycache__/
 .DS_Store
 _oisst_chunks/
 .claude/settings.local.json
+new_data/*
+!new_data/README.md

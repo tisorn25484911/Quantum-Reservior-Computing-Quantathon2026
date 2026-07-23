@@ -325,23 +325,49 @@
   <section class="slide" id="s6">
     <div class="wrap stack">
       <div class="eyebrow">Generality · the company's own waters</div>
-      <h2>The same pipeline ingests the drivers that<br>actually move a Gulf of Thailand pond.</h2>
-      <p class="lede">Proof-of-concept was on open ocean data. To show it generalises to the
-        <em class="hl">customer's problem</em>, we acquired four real records for the Mae Klong /
-        upper-Gulf farming region — heat, its long-term context, the ENSO state that modulates it,
-        and the rainfall that drives salinity. Every one loads through the identical code path.</p>
+      <h2>The same pipeline ingests the drivers that actually<br>move a Gulf of Thailand pond — now with a measured result.</h2>
+      <p class="lede">Proof-of-concept was on open ocean data (slide 5). To show it generalises to the
+        <em class="hl">customer's problem</em>, we acquired six real records for the Mae Klong /
+        upper-Gulf farming region — heat, an independent cross-check on that heat, its long-term
+        context, the ENSO state that modulates it, and the rainfall/drought signals behind salinity.
+        Every one loads through the identical code path.</p>
       <div class="scroller" style="margin-top:.4rem">
         <table class="tbl">
           <thead><tr><th>Driver record</th><th>What it warns of</th><th>Cadence</th><th class="num">Span</th><th>Status</th></tr></thead>
           <tbody>
-            <tr><td class="name">Gulf of Thailand SST — OISST</td><td>Marine heat reaching the estuary</td><td>Daily · 0.25°</td><td class="num" data-span="got_sst">1982–2026</td><td><span class="badge q">quantum-ready</span></td></tr>
+            <tr><td class="name">Gulf of Thailand SST — OISST</td><td>Marine heat reaching the estuary</td><td>Daily · 0.25°</td><td class="num" data-span="got_sst">1981–2026</td><td><span class="badge q">measured</span></td></tr>
+            <tr><td class="name">Gulf SST cross-check — HadISST1</td><td>Independent confirm of the heat signal</td><td>Monthly · 1°</td><td class="num" data-span="got_hadisst">1870–2026</td><td><span class="badge live">acquired</span></td></tr>
             <tr><td class="name">Gulf SST reconstruction — ERSSTv5</td><td>Is this event unusual vs 170&nbsp;yr?</td><td>Monthly · 2°</td><td class="num" data-span="got_ersst">1854–2026</td><td><span class="badge live">acquired</span></td></tr>
             <tr><td class="name">Oceanic Niño Index (ONI)</td><td>El Niño / La Niña loading</td><td>Monthly</td><td class="num" data-span="oni">1950–2026</td><td><span class="badge live">acquired</span></td></tr>
             <tr><td class="name">Mae Klong basin rainfall — NASA POWER</td><td>Freshwater salinity shock</td><td>Daily</td><td class="num" data-span="rain">1981–2026</td><td><span class="badge live">acquired</span></td></tr>
+            <tr><td class="name">Mae Klong SPEI-03 drought index</td><td>Drought-driven salinity risk</td><td>Monthly · 0.5°</td><td class="num" data-span="spei">1901–2015</td><td><span class="badge live">acquired</span></td></tr>
           </tbody>
         </table>
       </div>
-      <p class="footnote" style="margin-top:.3rem">All four are open, credential-free, and rebuilt by a single
+
+      <div class="two" style="margin-top:.6rem;align-items:stretch">
+        <div class="stack">
+          <h3 class="kicker" style="letter-spacing:.14em">First measured result — Gulf-of-Thailand daily SST</h3>
+          <p class="muted">Full 45-year record (16,394 days, nothing held back or cherry-picked), the same
+            5-seed kill-test as slide 5, 24-day horizon. <strong class="k">Here the reservoir kind that
+            wins is the disordered (seed-dependent) Hamiltonian</strong>, not the deterministic one on
+            slide 5 — so it, too, is scored as a distribution across seeds, exactly like the classical
+            baseline always is.</p>
+          <p class="footnote">Real skill (NMSE&lt;1) at all 24 lead days. Persistence looks fine while SST
+            barely moves day-to-day, then its error compounds linearly — the reservoir's does not, and it
+            pulls materially ahead of persistence from day 12 out to day 24. The seasonal-mean floor
+            (climatology) is the one baseline it does <em>not</em> clear all the way out: reservoir, ESN,
+            and persistence all converge toward it, and the reservoir dips back under it from day 21 on.
+            That is the honest edge of the demonstrated horizon, not day 24.</p>
+        </div>
+        <div class="stats">
+          <div class="stat cool"><div class="n">16 / 24</div><div class="l">lead-times where the quantum reservoir materially beats the mean classical-ESN curve — never materially beaten back at any horizon</div></div>
+          <div class="stat"><div class="n">3 / 5</div><div class="l">seeds where it beats that seed's own ESN draw at a typical horizon — a real edge, weaker than the 5/5 on slide 5's TAO series</div></div>
+          <div class="stat warm"><div class="n">day ≈20</div><div class="l">where the seasonal climatology floor catches every model, reservoir included — the honest edge, not day 24</div></div>
+          <div class="stat"><div class="n">45 yr</div><div class="l">of daily record used in full — the whole span we have, not a favourable window</div></div>
+        </div>
+      </div>
+      <p class="footnote" style="margin-top:.3rem">All open, credential-free, rebuilt by one
         reproducible script (<span class="kicker">fetch_cp_data.py</span>). Same loader, same forecast
         API, same detectors already validated on open-ocean data — the engine does not care whether the
         buoy sits on the equator or off Samut Songkhram.</p>

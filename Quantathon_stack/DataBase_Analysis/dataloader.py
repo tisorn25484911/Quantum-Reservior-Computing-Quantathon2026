@@ -179,12 +179,24 @@ _TABULAR = {
         index="date", dt=1.0, time_unit="day", unit="mm", tier="real",
         name="Mae Klong basin rainfall (NASA POWER daily)",
     ),
+    # ---- added from the manually-placed new_data/ archive -------------------
+    "got_hadisst": dict(
+        path="real/hadisst_gulf_thailand_monthly_sst.csv", column="sst",
+        index="date", dt=1.0 / 12.0, time_unit="yr", unit="degC", tier="real",
+        name="Gulf of Thailand SST (HadISST1 monthly, cross-check)",
+    ),
+    "maeklong_spei": dict(
+        path="real/spei03_mae_klong_monthly.csv", column="spei",
+        index="date", dt=1.0 / 12.0, time_unit="yr", unit="", tier="real",
+        name="Mae Klong basin SPEI-03 (drought index, monthly)",
+    ),
 }
 
 CHAOTIC_KEYS = tuple(_CHAOTIC)
 REAL_KEYS = ("nino34", "nino12", "tao", "nyc", "lax", "potomac", "potomac15",
              "opsd", "brest", "cuxhaven",
-             "got_sst", "got_ersst", "oni", "maeklong_rain")
+             "got_sst", "got_ersst", "oni", "maeklong_rain",
+             "got_hadisst", "maeklong_spei")
 SURROGATE_KEYS = ("solar", "load")
 ALL_KEYS = CHAOTIC_KEYS + REAL_KEYS + SURROGATE_KEYS
 

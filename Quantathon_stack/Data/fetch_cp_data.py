@@ -28,8 +28,26 @@ Gulf of Thailand, and ENSO modulates both.
       the lower Mae Klong basin (Ratchaburi / Samut Songkhram), 1981 ->
       present. Rain drives salinity swings in estuarine shrimp ponds.
 
+  real/hadisst_gulf_thailand_monthly_sst.csv
+      UK Met Office HadISST1 monthly SST, 1 deg, grid point 13.5N 100.5E
+      (upper Gulf, nearest ocean cell to the OISST/ERSST points), 1870 ->
+      present. Independent of ERSSTv5 (different interpolation and sea-ice
+      treatment) -- a warm-event signal appearing in both is unlikely to be
+      a reconstruction artifact of either. Extracted from a manually-placed
+      raw archive (new_data/hadisst1/); no simple stable download URL.
+
+  real/spei03_mae_klong_monthly.csv
+      SPEIbase v2.x, 3-month Standardized Precipitation-Evapotranspiration
+      Index, 0.5 deg, same point as the rain record (13.75N 99.75E),
+      1901-2015 (this vintage is not updated past 2015). Folds temperature-
+      driven evapotranspiration into the rain signal -- the better single
+      drought/salinity-risk number for the rain-to-pond-salinity link (see
+      TODO.md). Also from a manually-placed raw archive (new_data/speibase/).
+
 All sources are open, no credentials. Cached like fetch_data.py: existing
-outputs are never re-fetched unless --force.
+outputs are never re-fetched unless --force. The last two need their raw
+archive placed under `new_data/` first (see `new_data/README.md`) and
+`pip install netCDF4`; they are skipped with a clear error otherwise.
 
 Usage
 -----
@@ -50,6 +68,20 @@ from fetch_data import _http_get, _say
 
 HERE = Path(__file__).resolve().parent
 REAL = HERE / "real"
+
+# Raw archive dropped in manually (not fetched by this script): yearly OISST
+# v2.1 global NetCDFs, same source/grid as OISST_CHUNK_URL below. When present,
+# extracting the Gulf point locally is exact and avoids ~45 rounds of the
+# ERDDAP year-by-year fetch (see the comment on OISST_CHUNK_URL).
+NEW_DATA = HERE.parent.parent / "new_data"
+OISST_RAW_DIR = NEW_DATA / "oisst_v2.1"
+HADISST_RAW = NEW_DATA / "hadisst1" / "HadISST_sst.nc"
+SPEI_RAW = NEW_DATA / "speibase" / "spei03.nc"
+GOT_LAT, GOT_LON = 13.125, 100.125
+# HadISST1 is 1 deg; 12.5N/99.5E (nearest to the ERSST point) is a masked
+# land cell in this grid -- 13.5N/100.5E is the nearest valid ocean cell.
+GOT_HADISST_LAT, GOT_HADISST_LON = 13.5, 100.5
+MAEKLONG_LAT, MAEKLONG_LON = 13.75, 99.75   # same point as maeklong_rain
 
 # CoastWatch ERDDAP. Verified live 2026-07-23; both points return valid SST
 # (13.125N 100.125E is ocean despite being ~20 km off the Mae Klong mouth).
@@ -85,8 +117,47 @@ def _erddap_frame(text):
     return df[["date", "sst"]]
 
 
+def _oisst_daily_from_local(out):
+    """Extract the Gulf point directly from the local yearly NetCDFs.
+
+    Same source and grid point as the ERDDAP path (OISST v2.1, 13.125N
+    100.125E) -- reading the file beats querying it byte-for-byte, so this
+    is not an approximation, just a faster route to the same series.
+    """
+    import netCDF4 as nc
+
+    files = sorted(OISST_RAW_DIR.glob("sst.day.mean.*.nc"))
+    if not files:
+        raise FileNotFoundError(f"no OISST files under {OISST_RAW_DIR}")
+    frames = []
+    for f in files:
+        ds = nc.Dataset(f)
+        lat, lon = ds.variables["lat"][:], ds.variables["lon"][:]
+        yi = int(np.argmin(np.abs(lat - GOT_LAT)))
+        xi = int(np.argmin(np.abs(lon - GOT_LON)))
+        sst = np.ma.filled(ds.variables["sst"][:, yi, xi], np.nan).astype(float)
+        t = ds.variables["time"]
+        dates = pd.to_datetime(
+            [d.isoformat() for d in nc.num2date(t[:], t.units,
+                                                 only_use_cftime_datetimes=False)])
+        ds.close()
+        frames.append(pd.DataFrame({"date": dates, "sst": sst}))
+    df = (pd.concat(frames).drop_duplicates("date")
+          .set_index("date").sort_index())
+    df = df.reindex(pd.date_range(df.index.min(), df.index.max(), freq="D"))
+    df.to_csv(out, index_label="date")
+    _say(f"  wrote {out.name} from local OISST archive ({len(files)} yearly "
+         f"files): {len(df)} days, {df.index.min():%Y-%m} to "
+         f"{df.index.max():%Y-%m}, {df.sst.isna().mean():.2%} missing")
+
+
 def _oisst_daily(out):
     """Fetch the daily SST point year by year, caching each chunk."""
+    if OISST_RAW_DIR.exists():
+        _say(f"  OISST: local archive found at {OISST_RAW_DIR}, "
+             "extracting directly (skips ERDDAP) ...")
+        _oisst_daily_from_local(out)
+        return
     chunks = out.parent / "_oisst_chunks"
     chunks.mkdir(exist_ok=True)
     end_year = pd.Timestamp.today().year
@@ -172,6 +243,58 @@ def _mae_klong_rain(out):
          f"{df.rain_mm.isna().mean():.2%} missing")
 
 
+def _point_series_from_local(raw_path, lat_name, lon_name, var_name,
+                             target_lat, target_lon, monthly=False):
+    """Nearest-gridpoint time series from a local NetCDF, as a date-indexed df."""
+    import netCDF4 as nc
+
+    ds = nc.Dataset(raw_path)
+    lat, lon = ds.variables[lat_name][:], ds.variables[lon_name][:]
+    yi = int(np.argmin(np.abs(lat - target_lat)))
+    xi = int(np.argmin(np.abs(lon - target_lon)))
+    val = np.ma.filled(ds.variables[var_name][:, yi, xi], np.nan).astype(float)
+    t = ds.variables["time"]
+    raw_dates = nc.num2date(t[:], t.units, only_use_cftime_datetimes=False)
+    dates = pd.to_datetime([pd.Timestamp(d) for d in raw_dates])
+    ds.close()
+    df = pd.DataFrame({"date": dates, var_name: val})
+    if monthly:
+        df["date"] = df["date"].dt.to_period("M").dt.to_timestamp()
+    df = df.drop_duplicates("date").set_index("date").sort_index()
+    freq = "MS" if monthly else "D"
+    return df.reindex(pd.date_range(df.index.min(), df.index.max(), freq=freq))
+
+
+def _got_hadisst(out):
+    if not HADISST_RAW.exists():
+        raise FileNotFoundError(
+            f"{HADISST_RAW} missing -- place the HadISST1 archive under "
+            f"{HADISST_RAW.parent} first (see new_data/README.md)")
+    _say("  HadISST1 Gulf of Thailand monthly (cross-check) ...")
+    df = _point_series_from_local(HADISST_RAW, "latitude", "longitude", "sst",
+                                  GOT_HADISST_LAT, GOT_HADISST_LON, monthly=True)
+    df = df.rename(columns={"sst": "sst"})
+    df.to_csv(out, index_label="date")
+    _say(f"  wrote {out.name}: {len(df)} months, "
+         f"{df.index.min():%Y-%m} to {df.index.max():%Y-%m}, "
+         f"{df.sst.isna().mean():.2%} missing")
+
+
+def _maeklong_spei(out):
+    if not SPEI_RAW.exists():
+        raise FileNotFoundError(
+            f"{SPEI_RAW} missing -- place the SPEIbase archive under "
+            f"{SPEI_RAW.parent} first (see new_data/README.md)")
+    _say("  SPEI-03 Mae Klong basin monthly ...")
+    df = _point_series_from_local(SPEI_RAW, "lat", "lon", "spei",
+                                  MAEKLONG_LAT, MAEKLONG_LON, monthly=True)
+    df.to_csv(out, index_label="date")
+    _say(f"  wrote {out.name}: {len(df)} months, "
+         f"{df.index.min():%Y-%m} to {df.index.max():%Y-%m} "
+         "(SPEIbase vintage, not updated past 2015), "
+         f"{df.spei.isna().mean():.2%} missing")
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--force", action="store_true",
@@ -184,6 +307,8 @@ def main():
         (REAL / "ersst_gulf_thailand_monthly_sst.csv", _ersst_monthly),
         (REAL / "oni_index.csv", _oni),
         (REAL / "nasa_power_mae_klong_daily_rain.csv", _mae_klong_rain),
+        (REAL / "hadisst_gulf_thailand_monthly_sst.csv", _got_hadisst),
+        (REAL / "spei03_mae_klong_monthly.csv", _maeklong_spei),
     ]
     for out, fn in jobs:
         if out.exists() and not a.force:
