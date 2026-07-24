@@ -1,0 +1,7 @@
+# autonomous.yaml -- closed-loop rollout (Phase 4)
+# Stub (Phase 0). Populated in the phase noted below.
+domain_policy: hard_clip    # {hard_clip | smooth_bounded | terminate | wide_encoding}
+n_steps: 60
+warmup_policy: history_only
+telemetry: full
+

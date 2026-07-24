@@ -1,0 +1,6 @@
+# product_metrics.yaml -- product track (Phase 12)
+# Stub (Phase 0). Populated in the phase noted below.
+downstream_target: TBD_operational_series   # e.g. reservoir inflow / wind CF
+arms: [no_index, true_index, persistence_index, classical_index, qrc_index]
+uncertainty: {coverage: true, crps: true, pit: true}
+

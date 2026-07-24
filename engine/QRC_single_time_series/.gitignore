@@ -1,0 +1,10 @@
+# local interpreter (recreated per machine; deps in requirements-lock.txt)
+.venv/
+
+# python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# large regenerable artifacts (figures/features are script-regenerated, G1/G4)
+results/features/*.npy

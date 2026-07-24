@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qrc_single_time_series"
+version = "0.0.0"
+description = "Quantum Reservoir Computing for single-series climate-index forecasting (ENSO/PDO/SOI): exact / ideal-Qiskit / noisy-simulator, teacher-forced and autonomous."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "research-internal" }
+dependencies = [
+    "numpy>=2.0",
+    "scipy>=1.13",
+    "pandas>=2.2",
+    "statsmodels>=0.14",
+    "matplotlib>=3.8",
+    "qiskit>=1.2",
+    "qiskit-aer>=0.15",
+    "pennylane>=0.38",
+    "pyyaml>=6.0",
+    "pytest>=8.0",
+]
+
+[project.optional-dependencies]
+neural = ["torch>=2.2"]      # Phase 7 LSTM/GRU baselines
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+# Exact pinned versions used to produce results live in requirements-lock.txt;
+# utils/resources.py logs them (and the git hash) into every run's metadata.

@@ -1,0 +1,60 @@
+{
+  "root": "/Users/tisornnaphattalung/Desktop/Quantathon2026/final_pitch/QRC_single_time_series",
+  "n_files": 170,
+  "by_extension": {
+    ".py": 108,
+    "(none)": 22,
+    ".md": 11,
+    ".yaml": 11,
+    ".ipynb": 7,
+    ".json": 4,
+    ".csv": 3,
+    ".bib": 1,
+    ".toml": 1,
+    ".txt": 1,
+    ".TAG": 1
+  },
+  "top_level": [
+    ".pytest_cache",
+    "AUTONOMOUS_FORECASTING.md",
+    "IMPLEMENTATION_NOTES.md",
+    "IMPLEMENTATION_PHASES.md",
+    "LIMITATIONS.md",
+    "Makefile",
+    "PLAN.md",
+    "PRODUCT_STRATEGY.md",
+    "README.md",
+    "REFERENCES.md",
+    "THEORY.md",
+    "configs",
+    "data",
+    "handoffs",
+    "notebooks",
+    "pyproject.toml",
+    "references.bib",
+    "requirements-lock.txt",
+    "results",
+    "scripts",
+    "src",
+    "tests"
+  ],
+  "environment": {
+    "python": "3.11.8",
+    "platform": "macOS-26.5.1-arm64-arm-64bit",
+    "packages": {
+      "numpy": "2.4.6",
+      "scipy": "1.17.1",
+      "pandas": "3.0.3",
+      "statsmodels": "0.14.6",
+      "matplotlib": "3.11.0",
+      "qiskit": "2.5.0",
+      "qiskit-aer": "0.17.2",
+      "pennylane": "0.45.1",
+      "pyyaml": "6.0.3",
+      "pytest": "9.1.1",
+      "torch": null
+    },
+    "git_commit": "7c9208ae74a5d0323feee1eda1ce638ba0b0ebc3"
+  },
+  "note": "self-contained: all project artifacts live under this root."
+}

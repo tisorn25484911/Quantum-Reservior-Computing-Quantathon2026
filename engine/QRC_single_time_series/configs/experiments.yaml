@@ -1,0 +1,14 @@
+# experiments.yaml -- experiment registry (all phases)
+# Stub (Phase 0). Populated in the phase noted below.
+# Maps experiment names -> (config files, script, make target). Filled per phase.
+registry:
+  validate_exact_qrc:        # P2: exact-QRC anchors + FN Fig.5/Table-I checks
+    configs: [configs/qrc_exact.yaml]
+    script: scripts/validate_exact_qrc.py
+    make_target: validate-exact
+    outputs: [results/metrics/validate_exact_qrc.json]
+  validate_qiskit_qrc:       # P3: exact<->Trotter<->Qiskit<->noisy validation ladder
+    configs: [configs/qrc_qiskit.yaml, configs/qrc_noisy_simulator.yaml, configs/noise_models.yaml]
+    script: scripts/validate_qiskit_qrc.py
+    make_target: validate-ladder
+    outputs: [results/metrics/validate_qiskit_qrc.json]

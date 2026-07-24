@@ -1,0 +1,12 @@
+# qrc_exact.yaml -- exact NumPy FN reservoir (Phase 2)
+# Stub (Phase 0). Populated in the phase noted below.
+n_qubits: 5
+V_virtual_nodes: 10
+tau: 2.0
+J: 1.0
+h: 0.5
+hamiltonian: fc_tfi        # fully-connected transverse-field Ising (FN)
+reservoir_seed: 7
+observables: z_local       # {z_local | z_and_zz | pauli_strings}
+readout: {mode: ridge, lambda: auto_gcv}   # lambda=0 -> paper-faithful pinv
+
