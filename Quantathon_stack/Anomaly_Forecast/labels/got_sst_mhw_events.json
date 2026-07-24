@@ -1,0 +1,1652 @@
+[
+  {
+    "event_id": 1,
+    "start": "1981-09-05",
+    "end": "1981-09-10",
+    "duration_days": 6,
+    "i_max": 1.3119095107793584,
+    "i_mean": 1.114484526366044,
+    "i_cumulative": 6.686907158196263,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 2,
+    "start": "1981-09-13",
+    "end": "1981-09-19",
+    "duration_days": 7,
+    "i_max": 1.7090628300477562,
+    "i_mean": 1.2191347147762197,
+    "i_cumulative": 8.533943003433539,
+    "category": "Strong"
+  },
+  {
+    "event_id": 3,
+    "start": "1981-10-18",
+    "end": "1981-10-24",
+    "duration_days": 7,
+    "i_max": 2.3116236309152214,
+    "i_mean": 1.7724270154870172,
+    "i_cumulative": 12.406989108409121,
+    "category": "Strong"
+  },
+  {
+    "event_id": 4,
+    "start": "1981-11-01",
+    "end": "1981-11-08",
+    "duration_days": 8,
+    "i_max": 2.0618529026109798,
+    "i_mean": 1.75174165501506,
+    "i_cumulative": 14.01393324012048,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 5,
+    "start": "1982-07-11",
+    "end": "1982-07-27",
+    "duration_days": 17,
+    "i_max": 1.3591202759206666,
+    "i_mean": 1.1984567868250982,
+    "i_cumulative": 20.373765376026668,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 6,
+    "start": "1982-09-22",
+    "end": "1982-09-29",
+    "duration_days": 8,
+    "i_max": 1.0719552960214038,
+    "i_mean": 0.9449726895502946,
+    "i_cumulative": 7.5597815164023565,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 7,
+    "start": "1982-10-28",
+    "end": "1982-11-11",
+    "duration_days": 15,
+    "i_max": 2.593832524617511,
+    "i_mean": 1.4851802214382916,
+    "i_cumulative": 22.277703321574375,
+    "category": "Strong"
+  },
+  {
+    "event_id": 8,
+    "start": "1982-11-20",
+    "end": "1982-11-26",
+    "duration_days": 7,
+    "i_max": 2.657859432708946,
+    "i_mean": 2.2514076004113543,
+    "i_cumulative": 15.75985320287948,
+    "category": "Strong"
+  },
+  {
+    "event_id": 9,
+    "start": "1982-12-09",
+    "end": "1982-12-14",
+    "duration_days": 6,
+    "i_max": 1.711713329065347,
+    "i_mean": 1.628559074917692,
+    "i_cumulative": 9.771354449506152,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 10,
+    "start": "1983-05-17",
+    "end": "1983-05-22",
+    "duration_days": 6,
+    "i_max": 1.6966684071083122,
+    "i_mean": 1.4821736364032134,
+    "i_cumulative": 8.893041818419281,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 11,
+    "start": "1983-08-12",
+    "end": "1983-08-28",
+    "duration_days": 17,
+    "i_max": 1.5646327176285197,
+    "i_mean": 1.2596810640566845,
+    "i_cumulative": 21.414578088963637,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 12,
+    "start": "1983-09-14",
+    "end": "1983-09-28",
+    "duration_days": 15,
+    "i_max": 2.552741379425555,
+    "i_mean": 1.421828700090784,
+    "i_cumulative": 21.32743050136176,
+    "category": "Strong"
+  },
+  {
+    "event_id": 13,
+    "start": "1983-11-02",
+    "end": "1983-11-09",
+    "duration_days": 8,
+    "i_max": 2.0311079554776867,
+    "i_mean": 1.7551518077841015,
+    "i_cumulative": 14.041214462272812,
+    "category": "Strong"
+  },
+  {
+    "event_id": 14,
+    "start": "1984-03-17",
+    "end": "1984-03-28",
+    "duration_days": 12,
+    "i_max": 1.9989054725550055,
+    "i_mean": 1.1951911889322326,
+    "i_cumulative": 14.34229426718679,
+    "category": "Strong"
+  },
+  {
+    "event_id": 15,
+    "start": "1984-04-01",
+    "end": "1984-04-09",
+    "duration_days": 9,
+    "i_max": 1.3819187636016537,
+    "i_mean": 1.200588405949292,
+    "i_cumulative": 10.805295653543627,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 16,
+    "start": "1984-05-15",
+    "end": "1984-05-19",
+    "duration_days": 5,
+    "i_max": 1.2353115704518736,
+    "i_mean": 1.113957331742243,
+    "i_cumulative": 5.569786658711216,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 17,
+    "start": "1984-11-18",
+    "end": "1984-11-23",
+    "duration_days": 6,
+    "i_max": 1.766812071702347,
+    "i_mean": 1.4792535352100948,
+    "i_cumulative": 8.875521211260569,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 18,
+    "start": "1987-08-05",
+    "end": "1987-08-09",
+    "duration_days": 5,
+    "i_max": 1.5375840823787854,
+    "i_mean": 1.2826940686774981,
+    "i_cumulative": 6.413470343387491,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 19,
+    "start": "1987-09-03",
+    "end": "1987-09-07",
+    "duration_days": 5,
+    "i_max": 1.8119095107793584,
+    "i_mean": 1.5659340496193743,
+    "i_cumulative": 7.829670248096871,
+    "category": "Strong"
+  },
+  {
+    "event_id": 20,
+    "start": "1987-09-28",
+    "end": "1987-10-06",
+    "duration_days": 9,
+    "i_max": 1.4710456214226113,
+    "i_mean": 1.185735300867258,
+    "i_cumulative": 10.671617707805321,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 21,
+    "start": "1987-10-19",
+    "end": "1987-10-30",
+    "duration_days": 12,
+    "i_max": 1.9848400451570676,
+    "i_mean": 1.4195949997720143,
+    "i_cumulative": 17.03513999726417,
+    "category": "Strong"
+  },
+  {
+    "event_id": 22,
+    "start": "1987-11-15",
+    "end": "1987-11-29",
+    "duration_days": 15,
+    "i_max": 2.250843863240199,
+    "i_mean": 1.6888244819081766,
+    "i_cumulative": 25.332367228622648,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 23,
+    "start": "1988-02-27",
+    "end": "1988-03-06",
+    "duration_days": 9,
+    "i_max": 1.068192365239785,
+    "i_mean": 0.9907589935741904,
+    "i_cumulative": 8.916830942167714,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 24,
+    "start": "1988-03-10",
+    "end": "1988-03-17",
+    "duration_days": 8,
+    "i_max": 1.5878609462290498,
+    "i_mean": 1.155463673709109,
+    "i_cumulative": 9.243709389672873,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 25,
+    "start": "1988-05-25",
+    "end": "1988-06-01",
+    "duration_days": 8,
+    "i_max": 1.684072714140921,
+    "i_mean": 1.3188077419967126,
+    "i_cumulative": 10.5504619359737,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 26,
+    "start": "1988-07-03",
+    "end": "1988-07-16",
+    "duration_days": 14,
+    "i_max": 1.8478898250695437,
+    "i_mean": 1.57515113589784,
+    "i_cumulative": 22.05211590256976,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 27,
+    "start": "1988-09-22",
+    "end": "1988-09-30",
+    "duration_days": 9,
+    "i_max": 1.8219257436772835,
+    "i_mean": 1.5118022047995596,
+    "i_cumulative": 13.606219843196037,
+    "category": "Strong"
+  },
+  {
+    "event_id": 28,
+    "start": "1989-08-30",
+    "end": "1989-09-05",
+    "duration_days": 7,
+    "i_max": 1.1441398959938276,
+    "i_mean": 0.9962516135301124,
+    "i_cumulative": 6.973761294710787,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 29,
+    "start": "1989-10-15",
+    "end": "1989-10-19",
+    "duration_days": 5,
+    "i_max": 1.2160259211401332,
+    "i_mean": 1.029012337663191,
+    "i_cumulative": 5.1450616883159555,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 30,
+    "start": "1990-02-06",
+    "end": "1990-02-10",
+    "duration_days": 5,
+    "i_max": 1.5950549366815423,
+    "i_mean": 1.3497553965546978,
+    "i_cumulative": 6.748776982773489,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 31,
+    "start": "1990-04-30",
+    "end": "1990-05-04",
+    "duration_days": 5,
+    "i_max": 1.1897843156741885,
+    "i_mean": 1.0907332698341001,
+    "i_cumulative": 5.453666349170501,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 32,
+    "start": "1990-05-09",
+    "end": "1990-05-14",
+    "duration_days": 6,
+    "i_max": 1.374243739250236,
+    "i_mean": 1.2395272114798157,
+    "i_cumulative": 7.437163268878894,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 33,
+    "start": "1990-05-26",
+    "end": "1990-05-31",
+    "duration_days": 6,
+    "i_max": 1.247202713445251,
+    "i_mean": 1.1576325382072319,
+    "i_cumulative": 6.945795229243391,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 34,
+    "start": "1991-01-20",
+    "end": "1991-01-24",
+    "duration_days": 5,
+    "i_max": 1.7710471629630362,
+    "i_mean": 1.5314144806475034,
+    "i_cumulative": 7.6570724032375175,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 35,
+    "start": "1991-01-27",
+    "end": "1991-02-01",
+    "duration_days": 6,
+    "i_max": 1.6393349846087588,
+    "i_mean": 1.4054566202819394,
+    "i_cumulative": 8.432739721691636,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 36,
+    "start": "1991-06-01",
+    "end": "1991-06-05",
+    "duration_days": 5,
+    "i_max": 1.2440409849582643,
+    "i_mean": 1.1891087964413103,
+    "i_cumulative": 5.9455439822065514,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 37,
+    "start": "1991-08-02",
+    "end": "1991-08-10",
+    "duration_days": 9,
+    "i_max": 1.6491949368548653,
+    "i_mean": 1.4075542639919536,
+    "i_cumulative": 12.667988375927582,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 38,
+    "start": "1992-06-04",
+    "end": "1992-06-08",
+    "duration_days": 5,
+    "i_max": 1.113425079375535,
+    "i_mean": 1.0777442920569236,
+    "i_cumulative": 5.388721460284618,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 39,
+    "start": "1992-09-26",
+    "end": "1992-09-30",
+    "duration_days": 5,
+    "i_max": 0.8996426631744754,
+    "i_mean": 0.8499530018855872,
+    "i_cumulative": 4.249765009427936,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 40,
+    "start": "1993-09-24",
+    "end": "1993-09-29",
+    "duration_days": 6,
+    "i_max": 1.1511277388034813,
+    "i_mean": 0.997729302726689,
+    "i_cumulative": 5.986375816360134,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 41,
+    "start": "1994-02-18",
+    "end": "1994-02-22",
+    "duration_days": 5,
+    "i_max": 1.4558260916338526,
+    "i_mean": 1.2275869180057193,
+    "i_cumulative": 6.137934590028596,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 42,
+    "start": "1995-06-13",
+    "end": "1995-06-18",
+    "duration_days": 6,
+    "i_max": 1.4825196917805172,
+    "i_mean": 1.2598989601358994,
+    "i_cumulative": 7.5593937608153965,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 43,
+    "start": "1996-06-05",
+    "end": "1996-06-15",
+    "duration_days": 11,
+    "i_max": 1.615093017719829,
+    "i_mean": 1.322856977909055,
+    "i_cumulative": 14.551426756999607,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 44,
+    "start": "1996-06-23",
+    "end": "1996-06-27",
+    "duration_days": 5,
+    "i_max": 1.1586281635661102,
+    "i_mean": 1.1126910154281133,
+    "i_cumulative": 5.563455077140567,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 45,
+    "start": "1996-07-01",
+    "end": "1996-07-05",
+    "duration_days": 5,
+    "i_max": 1.793907723375547,
+    "i_mean": 1.5016631295137983,
+    "i_cumulative": 7.508315647568992,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 46,
+    "start": "1997-05-06",
+    "end": "1997-05-11",
+    "duration_days": 6,
+    "i_max": 1.1804220410269615,
+    "i_mean": 0.8760289701198906,
+    "i_cumulative": 5.256173820719344,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 47,
+    "start": "1997-06-17",
+    "end": "1997-06-26",
+    "duration_days": 10,
+    "i_max": 1.9641395069170784,
+    "i_mean": 1.4146879167081323,
+    "i_cumulative": 14.146879167081323,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 48,
+    "start": "1997-10-12",
+    "end": "1997-10-16",
+    "duration_days": 5,
+    "i_max": 1.5768381465565113,
+    "i_mean": 1.298914156976219,
+    "i_cumulative": 6.494570784881095,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 49,
+    "start": "1997-10-21",
+    "end": "1997-10-29",
+    "duration_days": 9,
+    "i_max": 1.906029976055187,
+    "i_mean": 1.3964420224965903,
+    "i_cumulative": 12.567978202469313,
+    "category": "Strong"
+  },
+  {
+    "event_id": 50,
+    "start": "1997-12-03",
+    "end": "1997-12-08",
+    "duration_days": 6,
+    "i_max": 2.034054486562777,
+    "i_mean": 1.7828452503382113,
+    "i_cumulative": 10.697071502029267,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 51,
+    "start": "1997-12-13",
+    "end": "1997-12-19",
+    "duration_days": 7,
+    "i_max": 1.8986183369730725,
+    "i_mean": 1.5639563306518969,
+    "i_cumulative": 10.947694314563279,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 52,
+    "start": "1997-12-22",
+    "end": "1998-02-03",
+    "duration_days": 44,
+    "i_max": 2.7945674329442625,
+    "i_mean": 1.9392467702853577,
+    "i_cumulative": 85.32685789255574,
+    "category": "Strong"
+  },
+  {
+    "event_id": 53,
+    "start": "1998-02-06",
+    "end": "1998-03-12",
+    "duration_days": 35,
+    "i_max": 2.223971567646025,
+    "i_mean": 1.6424547187244531,
+    "i_cumulative": 57.48591515535586,
+    "category": "Strong"
+  },
+  {
+    "event_id": 54,
+    "start": "1998-03-15",
+    "end": "1998-03-27",
+    "duration_days": 13,
+    "i_max": 1.426285269638342,
+    "i_mean": 1.0241057979542485,
+    "i_cumulative": 13.31337537340523,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 55,
+    "start": "1998-03-31",
+    "end": "1998-04-06",
+    "duration_days": 7,
+    "i_max": 1.4395829542874097,
+    "i_mean": 1.1373453784831307,
+    "i_cumulative": 7.961417649381914,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 56,
+    "start": "1998-04-29",
+    "end": "1998-05-11",
+    "duration_days": 13,
+    "i_max": 1.2642450362473063,
+    "i_mean": 1.0729565036342579,
+    "i_cumulative": 13.948434547245352,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 57,
+    "start": "1998-06-19",
+    "end": "1998-07-02",
+    "duration_days": 14,
+    "i_max": 1.8596479520303646,
+    "i_mean": 1.3515649214484757,
+    "i_cumulative": 18.92190890027866,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 58,
+    "start": "1998-07-11",
+    "end": "1998-07-21",
+    "duration_days": 11,
+    "i_max": 2.4547278751958714,
+    "i_mean": 1.9626372074366856,
+    "i_cumulative": 21.58900928180354,
+    "category": "Strong"
+  },
+  {
+    "event_id": 59,
+    "start": "1998-08-09",
+    "end": "1998-08-17",
+    "duration_days": 9,
+    "i_max": 1.6883747410331438,
+    "i_mean": 1.3406562417988381,
+    "i_cumulative": 12.065906176189543,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 60,
+    "start": "1998-08-24",
+    "end": "1998-08-30",
+    "duration_days": 7,
+    "i_max": 1.8777931681359874,
+    "i_mean": 1.5700375533639976,
+    "i_cumulative": 10.990262873547984,
+    "category": "Strong"
+  },
+  {
+    "event_id": 61,
+    "start": "1998-10-19",
+    "end": "1998-10-31",
+    "duration_days": 13,
+    "i_max": 1.9280446500955328,
+    "i_mean": 1.494117313740407,
+    "i_cumulative": 19.42352507862529,
+    "category": "Strong"
+  },
+  {
+    "event_id": 62,
+    "start": "1999-11-12",
+    "end": "1999-11-17",
+    "duration_days": 6,
+    "i_max": 1.6693051892874422,
+    "i_mean": 1.552027791328716,
+    "i_cumulative": 9.312166747972295,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 63,
+    "start": "2001-09-19",
+    "end": "2001-09-30",
+    "duration_days": 12,
+    "i_max": 1.1507320499140512,
+    "i_mean": 1.004921587999655,
+    "i_cumulative": 12.05905905599586,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 64,
+    "start": "2002-12-05",
+    "end": "2002-12-09",
+    "duration_days": 5,
+    "i_max": 2.6988168585918046,
+    "i_mean": 2.1360373563570705,
+    "i_cumulative": 10.680186781785352,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 65,
+    "start": "2002-12-13",
+    "end": "2003-01-05",
+    "duration_days": 24,
+    "i_max": 2.3535352671484304,
+    "i_mean": 1.7931767617424843,
+    "i_cumulative": 43.036242281819625,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 66,
+    "start": "2003-04-03",
+    "end": "2003-04-13",
+    "duration_days": 11,
+    "i_max": 1.4019192213653255,
+    "i_mean": 1.0100937575432907,
+    "i_cumulative": 11.111031332976196,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 67,
+    "start": "2004-11-11",
+    "end": "2004-11-21",
+    "duration_days": 11,
+    "i_max": 2.0670326781063117,
+    "i_mean": 1.4392005830576802,
+    "i_cumulative": 15.831206413634483,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 68,
+    "start": "2006-04-06",
+    "end": "2006-04-10",
+    "duration_days": 5,
+    "i_max": 1.338538221879439,
+    "i_mean": 1.187130623721424,
+    "i_cumulative": 5.935653118607121,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 69,
+    "start": "2006-04-14",
+    "end": "2006-04-19",
+    "duration_days": 6,
+    "i_max": 0.9421230049543503,
+    "i_mean": 0.9027371907475032,
+    "i_cumulative": 5.4164231444850195,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 70,
+    "start": "2006-05-01",
+    "end": "2006-05-07",
+    "duration_days": 7,
+    "i_max": 1.4903482647818436,
+    "i_mean": 1.2950916401085766,
+    "i_cumulative": 9.065641480760036,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 71,
+    "start": "2006-11-17",
+    "end": "2006-12-01",
+    "duration_days": 15,
+    "i_max": 2.3608444735917615,
+    "i_mean": 1.6917762087874466,
+    "i_cumulative": 25.3766431318117,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 72,
+    "start": "2006-12-04",
+    "end": "2006-12-16",
+    "duration_days": 13,
+    "i_max": 2.5278117395216455,
+    "i_mean": 2.0927290540609573,
+    "i_cumulative": 27.205477702792447,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 73,
+    "start": "2007-04-16",
+    "end": "2007-04-22",
+    "duration_days": 7,
+    "i_max": 1.4921222420149007,
+    "i_mean": 1.2399612661946884,
+    "i_cumulative": 8.679728863362818,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 74,
+    "start": "2007-06-10",
+    "end": "2007-06-18",
+    "duration_days": 9,
+    "i_max": 1.7446427817918,
+    "i_mean": 1.4225981099035612,
+    "i_cumulative": 12.80338298913205,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 75,
+    "start": "2007-06-23",
+    "end": "2007-06-30",
+    "duration_days": 8,
+    "i_max": 1.2142302504732463,
+    "i_mean": 1.1274252271139509,
+    "i_cumulative": 9.019401816911607,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 76,
+    "start": "2008-08-25",
+    "end": "2008-08-29",
+    "duration_days": 5,
+    "i_max": 1.1451797451791137,
+    "i_mean": 1.0887125861353417,
+    "i_cumulative": 5.443562930676709,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 77,
+    "start": "2008-10-07",
+    "end": "2008-10-20",
+    "duration_days": 14,
+    "i_max": 1.6032185587132624,
+    "i_mean": 1.277546997440544,
+    "i_cumulative": 17.885657964167617,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 78,
+    "start": "2009-04-15",
+    "end": "2009-04-20",
+    "duration_days": 6,
+    "i_max": 1.3358726874358062,
+    "i_mean": 1.1039269269891676,
+    "i_cumulative": 6.623561561935006,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 79,
+    "start": "2009-08-20",
+    "end": "2009-08-25",
+    "duration_days": 6,
+    "i_max": 1.1129901224100962,
+    "i_mean": 1.0173313057589681,
+    "i_cumulative": 6.103987834553809,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 80,
+    "start": "2009-09-26",
+    "end": "2009-09-30",
+    "duration_days": 5,
+    "i_max": 0.8949305773946676,
+    "i_mean": 0.8639525593807044,
+    "i_cumulative": 4.319762796903522,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 81,
+    "start": "2009-10-26",
+    "end": "2009-10-31",
+    "duration_days": 6,
+    "i_max": 1.1925451375638758,
+    "i_mean": 1.0680645118594068,
+    "i_cumulative": 6.40838707115644,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 82,
+    "start": "2010-01-02",
+    "end": "2010-01-14",
+    "duration_days": 13,
+    "i_max": 1.6698339035317638,
+    "i_mean": 1.4455434036771209,
+    "i_cumulative": 18.79206424780257,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 83,
+    "start": "2010-02-24",
+    "end": "2010-03-09",
+    "duration_days": 14,
+    "i_max": 1.3261734038227715,
+    "i_mean": 1.056406929353456,
+    "i_cumulative": 14.789697010948384,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 84,
+    "start": "2010-05-06",
+    "end": "2010-05-17",
+    "duration_days": 12,
+    "i_max": 1.1380183865947089,
+    "i_mean": 1.0357941106073472,
+    "i_cumulative": 12.429529327288165,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 85,
+    "start": "2010-07-08",
+    "end": "2010-07-29",
+    "duration_days": 22,
+    "i_max": 1.5369650082853887,
+    "i_mean": 1.2076861111183206,
+    "i_cumulative": 26.569094444603053,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 86,
+    "start": "2010-08-27",
+    "end": "2010-09-01",
+    "duration_days": 6,
+    "i_max": 1.1300446184965658,
+    "i_mean": 1.0254609233822645,
+    "i_cumulative": 6.152765540293586,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 87,
+    "start": "2011-05-20",
+    "end": "2011-05-24",
+    "duration_days": 5,
+    "i_max": 1.155015760666,
+    "i_mean": 1.100948115858749,
+    "i_cumulative": 5.504740579293745,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 88,
+    "start": "2011-05-30",
+    "end": "2011-06-09",
+    "duration_days": 11,
+    "i_max": 1.9034240875542459,
+    "i_mean": 1.5528516915685016,
+    "i_cumulative": 17.081368607253516,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 89,
+    "start": "2012-03-11",
+    "end": "2012-03-16",
+    "duration_days": 6,
+    "i_max": 1.2475601852780258,
+    "i_mean": 1.1528079301654,
+    "i_cumulative": 6.9168475809924,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 90,
+    "start": "2012-10-13",
+    "end": "2012-10-23",
+    "duration_days": 11,
+    "i_max": 1.2371392974406064,
+    "i_mean": 1.1268566408719243,
+    "i_cumulative": 12.395423049591166,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 91,
+    "start": "2012-10-27",
+    "end": "2012-10-31",
+    "duration_days": 5,
+    "i_max": 1.3380444975076422,
+    "i_mean": 1.24731977311747,
+    "i_cumulative": 6.23659886558735,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 92,
+    "start": "2012-11-09",
+    "end": "2012-11-18",
+    "duration_days": 10,
+    "i_max": 1.4482228483272763,
+    "i_mean": 1.2909583286386084,
+    "i_cumulative": 12.909583286386084,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 93,
+    "start": "2012-12-03",
+    "end": "2012-12-31",
+    "duration_days": 29,
+    "i_max": 2.7512346942636903,
+    "i_mean": 2.11229705953275,
+    "i_cumulative": 61.256614726449754,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 94,
+    "start": "2013-01-09",
+    "end": "2013-01-17",
+    "duration_days": 9,
+    "i_max": 1.613387483166111,
+    "i_mean": 1.4914049185020248,
+    "i_cumulative": 13.422644266518223,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 95,
+    "start": "2013-05-28",
+    "end": "2013-06-01",
+    "duration_days": 5,
+    "i_max": 1.1495371172505031,
+    "i_mean": 1.1156589098619925,
+    "i_cumulative": 5.5782945493099625,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 96,
+    "start": "2014-05-21",
+    "end": "2014-06-06",
+    "duration_days": 17,
+    "i_max": 1.8823005346259087,
+    "i_mean": 1.4254813443290781,
+    "i_cumulative": 24.23318285359433,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 97,
+    "start": "2014-12-04",
+    "end": "2014-12-08",
+    "duration_days": 5,
+    "i_max": 1.9040534184475426,
+    "i_mean": 1.649080355244299,
+    "i_cumulative": 8.245401776221495,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 98,
+    "start": "2015-08-18",
+    "end": "2015-08-29",
+    "duration_days": 12,
+    "i_max": 2.102020951473353,
+    "i_mean": 1.5980671358403737,
+    "i_cumulative": 19.176805630084484,
+    "category": "Strong"
+  },
+  {
+    "event_id": 99,
+    "start": "2015-09-06",
+    "end": "2015-09-11",
+    "duration_days": 6,
+    "i_max": 1.027527593237913,
+    "i_mean": 0.9621173856778112,
+    "i_cumulative": 5.772704314066868,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 100,
+    "start": "2015-09-18",
+    "end": "2015-09-23",
+    "duration_days": 6,
+    "i_max": 1.6108950817223793,
+    "i_mean": 1.25639731487027,
+    "i_cumulative": 7.53838388922162,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 101,
+    "start": "2015-10-17",
+    "end": "2015-10-26",
+    "duration_days": 10,
+    "i_max": 1.641623554621276,
+    "i_mean": 1.350612539047137,
+    "i_cumulative": 13.506125390471372,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 102,
+    "start": "2015-10-29",
+    "end": "2015-11-02",
+    "duration_days": 5,
+    "i_max": 1.6325437642728602,
+    "i_mean": 1.4640394802224015,
+    "i_cumulative": 7.320197401112008,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 103,
+    "start": "2015-11-16",
+    "end": "2015-12-20",
+    "duration_days": 35,
+    "i_max": 2.687811586933755,
+    "i_mean": 2.0738990646892885,
+    "i_cumulative": 72.5864672641251,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 104,
+    "start": "2015-12-25",
+    "end": "2016-01-24",
+    "duration_days": 31,
+    "i_max": 2.5194474226801553,
+    "i_mean": 1.8279707267163894,
+    "i_cumulative": 56.66709252820807,
+    "category": "Strong"
+  },
+  {
+    "event_id": 105,
+    "start": "2016-05-19",
+    "end": "2016-06-01",
+    "duration_days": 14,
+    "i_max": 1.8440725615530305,
+    "i_mean": 1.6199416951117045,
+    "i_cumulative": 22.679183731563864,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 106,
+    "start": "2016-06-09",
+    "end": "2016-06-18",
+    "duration_days": 10,
+    "i_max": 2.308826336716159,
+    "i_mean": 1.7492790707302006,
+    "i_cumulative": 17.492790707302007,
+    "category": "Strong"
+  },
+  {
+    "event_id": 107,
+    "start": "2016-06-28",
+    "end": "2016-07-13",
+    "duration_days": 16,
+    "i_max": 1.496964092758045,
+    "i_mean": 1.26594278274044,
+    "i_cumulative": 20.25508452384704,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 108,
+    "start": "2016-07-17",
+    "end": "2016-07-26",
+    "duration_days": 10,
+    "i_max": 1.1897934150136464,
+    "i_mean": 1.0711091838624118,
+    "i_cumulative": 10.711091838624117,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 109,
+    "start": "2016-08-07",
+    "end": "2016-08-14",
+    "duration_days": 8,
+    "i_max": 1.5024922603036686,
+    "i_mean": 1.1724147691288551,
+    "i_cumulative": 9.379318153030841,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 110,
+    "start": "2016-11-14",
+    "end": "2016-11-19",
+    "duration_days": 6,
+    "i_max": 1.3806737137213716,
+    "i_mean": 1.3041568658840543,
+    "i_cumulative": 7.824941195304326,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 111,
+    "start": "2017-09-11",
+    "end": "2017-09-19",
+    "duration_days": 9,
+    "i_max": 1.2027409979558321,
+    "i_mean": 1.1331271038053354,
+    "i_cumulative": 10.19814393424802,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 112,
+    "start": "2017-10-20",
+    "end": "2017-10-29",
+    "duration_days": 10,
+    "i_max": 1.43012961875192,
+    "i_mean": 1.2089600917857193,
+    "i_cumulative": 12.089600917857194,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 113,
+    "start": "2018-10-10",
+    "end": "2018-10-15",
+    "duration_days": 6,
+    "i_max": 1.277380162460016,
+    "i_mean": 1.1259419990929864,
+    "i_cumulative": 6.755651994557919,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 114,
+    "start": "2018-10-26",
+    "end": "2018-10-30",
+    "duration_days": 5,
+    "i_max": 1.0427889105162045,
+    "i_mean": 0.9760005200293783,
+    "i_cumulative": 4.8800026001468915,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 115,
+    "start": "2018-11-20",
+    "end": "2018-11-26",
+    "duration_days": 7,
+    "i_max": 1.7971764550530658,
+    "i_mean": 1.5642648195624425,
+    "i_cumulative": 10.949853736937097,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 116,
+    "start": "2018-12-03",
+    "end": "2018-12-12",
+    "duration_days": 10,
+    "i_max": 2.4040534184475426,
+    "i_mean": 2.0984804437959896,
+    "i_cumulative": 20.984804437959898,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 117,
+    "start": "2018-12-20",
+    "end": "2018-12-29",
+    "duration_days": 10,
+    "i_max": 1.7786047309957524,
+    "i_mean": 1.6480951850831453,
+    "i_cumulative": 16.480951850831453,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 118,
+    "start": "2019-01-12",
+    "end": "2019-01-22",
+    "duration_days": 11,
+    "i_max": 1.7183181555739608,
+    "i_mean": 1.5107778261558122,
+    "i_cumulative": 16.618556087713934,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 119,
+    "start": "2019-04-08",
+    "end": "2019-04-12",
+    "duration_days": 5,
+    "i_max": 0.9365243137989836,
+    "i_mean": 0.884080999193538,
+    "i_cumulative": 4.42040499596769,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 120,
+    "start": "2019-04-15",
+    "end": "2019-04-22",
+    "duration_days": 8,
+    "i_max": 1.082604751512335,
+    "i_mean": 0.9914146906935706,
+    "i_cumulative": 7.931317525548565,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 121,
+    "start": "2019-04-29",
+    "end": "2019-05-12",
+    "duration_days": 14,
+    "i_max": 1.7011752752264933,
+    "i_mean": 1.1518894244299118,
+    "i_cumulative": 16.126451942018765,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 122,
+    "start": "2019-05-18",
+    "end": "2019-05-23",
+    "duration_days": 6,
+    "i_max": 1.1639783171264995,
+    "i_mean": 1.1022575178920129,
+    "i_cumulative": 6.613545107352078,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 123,
+    "start": "2019-08-05",
+    "end": "2019-08-11",
+    "duration_days": 7,
+    "i_max": 0.8837643251391114,
+    "i_mean": 0.865870912640043,
+    "i_cumulative": 6.061096388480301,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 124,
+    "start": "2019-10-17",
+    "end": "2019-11-01",
+    "duration_days": 16,
+    "i_max": 1.6327890631040916,
+    "i_mean": 1.217411643074406,
+    "i_cumulative": 19.478586289190496,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 125,
+    "start": "2020-01-08",
+    "end": "2020-01-23",
+    "duration_days": 16,
+    "i_max": 1.9144059946576633,
+    "i_mean": 1.5178982712772722,
+    "i_cumulative": 24.286372340436355,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 126,
+    "start": "2020-07-16",
+    "end": "2020-08-14",
+    "duration_days": 30,
+    "i_max": 1.5941596790958812,
+    "i_mean": 1.263469150495981,
+    "i_cumulative": 37.904074514879426,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 127,
+    "start": "2020-08-18",
+    "end": "2020-10-09",
+    "duration_days": 53,
+    "i_max": 1.9751796688851684,
+    "i_mean": 1.2692625950323777,
+    "i_cumulative": 67.27091753671601,
+    "category": "Strong"
+  },
+  {
+    "event_id": 128,
+    "start": "2021-05-02",
+    "end": "2021-05-07",
+    "duration_days": 6,
+    "i_max": 0.9893477606750096,
+    "i_mean": 0.9507447109116777,
+    "i_cumulative": 5.704468265470066,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 129,
+    "start": "2021-10-10",
+    "end": "2021-10-17",
+    "duration_days": 8,
+    "i_max": 1.067981550304303,
+    "i_mean": 1.0008496491207532,
+    "i_cumulative": 8.006797192966026,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 130,
+    "start": "2022-01-24",
+    "end": "2022-01-31",
+    "duration_days": 8,
+    "i_max": 1.3541764748760734,
+    "i_mean": 1.3039377702179786,
+    "i_cumulative": 10.431502161743829,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 131,
+    "start": "2022-03-18",
+    "end": "2022-04-01",
+    "duration_days": 15,
+    "i_max": 1.2285923872714903,
+    "i_mean": 1.0618642387624841,
+    "i_cumulative": 15.927963581437261,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 132,
+    "start": "2022-06-17",
+    "end": "2022-06-21",
+    "duration_days": 5,
+    "i_max": 1.469648562381927,
+    "i_mean": 1.2641792037456732,
+    "i_cumulative": 6.320896018728366,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 133,
+    "start": "2022-07-16",
+    "end": "2022-07-20",
+    "duration_days": 5,
+    "i_max": 1.3929047026126113,
+    "i_mean": 1.0842357546376562,
+    "i_cumulative": 5.421178773188281,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 134,
+    "start": "2022-09-01",
+    "end": "2022-09-18",
+    "duration_days": 18,
+    "i_max": 2.104018977660239,
+    "i_mean": 1.1280711046088165,
+    "i_cumulative": 20.305279882958697,
+    "category": "Strong"
+  },
+  {
+    "event_id": 135,
+    "start": "2023-04-20",
+    "end": "2023-04-26",
+    "duration_days": 7,
+    "i_max": 1.3217182964873118,
+    "i_mean": 1.022232208337186,
+    "i_cumulative": 7.155625458360301,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 136,
+    "start": "2023-05-06",
+    "end": "2023-06-02",
+    "duration_days": 28,
+    "i_max": 1.7271534838634466,
+    "i_mean": 1.2492161985649577,
+    "i_cumulative": 34.97805355981882,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 137,
+    "start": "2023-07-13",
+    "end": "2023-07-17",
+    "duration_days": 5,
+    "i_max": 1.378444435589472,
+    "i_mean": 1.119224725799711,
+    "i_cumulative": 5.596123628998555,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 138,
+    "start": "2023-07-20",
+    "end": "2023-08-15",
+    "duration_days": 27,
+    "i_max": 2.1401033802349403,
+    "i_mean": 1.1211274338901052,
+    "i_cumulative": 30.27044071503284,
+    "category": "Strong"
+  },
+  {
+    "event_id": 139,
+    "start": "2023-08-27",
+    "end": "2023-09-06",
+    "duration_days": 11,
+    "i_max": 1.2919090530156865,
+    "i_mean": 1.0930974545907233,
+    "i_cumulative": 12.024072000497956,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 140,
+    "start": "2023-09-20",
+    "end": "2023-09-25",
+    "duration_days": 6,
+    "i_max": 1.4419561352548023,
+    "i_mean": 1.0396811032225326,
+    "i_cumulative": 6.238086619335196,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 141,
+    "start": "2023-10-11",
+    "end": "2023-11-17",
+    "duration_days": 38,
+    "i_max": 1.6793054181692781,
+    "i_mean": 1.190298201850507,
+    "i_cumulative": 45.23133167031927,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 142,
+    "start": "2023-12-09",
+    "end": "2023-12-22",
+    "duration_days": 14,
+    "i_max": 2.244313061621881,
+    "i_mean": 1.9212012290688245,
+    "i_cumulative": 26.896817206963544,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 143,
+    "start": "2024-01-09",
+    "end": "2024-01-24",
+    "duration_days": 16,
+    "i_max": 1.84944734638621,
+    "i_mean": 1.5675130800184747,
+    "i_cumulative": 25.080209280295595,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 144,
+    "start": "2024-02-04",
+    "end": "2024-02-11",
+    "duration_days": 8,
+    "i_max": 1.5771904410971693,
+    "i_mean": 1.3918403689528818,
+    "i_cumulative": 11.134722951623054,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 145,
+    "start": "2024-03-04",
+    "end": "2024-03-16",
+    "duration_days": 13,
+    "i_max": 1.2003754812092033,
+    "i_mean": 0.9703677709935545,
+    "i_cumulative": 12.614781022916208,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 146,
+    "start": "2024-03-31",
+    "end": "2024-04-08",
+    "duration_days": 9,
+    "i_max": 1.0365081412351707,
+    "i_mean": 0.9769738248392308,
+    "i_cumulative": 8.792764423553077,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 147,
+    "start": "2024-04-11",
+    "end": "2024-05-16",
+    "duration_days": 36,
+    "i_max": 1.7839002872142622,
+    "i_mean": 1.1537946075262542,
+    "i_cumulative": 41.53660587094515,
+    "category": "Strong"
+  },
+  {
+    "event_id": 148,
+    "start": "2024-05-26",
+    "end": "2024-05-30",
+    "duration_days": 5,
+    "i_max": 1.5457935275453494,
+    "i_mean": 1.3229661624941997,
+    "i_cumulative": 6.6148308124709985,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 149,
+    "start": "2024-06-03",
+    "end": "2024-06-07",
+    "duration_days": 5,
+    "i_max": 1.3493762015364155,
+    "i_mean": 1.1725992601754505,
+    "i_cumulative": 5.862996300877253,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 150,
+    "start": "2024-07-05",
+    "end": "2024-07-11",
+    "duration_days": 7,
+    "i_max": 1.4458873411310975,
+    "i_mean": 1.2519191957955063,
+    "i_cumulative": 8.763434370568543,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 151,
+    "start": "2024-07-14",
+    "end": "2024-07-18",
+    "duration_days": 5,
+    "i_max": 1.309339462533842,
+    "i_mean": 1.1744811848391534,
+    "i_cumulative": 5.872405924195768,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 152,
+    "start": "2024-08-09",
+    "end": "2024-08-18",
+    "duration_days": 10,
+    "i_max": 1.4146330990982463,
+    "i_mean": 1.2200934707291105,
+    "i_cumulative": 12.200934707291104,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 153,
+    "start": "2024-08-21",
+    "end": "2024-09-02",
+    "duration_days": 13,
+    "i_max": 1.692529910657182,
+    "i_mean": 1.19780159822684,
+    "i_cumulative": 15.57142077694892,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 154,
+    "start": "2024-09-05",
+    "end": "2024-09-11",
+    "duration_days": 7,
+    "i_max": 1.2551634994536656,
+    "i_mean": 1.056373327255516,
+    "i_cumulative": 7.394613290788612,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 155,
+    "start": "2024-09-14",
+    "end": "2024-09-19",
+    "duration_days": 6,
+    "i_max": 1.1976967803194363,
+    "i_mean": 1.0745108134585746,
+    "i_cumulative": 6.447064880751448,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 156,
+    "start": "2024-09-25",
+    "end": "2024-10-19",
+    "duration_days": 25,
+    "i_max": 1.6010466895378457,
+    "i_mean": 1.1965650701662676,
+    "i_cumulative": 29.914126754156687,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 157,
+    "start": "2024-10-22",
+    "end": "2024-11-07",
+    "duration_days": 17,
+    "i_max": 1.7758591339618448,
+    "i_mean": 1.405932639275938,
+    "i_cumulative": 23.900854867690946,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 158,
+    "start": "2024-11-12",
+    "end": "2024-11-28",
+    "duration_days": 17,
+    "i_max": 1.6493047315237703,
+    "i_mean": 1.3927008175834832,
+    "i_cumulative": 23.675913898919212,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 159,
+    "start": "2025-08-02",
+    "end": "2025-08-10",
+    "duration_days": 9,
+    "i_max": 1.3337565648590726,
+    "i_mean": 0.9897766727104869,
+    "i_cumulative": 8.907990054394382,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 160,
+    "start": "2026-02-26",
+    "end": "2026-03-22",
+    "duration_days": 25,
+    "i_max": 1.5742773357680946,
+    "i_mean": 1.1647712554136747,
+    "i_cumulative": 29.119281385341868,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 161,
+    "start": "2026-04-07",
+    "end": "2026-04-19",
+    "duration_days": 13,
+    "i_max": 1.084494010910376,
+    "i_mean": 0.9148541732249991,
+    "i_cumulative": 11.893104251924989,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 162,
+    "start": "2026-05-24",
+    "end": "2026-06-06",
+    "duration_days": 14,
+    "i_max": 2.270964950830006,
+    "i_mean": 1.4159208096233997,
+    "i_cumulative": 19.822891334727597,
+    "category": "Strong"
+  },
+  {
+    "event_id": 163,
+    "start": "2026-06-17",
+    "end": "2026-06-27",
+    "duration_days": 11,
+    "i_max": 1.5086285450358332,
+    "i_mean": 1.3321374889459547,
+    "i_cumulative": 14.653512378405502,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 164,
+    "start": "2026-06-30",
+    "end": "2026-07-05",
+    "duration_days": 6,
+    "i_max": 1.6095549869630617,
+    "i_mean": 1.347111134515132,
+    "i_cumulative": 8.082666807090792,
+    "category": "Moderate"
+  },
+  {
+    "event_id": 165,
+    "start": "2026-07-08",
+    "end": "2026-07-20",
+    "duration_days": 13,
+    "i_max": 1.7046328096212662,
+    "i_mean": 1.4792647828947507,
+    "i_cumulative": 19.23044217763176,
+    "category": "Moderate"
+  }
+]

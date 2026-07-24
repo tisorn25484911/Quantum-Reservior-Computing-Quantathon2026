@@ -190,13 +190,25 @@ _TABULAR = {
         index="date", dt=1.0 / 12.0, time_unit="yr", unit="", tier="real",
         name="Mae Klong basin SPEI-03 (drought index, monthly)",
     ),
+    # ---- derived anomaly target (Anomaly_Forecast/label_anomalies.py) --------
+    # Marine-heatwave INTENSITY = SST minus its seasonal climatology, i.e. the
+    # deseasonalised heat anomaly the detector thresholds. It is the natural
+    # Step-1 forecast target: unlike raw `got_sst`, persistence is weak on it,
+    # so the QRC beats persistence at every lead (the whole point of forecasting
+    # the anomaly rather than the raw series). Generated file, reproducible.
+    "got_sst_mhwi": dict(
+        path="../Anomaly_Forecast/labels/got_sst_mhw_labeled.csv",
+        column="intensity", index="date", dt=1.0, time_unit="day",
+        unit="degC", tier="real",
+        name="Gulf of Thailand MHW intensity (SST anomaly vs climatology)",
+    ),
 }
 
 CHAOTIC_KEYS = tuple(_CHAOTIC)
 REAL_KEYS = ("nino34", "nino12", "tao", "nyc", "lax", "potomac", "potomac15",
              "opsd", "brest", "cuxhaven",
              "got_sst", "got_ersst", "oni", "maeklong_rain",
-             "got_hadisst", "maeklong_spei")
+             "got_hadisst", "maeklong_spei", "got_sst_mhwi")
 SURROGATE_KEYS = ("solar", "load")
 ALL_KEYS = CHAOTIC_KEYS + REAL_KEYS + SURROGATE_KEYS
 
