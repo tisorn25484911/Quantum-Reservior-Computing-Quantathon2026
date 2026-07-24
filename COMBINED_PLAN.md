@@ -49,14 +49,24 @@ COMPOSE Run the Step-2 detector on the Step-1 forecast -> predicted anomalies,
 
 On **raw** daily SST, persistence is nearly unbeatable (the ocean barely moves
 day to day), so the QRC only ties it. On the **deseasonalised MHW intensity**,
-persistence is weak and the **QRC beats it at every horizon**, with the margin
-*widening* with lead time:
+persistence is weak and the **QRC beats it at 23/24 horizons** with the margin
+*widening* with lead — and, decisively, the QRC still has skill (NMSE < 1) at
+every horizon while **persistence crosses into no-skill by h ≈ 15**:
 
-| lead h | QRC (ising) | persistence |
-|---|---|---|
-| 1 | 0.074 | 0.078 |
-| 6 | 0.409 | 0.438 |
-| 12 | **0.639** | 0.778 |
+Multi-seed (5 seeds, 6000 pts, `seed_sweep.py --dataset got_sst_mhwi`):
+
+| lead h | QRC (xxz_hx) | size-matched ESN | persistence |
+|---|---|---|---|
+| 1 | **0.077** | 0.082 | 0.082 |
+| 6 | **0.444** | 0.458 | 0.501 |
+| 12 | **0.692** | 0.722 | 0.866 |
+| 15 | **0.775** | 0.799 | 0.999 ← no-skill |
+| 24 | **0.902** | 0.892 | 1.182 |
+
+Verdict: **PASS** — useful at 23/24 horizons. Honest caveat: vs the classical
+ESN it is **parity** (materially better, by >5%, only at h=1; never materially
+worse) — no quantum advantage, as the guardrails require. The win that matters
+is over persistence, and it is large and grows with lead.
 
 So Step 1's target is `got_sst_mhwi` (registered in `dataloader.py`), and this is
 also the exact signal Step 2 thresholds — the two steps share one series.
