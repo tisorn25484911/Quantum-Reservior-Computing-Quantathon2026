@@ -64,10 +64,17 @@ For a few-days deadline, **Option A** keeps everyone moving with the least frict
 
 ## Sequenced plan for the remaining days
 
-**Day 1 — wire the engine in (no science yet).**
-- Bring the ENGINE in (subtree), make one venv install both, get its test suite
-  green here. Smoke-test: drive the ENGINE's `ExactQRC` from APPLIED's loaders on
-  `got_sst_mhwi`, confirm features match `qrc_core.py` to ~1e-10.
+**Day 1 — wire the engine in (no science yet). ✅ DONE 2026-07-24.**
+- ENGINE vendored under `engine/` via `git subtree add --prefix engine ... --squash`
+  (5 MB). Its Phase 1–2 core test suite runs **green in this repo** under the shared
+  `.venv` (qiskit/noise tests skipped — Phase-3 deps, not yet installed).
+- Integration anchor `Quantathon_stack/Anomaly_Forecast/engine_integration.py`:
+  drives **their** exact FN reservoir with **our** `got_sst_mhwi` via our loader →
+  1-step held-out **NMSE 0.0849** (same ballpark as our `qrc_core.py`'s 0.077).
+  So the applied pipeline can now stand on the engine's validated core. Convention
+  differences (their V=10/z_local vs our V=4/z_and_zz) mean features are not
+  bit-identical — a later task is to align configs and assert ~1e-10, or simply
+  adopt the engine's config as canonical.
 
 **Day 2 — re-run the headline results on the canonical engine + full baselines.**
 - Step-1 skill on `got_sst_mhwi` through the ENGINE core, scored against the whole
