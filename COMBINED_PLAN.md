@@ -100,17 +100,36 @@ beats-climatology ≈ 14 d; the intensity target and H_reliable are next.
   `operating_point_sweep.py`, leakage-safe val/test) — a documented negative
   result; do not re-open it expecting free accuracy.
 
+## Step 2 result (done this session)
+
+`detect.py` — **marine-heatwave onset early-warning**, framed to avoid
+circularity: predict whether a *new* heatwave will begin within the next L days,
+from causal precursors only (never today's threshold rule). Chronological
+train/val/test; PR-AUC headline (rare events); model chosen on validation.
+
+- Predictors that matter (permutation importance): **30-day intensity build-up**,
+  **ENSO state (ONI)**, current intensity, intensity variance, **rainfall** — i.e.
+  the "found" multivariate drivers genuinely contribute.
+- **Test PR-AUC 0.329** (logistic) vs base rate 0.124 — a **2.6× lift**, and it
+  edges the best single-precursor baseline (ONI-only 0.314; warm-now 0.310).
+  Gradient boosting overfits (0.263) — reported, not hidden.
+- Honest caveats: (a) a real train→test non-stationarity (onset rate 5%→12%, the
+  warming trend); (b) modest operating point — ~1/3 of onsets caught 7 d ahead at
+  a few false alarms/yr. 7-day-ahead onset is genuinely hard; the model is a
+  marginal-but-real improvement over ENSO alone, not a blowout.
+- **Independent validation** (`detect.py --nab`): the same windowed-feature method
+  recovers labelled anomalies on the NAB temperature benchmark (2/2 and 2/4
+  windows in the top-2%) — so it is not merely re-learning our own Hobday labels.
+
 ## Immediate next steps
 
-1. **Step 1 on the anomaly target** — run `seed_sweep.py --dataset got_sst_mhwi`;
-   report the full horizon taxonomy against persistence + climatology.
-2. **Step 2 detector** — train on `labels/got_sst_mhw_labeled.csv`
-   (features from the intensity series; labels = `mhw` / `category`), chronological
-   train/val/test, range-based metrics (Tatbul et al.), never point-adjust F1.
-3. **Adopt the linked repo's rigor incrementally** — at minimum the Mackey–Glass
+1. **Adopt the linked repo's rigor incrementally** — at minimum the Mackey–Glass
    autonomous gate and the shot-noise horizon law, to make Step 1 defensible.
-4. **Compose + re-calibrate** — detector on forecast-of-training, then measure
-   hit-rate vs lead time on the injected/labelled events.
+2. **Compose + re-calibrate** — run the Step-2 detector on the Step-1 *forecast*
+   intensity (re-fit its threshold on forecast-of-training first), then measure
+   hit-rate vs lead time — the end-to-end "predict the anomaly before it happens".
+3. **Strengthen Step 2** — longer precursor windows, an LSTM/1D-CNN only if it
+   beats logistic on validation; richer labels (event severity/category).
 
 ## Artifacts produced this session
 

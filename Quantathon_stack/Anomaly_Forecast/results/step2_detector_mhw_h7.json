@@ -1,0 +1,55 @@
+{
+  "task": "mhw_onset_early_warning",
+  "horizon": 7,
+  "n": 16394,
+  "n_test_eligible": 2565,
+  "test_positives": 318,
+  "train_onset_rate": 0.04984662576687116,
+  "base_rate": 0.1239766081871345,
+  "selected_model": "logistic",
+  "pr_auc": 0.32852250705896435,
+  "roc_auc": 0.8048551107976254,
+  "models": {
+    "gradient_boost": 0.26331411652313097,
+    "logistic": 0.32852250705896435
+  },
+  "baselines": {
+    "climatology_base_rate": 0.1239766081871345,
+    "warm_now": 0.3095456677854148,
+    "i_slope14": 0.13639437665298304,
+    "oni_only": 0.3137428388271234
+  },
+  "beats_best_baseline": true,
+  "operating": {
+    "threshold": 0.8984961727425276,
+    "event_recall": 0.32432432432432434,
+    "false_alarms_per_year": 11.634303215926494,
+    "n_events": 37
+  },
+  "top_features": [
+    [
+      "i_mean30",
+      0.10878538896746953
+    ],
+    [
+      "oni",
+      0.0862670467269605
+    ],
+    [
+      "intensity",
+      0.04995693715640502
+    ],
+    [
+      "i_std30",
+      0.02847365209892585
+    ],
+    [
+      "rain30",
+      0.02731144475270736
+    ],
+    [
+      "i_mean7",
+      0.014621190109271771
+    ]
+  ]
+}
