@@ -121,14 +121,38 @@ train/val/test; PR-AUC headline (rare events); model chosen on validation.
   recovers labelled anomalies on the NAB temperature benchmark (2/2 and 2/4
   windows in the top-2%) — so it is not merely re-learning our own Hobday labels.
 
+## End-to-end composition (done this session)
+
+`compose.py` — the actual product claim: QRC forecasts the intensity trajectory,
+the Hobday threshold runs on that **forecast**, so a heatwave is flagged ahead of
+time. The plan's calibration step is real and necessary: raw threshold on
+forecasts fires on 8.2% of days vs 13.1% actual (the smoothing under-alarm), so
+the applied threshold is re-fitted on **forecast-of-training** (scale c*=0.85)
+before one pass on held-out test. Scored against a persistence-then-detect
+baseline calibrated the same way.
+
+- **Short-to-mid lead is the QRC's window.** At **3 days it catches 84% of real
+  heatwave days at 66% precision**; QRC-composed F1 **beats persistence-composed
+  at leads 2–6**.
+- **Long lead: the mean trajectory under-alarms.** By h≈8–14 the ridge forecast
+  has damped toward climatology, recall collapses (16% at 14 d), and persistence
+  (which just holds today's warm value) catches up — mean F1 over 1–14 is
+  persistence 0.576 vs QRC 0.527. Reported, not hidden.
+- **This is precisely the mean-trajectory problem `plan.md` Step 3 fixes:** sample
+  K forecast trajectories and alarm on the *fraction* that breach threshold, not
+  the smooth mean. That is the next kill-test and should restore long-lead recall.
+
+So all three pieces now exist and compose: **Step 1 → Step 2 → warning vs lead**,
+with an honest short-lead win and a named fix for the long-lead gap.
+
 ## Immediate next steps
 
-1. **Adopt the linked repo's rigor incrementally** — at minimum the Mackey–Glass
-   autonomous gate and the shot-noise horizon law, to make Step 1 defensible.
-2. **Compose + re-calibrate** — run the Step-2 detector on the Step-1 *forecast*
-   intensity (re-fit its threshold on forecast-of-training first), then measure
-   hit-rate vs lead time — the end-to-end "predict the anomaly before it happens".
-3. **Strengthen Step 2** — longer precursor windows, an LSTM/1D-CNN only if it
+1. **Step 3 stochastic rollout** — K-sample residual-bootstrap trajectories,
+   verify calibration, re-run `compose.py` on the ensemble fraction; expect the
+   long-lead recall to recover.
+2. **Adopt the linked repo's rigor incrementally** — the Mackey–Glass autonomous
+   gate and the shot-noise horizon law, to make Step 1 defensible.
+3. **Strengthen Step 2** — longer precursor windows; an LSTM/1D-CNN only if it
    beats logistic on validation; richer labels (event severity/category).
 
 ## Artifacts produced this session
