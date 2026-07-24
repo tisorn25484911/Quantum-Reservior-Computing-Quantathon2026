@@ -19,6 +19,19 @@ Conversely, the APPLIED repo's results need the ENGINE's rigor (validated core,
 baseline battery, horizon taxonomy) to survive scrutiny. Each supplies exactly
 what the other lacks.
 
+## Revised roles (2026-07-24)
+
+Teammates now **improve Step 1 (the forecaster) and Step 2 (the detector)
+independently**. The integrator's job is to **combine any Step-1 × Step-2 pair,
+plus the current ones, into one end-to-end pipeline and drive it to a
+conclusion.** The harness for that is
+`Quantathon_stack/Anomaly_Forecast/combine_and_conclude.py` (pluggable registries
+`FORECASTERS` / `DETECTORS`); the standing conclusion is `CONCLUSION.md`, which is
+*regenerated* from the harness whenever a component improves. Concretely: a
+better forecaster or detector is a drop-in registry entry, and the combination
+matrix + ship recommendation re-rank automatically. The integrator keeps the
+comparison honest (decision-relevant lead window, identical origins, multi-seed).
+
 ## Division of labour (who owns what)
 
 | Concern | Owner | Why |
