@@ -25,6 +25,12 @@ PERSIST = "#8c8c8c"    # grey -- persistence floor
 BAND = "#0072B2"
 GRID = "#dddddd"
 
+# Zone shading (Okabe-Ito, kept distinct from the line hues above).
+ZONE_TRAIN = "#0072B2"   # blue   -- the read-out was fitted here
+ZONE_CALIB = "#E69F00"   # amber  -- the conformal radius was set here
+ZONE_TEST = "#009E73"    # green  -- scored here; nothing above ever saw it
+ZONE_WASH = "#9a9a9a"    # grey   -- washout, discarded
+
 plt.rcParams.update({
     "figure.dpi": 110, "savefig.bbox": "tight", "font.size": 9,
     "axes.linewidth": 0.7, "lines.linewidth": 1.3,
@@ -45,8 +51,51 @@ def _grid(ax):
     ax.set_axisbelow(True)
 
 
+def _zone_overview(ax, x_full: np.ndarray, z: dict, ds: dict,
+                   test_index: np.ndarray, n_detail: int) -> None:
+    """Top strip: the whole series with train / calib / test zones shaded.
+
+    This is the part that makes the split legible -- the detail panel below
+    only ever shows the test window, so without this the training data the
+    read-out actually learned from is invisible.
+    """
+    T = int(z["T"])
+    ti = np.arange(T)
+    ax.plot(ti, x_full, color="k", lw=0.7, alpha=0.75, zorder=3)
+
+    wash, tr, ca, te = (z["washout"], z["train_end"],
+                        z["calib_end"], z["test_end"])
+    spans = [(0, wash, ZONE_WASH, 0.22, "washout"),
+             (wash, tr, ZONE_TRAIN, 0.12, "TRAIN"),
+             (tr, ca, ZONE_CALIB, 0.16, "CALIB"),
+             (ca, te, ZONE_TEST, 0.16, "TEST")]
+    ytop = float(np.nanmax(x_full))
+    for a, b, colour, alpha, label in spans:
+        if b <= a:
+            continue
+        ax.axvspan(a, b, color=colour, alpha=alpha, zorder=1, lw=0)
+        ax.text((a + b) / 2, ytop, label, fontsize=7.5, ha="center",
+                va="top", fontweight="bold", color=colour, zorder=5)
+
+    # Mark how much of the test zone the detail panel below actually shows.
+    if len(test_index) and n_detail < len(test_index):
+        cut = int(test_index[n_detail - 1])
+        ax.axvline(cut, color=ZONE_TEST, lw=0.9, ls=":", zorder=4)
+        ax.text(cut, float(np.nanmin(x_full)), " detail below ends here",
+                fontsize=6.8, color="#00614a", va="bottom", ha="left")
+
+    unit = f" [{ds['unit']}]" if ds.get("unit") else ""
+    ax.set_ylabel(f"{ds['name']}{unit}", fontsize=8)
+    ax.set_title("Full series, split into zones -- the read-out was fitted on "
+                 "TRAIN, its band set on CALIB, and it was scored on TEST "
+                 "(which nothing upstream ever saw)", fontsize=8.5)
+    ax.set_xlim(0, T)
+    ax.margins(x=0)
+    _grid(ax)
+
+
 def forecast_png(result: dict, n_show: int = 240) -> bytes:
-    """The headline figure: truth, forecast, conformal band, and baselines."""
+    """The headline figure: a zone overview on top, the test forecast below."""
     s = result["series"]
     y = np.asarray(s["y_true"], float)
     q = np.asarray(s["qrc"], float)
@@ -54,6 +103,9 @@ def forecast_png(result: dict, n_show: int = 240) -> bytes:
     hi = np.asarray(s["qrc_hi"], float)
     e = np.asarray(s["esn"], float)
     p = np.asarray(s["persistence"], float)
+    x_full = np.asarray(s.get("observed_full", []), float)
+    test_index = np.asarray(s.get("test_index", []), int)
+    z = result.get("zones")
 
     n = min(n_show, len(y))
     t = np.arange(n)
@@ -61,7 +113,17 @@ def forecast_png(result: dict, n_show: int = 240) -> bytes:
     unit = f" [{ds['unit']}]" if ds.get("unit") else ""
     nominal = result["conformal"]["nominal"]
 
-    fig, ax = plt.subplots(figsize=(10, 4.0))
+    # Two panels when we have the zone context; fall back to one otherwise
+    # (e.g. a result cached before zones were added).
+    have_zones = bool(z) and x_full.size > 0
+    if have_zones:
+        fig, (axo, ax) = plt.subplots(
+            2, 1, figsize=(10, 5.6),
+            gridspec_kw={"height_ratios": [1.0, 2.3], "hspace": 0.5})
+        _zone_overview(axo, x_full, z, ds, test_index, n)
+    else:
+        fig, ax = plt.subplots(figsize=(10, 4.0))
+
     ax.fill_between(t, lo[:n], hi[:n], color=BAND, alpha=0.16, zorder=2,
                     label=f"{nominal:.0%} conformal band")
     ax.plot(t, y[:n], color="k", lw=2.6, alpha=0.24, solid_capstyle="round",
@@ -72,12 +134,13 @@ def forecast_png(result: dict, n_show: int = 240) -> bytes:
             label="ESN (size-matched)")
     ax.plot(t, q[:n], color=QRC, lw=1.6, zorder=6, label="QRC forecast")
 
-    ax.set_xlabel(f"held-out step (horizon = {result['config']['horizon']})")
+    ax.set_xlabel(f"held-out TEST step (horizon = {result['config']['horizon']})")
     ax.set_ylabel(f"{ds['name']}{unit}")
-    ax.set_title(f"{ds['name']} -- {nominal:.0%} band, "
-                 f"showing {n} of {len(y)} test steps")
+    title = (f"TEST zone in detail -- {nominal:.0%} band, "
+             f"showing {n} of {len(y)} test steps")
+    ax.set_title(title, fontsize=9)
     ax.legend(ncol=5, fontsize=8, loc="upper center",
-              bbox_to_anchor=(0.5, -0.18))
+              bbox_to_anchor=(0.5, -0.22))
     _grid(ax)
     return _png(fig)
 
@@ -203,14 +266,26 @@ def anomaly_example_png(r: dict) -> bytes:
     fig, ax = plt.subplots(figsize=(7.0, 3.4))
     t_h = np.arange(-len(hist) + 1, 1)
     t_f = np.arange(1, len(truth) + 1)
-    ax.plot(t_h, hist, lw=1.3, color="#666", zorder=3, label="history (driven)")
+
+    # Shade the two regimes: up to the origin the reservoir is driven by real
+    # observations; after it, only step 1 uses real state -- every step from 2
+    # on is driven by the model's OWN fed-back output. That self-driven zone is
+    # exactly where forecast error compounds, so it earns a distinct colour.
+    ax.axvspan(t_h[0] - 0.5, 0.5, color=ZONE_WASH, alpha=0.16, zorder=1, lw=0)
+    ax.axvspan(0.5, len(truth) + 0.5, color=QRC, alpha=0.08, zorder=1, lw=0)
+
+    ax.plot(t_h, hist, lw=1.3, color="#666", zorder=3,
+            label="history (driven by observations)")
     ax.plot(t_f, truth, lw=2.6, color="k", alpha=0.24, solid_capstyle="round",
-            zorder=3, label="observed")
+            zorder=3, label="observed (ground truth)")
     ax.plot(t_f, yhat, lw=1.8, color=QRC, marker="o", ms=3, zorder=4,
-            label="recursive rollout")
+            label="recursive rollout (self-driven)")
     ax.axvline(0, color=QRC, lw=0.9, ls=":", zorder=2)
-    ax.text(0, ax.get_ylim()[1], " forecast origin", fontsize=7.5,
-            color=QRC, va="top")
+    ylo, yhi = ax.get_ylim()
+    ax.text(0, yhi, " forecast origin", fontsize=7.5, color=QRC, va="top")
+    ax.text(len(truth) / 2 + 0.5, ylo, "self-driven: own output fed back",
+            fontsize=7, color=QRC, va="bottom", ha="center",
+            fontstyle="italic")
 
     ds = r["dataset"]
     unit = f" [{ds['unit']}]" if ds.get("unit") else ""

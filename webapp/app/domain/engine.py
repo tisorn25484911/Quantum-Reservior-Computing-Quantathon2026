@@ -198,6 +198,18 @@ def run_forecast(cfg: ForecastConfig, progress: ProgressFn | None = None
                       "radius_esn": float(rad_e)},
         "metrics": {"qrc": m_q, "esn": m_e, "persistence": m_p},
         "verdict": verdict,
+        # Absolute index boundaries of each chronological zone, so a plot can
+        # shade exactly what the read-out was trained on (train), what set the
+        # conformal radius (calib), and what was scored (test). These are ORIGIN
+        # indices; each origin's target sits `horizon` steps later.
+        "zones": {
+            "washout": int(cfg.washout),
+            "train_end": int(split.train[-1]) + 1,
+            "calib_end": int(split.calib[-1]) + 1,
+            "test_end": int(split.test[-1]) + 1,
+            "T": int(T),
+            "horizon": int(h),
+        },
         "series": {
             "test_index": split.test.tolist(),
             "y_true": y_test.tolist(),
@@ -206,6 +218,9 @@ def run_forecast(cfg: ForecastConfig, progress: ProgressFn | None = None
             "qrc_hi": hi_q.tolist(),
             "esn": pred_e.tolist(),
             "persistence": pred_p.tolist(),
+            # Whole observed series (already capped at max_points) so the plot
+            # can draw the train/calib/test context, not just the test window.
+            "observed_full": x.tolist(),
         },
     }
 

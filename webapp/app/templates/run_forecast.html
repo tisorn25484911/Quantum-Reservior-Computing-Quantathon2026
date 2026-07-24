@@ -56,9 +56,16 @@
 <figure class="card" style="margin-top:18px">
   <img src="/charts/forecast/{{ job.id }}.png" alt="forecast against observed">
   <figcaption>
-    Held-out test window. The shaded band is the
-    {{ r.conformal.nominal|pct }} split-conformal interval, calibrated on a
-    slice the read-out never saw.
+    <strong>Top:</strong> the whole series, shaded by zone &mdash;
+    <span style="color:#0072B2;font-weight:600">TRAIN</span> (read-out fitted
+    here), <span style="color:#b07c00;font-weight:600">CALIB</span> (conformal
+    band radius set here), <span style="color:#00795a;font-weight:600">TEST</span>
+    (scored here; nothing upstream ever saw it). Splits are chronological, never
+    shuffled. <strong>Bottom:</strong> the TEST zone in detail &mdash; the shaded
+    band is the {{ r.conformal.nominal|pct }} split-conformal interval.
+    This page is <em>direct</em> {{ r.config.horizon }}-step forecasting (each
+    prediction uses real history); the recursive self-driven rollout is on the
+    <a href="/anomaly?dataset={{ r.config.dataset }}">anomaly</a> page.
   </figcaption>
 </figure>
 

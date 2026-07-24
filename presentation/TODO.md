@@ -85,10 +85,11 @@ Per `Anomaly_Forecast/plan.md` §3 (the next kill-test in the original line):
       manually-placed `new_data/` archive (~21GB; kept `new_data/README.md`
       tracked via a `!` exception). `.claude/settings.local.json` was never
       tracked, so no `git rm --cached` was needed.
-- [ ] Commit the recipe + completed CSVs (including
+- [x] Commit the recipe + completed CSVs (including
       `oisst_gulf_thailand_daily_sst.csv`, `hadisst_gulf_thailand_monthly_sst.csv`,
       `spei03_mae_klong_monthly.csv`) + `presentation/` + `Anomaly_Forecast/seed_sweep.py`
       + the new `results/step2_seedsweep_got_sst.json` and its sibling artifacts.
+      Commit `d28407a` on `main`. Not yet pushed to the remote.
 
 ---
 
