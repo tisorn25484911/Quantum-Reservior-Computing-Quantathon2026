@@ -102,6 +102,10 @@ HTML = f"""<title>TideRead - Results Report</title>
  figure{{margin:1.2em 0;background:var(--surf);border:1px solid var(--hair);border-radius:12px;padding:14px}}
  figure img{{width:100%;height:auto;border-radius:6px;background:#fff}}
  figcaption{{font-size:.82rem;color:var(--ink3);margin-top:8px}}
+ .read{{background:var(--surf2);border-radius:10px;padding:13px 16px;margin:.7em 0 1.4em;font-size:.9rem}}
+ .read .h{{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--qrc);display:block;margin-bottom:.4em}}
+ .read p{{margin:.35em 0}} .read b{{color:var(--ink)}}
+ .read ul{{margin:.35em 0;padding-left:1.1em}} .read li{{color:var(--ink2);margin:.2em 0}}
  .card{{background:var(--surf);border:1px solid var(--hair);border-radius:12px;padding:16px 18px;margin:1em 0}}
  .verdict{{border-left:3px solid var(--good)}}
  .caveat{{border-left:3px solid var(--heat)}}
@@ -140,6 +144,15 @@ HTML = f"""<title>TideRead - Results Report</title>
  <figure><img src="{FIG_MHW}" alt="Gulf of Thailand SST with marine-heatwave events shaded">
   <figcaption>Gulf SST (dark) with its seasonal climatology (grey) and 90th-percentile threshold
   (orange dashed). Red = labelled marine heatwaves, only where temperature exceeds the threshold.</figcaption></figure>
+ <div class="read"><span class="h">How to read this graph</span>
+  <p><b>Axes:</b> horizontal = time (last 8 years); vertical = sea temperature in &deg;C.</p>
+  <p><b>Dark line</b> = the actual daily temperature (note the strong yearly cycle - hot around
+   April/May, cool around December). <b>Grey line</b> = the <em>normal</em> temperature for each date.
+   <b>Orange dashed</b> = the heatwave threshold (unusually hot <em>for that date</em>). <b>Red</b> =
+   a marine heatwave: temperature above the orange line for 5+ days.</p>
+  <p><b>The point:</b> the threshold rides up and down with the seasons, so a "heatwave" means hotter
+   than normal <em>for that time of year</em> - not just "summer". These red events are what the
+   system learns to predict.</p></div>
 
  <h2>Step 1 - the forecast works, on the right target</h2>
  <p>Forecasting <em>raw</em> temperature is a trap: the ocean barely moves day-to-day, so "tomorrow
@@ -152,6 +165,15 @@ HTML = f"""<title>TideRead - Results Report</title>
  <figure>{svg_skill()}
   <figcaption>Forecast error (lower better) vs lead. 1.0 = no skill. The quantum reservoir keeps
   skill to 24 days; persistence collapses past the no-skill line by ~day 15. 5-seed average.</figcaption></figure>
+ <div class="read"><span class="h">How to read this graph</span>
+  <p><b>Axes:</b> horizontal = how many <b>days ahead</b> we forecast (1-24); vertical = <b>forecast
+   error</b>, lower is better. The dashed line at <b>1.0 = no skill</b> (no better than guessing the average).</p>
+  <p>All lines rise (error grows the further ahead you look - expected). The key moment is where the
+   grey dashed baseline <b>crosses 1.0 at about day 15</b> - persistence becomes useless. The teal
+   line stays well below it all the way to day 24: it still has skill where the dumb baseline has none.</p>
+  <p><b>The point:</b> teal and orange sit almost on top of each other, so the quantum model
+   <em>ties</em> the classical one - we claim no quantum speed-up. The real win is over persistence,
+   and it grows with lead.</p></div>
  <div class="card verdict"><strong>Verdict:</strong> the QRC beats persistence at 23 of 24 days
   ahead, with a widening margin. Honest note: vs the classical model of equal size it's a <strong>tie</strong>
   - no "quantum advantage" is claimed (that would be false at this scale), and we say so.</div>
@@ -172,6 +194,16 @@ HTML = f"""<title>TideRead - Results Report</title>
  <figure><img src="{FIG_COMPOSE}" alt="Composed warning precision/recall and F1 vs lead">
   <figcaption>Left: precision &amp; recall of the composed warning vs lead. Right: overall F1. The
   quantum-forecast warning (solid) leads at short-mid range; the average forecast fades at long lead.</figcaption></figure>
+ <div class="read"><span class="h">How to read this graph</span>
+  <p><b>Left panel</b> - horizontal = days ahead, vertical = score (0-1). <b>Teal solid = recall</b>
+   (of real heatwave days, what fraction did we catch) - starts near 0.97 at 1 day. <b>Grey = precision</b>
+   (when we alarm, how often we're right). Dashed = the naive baseline for each.</p>
+  <p><b>Right panel</b> - "F1" combines precision and recall into one score. <b>Solid red = our
+   quantum-forecast warning; dashed red = the naive baseline.</b> The solid line is <b>above</b> the
+   dashed one for days 2-6 (our forecast adds value), then they cross and it dips below - a single
+   "average" forecast smooths out and starts missing events at long lead.</p>
+  <p><b>The point:</b> a 3-day warning catches 84% of heatwave days; the quantum forecast wins the
+   actionable 2-6 day window. The long-lead dip is the honest limit we fix in the next graph.</p></div>
 
  <h2>Step 3 - sampling many futures fixes the long-lead miss</h2>
  <p>The fix: instead of forecasting one <em>average</em> future, sample <strong>120 possible futures</strong>
@@ -185,6 +217,17 @@ HTML = f"""<title>TideRead - Results Report</title>
  <figure><img src="{FIG_STEP3}" alt="Ensemble calibration and recovered recall vs lead">
   <figcaption>Left: coverage tracks the nominal 90% line (calibrated). Right: the sampled-ensemble
   recall (solid) rises above the single-forecast recall (dashed) at long lead - warning recovered.</figcaption></figure>
+ <div class="read"><span class="h">How to read this graph</span>
+  <p><b>Left panel (calibration)</b> - the dotted line at <b>0.90</b> is the target; the teal line
+   sits right on it. "Coverage" means: when the model says "90% confident the temperature is in this
+   band", does the truth actually land inside 90% of the time? Yes - so the probabilities are
+   <b>honest, not over-confident</b>. This gate had to pass before trusting any alarm.</p>
+  <p><b>Right panel (recovered warning)</b> - <b>solid red = the sampled ensemble</b>; <b>dashed red =
+   the single average forecast</b> (from the previous graph); dotted grey = persistence. Past day 8
+   the solid line pulls <b>above</b> the dashed one - the ensemble catches events the single forecast
+   missed (at 14 days: 40% vs 30%).</p>
+  <p><b>The point:</b> sampling many futures does two things at once - keeps the probabilities honest
+   (left) and restores the long-range warning (right).</p></div>
 
  <h2>Honest scorecard</h2>
  <table>
