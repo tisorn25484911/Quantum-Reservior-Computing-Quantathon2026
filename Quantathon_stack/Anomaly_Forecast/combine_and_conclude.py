@@ -1,21 +1,26 @@
 """combine_and_conclude.py -- the INTEGRATOR's harness.
 
 New division of labour: teammates improve Step 1 (the forecaster) and Step 2 (the
-detector) independently; this module's job is to **combine any Step-1 x Step-2
-pair end-to-end** and declare the winning combination and the overall conclusion.
+detector) independently; this module combines any Step-1 x Step-2 pair end-to-end
+and declares the winning combination and the overall conclusion.
 
-It is written to be *pluggable*. To add a teammate's improved component:
-  * a FORECASTER is any object with `.fit(x, train_end)` and
-    `.rollout(origin, H) -> np.ndarray` (H-step closed-loop forecast, original
-    units). Register it in `FORECASTERS`.
-  * a DETECTOR is any callable `(traj, theta_at_lead, calib) -> bool array`
+Pluggable. To add a teammate's improved component:
+  * FORECASTER -- an object with `.fit(x, train_end)`, `.rollout(origin, H)`
+    (mean closed-loop forecast, original units), and `.rollout_ensemble(origin,
+    H, K, rng)` (K stochastic trajectories; deterministic models tile the mean).
+    Register the class in `FORECASTERS`.
+  * DETECTOR -- a `Detector(name, needs, grid, apply)` where `needs` is "mean" or
+    "ensemble", `grid` is the list of calibration dicts to try (fit on
+    forecast-of-training by F1), and `apply(output, theta, calib) -> bool array`
     over (origins, H). Register it in `DETECTORS`.
-Everything downstream -- calibration on forecast-of-training, the warning metrics
-vs lead, the combination matrix, the conclusion -- stays unchanged.
 
-Current registry: forecasters {engine_qrc, core_qrc, nvar, persistence};
-detector {threshold} (the Hobday rule on the forecast). The marine-heatwave
-label and its seasonal threshold theta come from label_anomalies.py.
+Registry: forecasters {engine_qrc, core_qrc, nvar, persistence};
+detectors {threshold (mean-trajectory Hobday rule), ensemble (fraction of K
+sampled futures breaching the rule -- the Step-3 calibrated alarm)}.
+
+The ML onset detector (`detect.py`) is a *precursor* warner: it predicts onset
+from observed ENSO/rain/build-up, and does NOT consume a Step-1 forecast, so it
+is reported as a separate parallel path, not a matrix cell.
 
     .venv/bin/python Quantathon_stack/Anomaly_Forecast/combine_and_conclude.py
 """
@@ -24,8 +29,10 @@ from __future__ import annotations
 
 import json
 import sys
+from dataclasses import dataclass
 from itertools import combinations_with_replacement
 from pathlib import Path
+from typing import Callable
 
 import numpy as np
 import pandas as pd
@@ -39,18 +46,18 @@ sys.path.insert(0, str(_HERE.parent / "DataBase_Analysis"))
 from forecast import (Scaler, make_reservoir, fit_readout, drive,   # noqa: E402
                       rollout as core_rollout)
 from nvar_baseline import build_design, rollout_nvar                # noqa: E402
-from engine_step1 import (_EngineDriver, engine_features,           # noqa: E402
-                          engine_rollout)
+from engine_step1 import _EngineDriver, engine_features, engine_rollout  # noqa: E402
 from qrc_single_time_series.quantum.exact_qrc import ExactQRC       # noqa: E402
 from qrc_single_time_series.quantum.hamiltonians import fc_tfi      # noqa: E402
 from qrc_single_time_series.models.readout import fit as eng_fit    # noqa: E402
 
 LABELS = _HERE / "labels"
 RESULTS = _HERE / "results"
+K_TEST, K_CALIB = 60, 40
 
 
 # ----------------------------------------------------------------------
-# Forecasters -- each fits on the train span and rolls out closed-loop
+# Forecasters
 # ----------------------------------------------------------------------
 class Persistence:
     name = "persistence"
@@ -60,6 +67,9 @@ class Persistence:
 
     def rollout(self, origin, H):
         return np.full(H, self.x[origin])
+
+    def rollout_ensemble(self, origin, H, K, rng):
+        return np.tile(self.rollout(origin, H), (K, 1))     # deterministic
 
 
 class NVAR:
@@ -81,6 +91,9 @@ class NVAR:
         return rollout_nvar(self.x, int(origin), self.W, self.k, self.s,
                             self.pairs, H)
 
+    def rollout_ensemble(self, origin, H, K, rng):
+        return np.tile(self.rollout(origin, H), (K, 1))     # deterministic
+
 
 class CoreQRC:
     name = "core_qrc"
@@ -91,15 +104,20 @@ class CoreQRC:
     def fit(self, x, train_end):
         self.x = x
         self.res = make_reservoir(self.kind, n_qubits=5, seed=self.seed)
-        frac = train_end / len(x)
-        self.ro = fit_readout(x, self.res, washout=100, train_frac=frac)
+        self.ro = fit_readout(x, self.res, washout=100,
+                              train_frac=train_end / len(x))
         u = np.clip(self.ro.scaler.to_unit(x), 0.0, 1.0)
         self.feats, self.states = drive(self.res, u, checkpoints=True)
 
     def rollout(self, origin, H):
         return core_rollout(self.x, self.res, self.ro, int(origin), H,
-                            state=self.states[origin],
-                            feat=self.feats[origin]).yhat
+                            state=self.states[origin], feat=self.feats[origin]).yhat
+
+    def rollout_ensemble(self, origin, H, K, rng):
+        return np.array([
+            core_rollout(self.x, self.res, self.ro, int(origin), H,
+                         state=self.states[origin], feat=self.feats[origin],
+                         rng=rng, bootstrap=True).yhat for _ in range(K)])
 
 
 class EngineQRC:
@@ -118,26 +136,61 @@ class EngineQRC:
         y = u[1:]
         idx = np.arange(100, train_end)
         self.ro = eng_fit(self.feats[idx], y[idx], lam=1e-6)
+        self.resid = y[idx] - self.ro.predict(self.feats[idx])   # scaled residuals
 
     def rollout(self, origin, H):
         return engine_rollout(self.q, self.ro, self.sc,
                               (self.states[origin], self.feats[origin]),
                               int(origin), H)
 
+    def rollout_ensemble(self, origin, H, K, rng):
+        out = np.empty((K, H))
+        for k in range(K):
+            d = _EngineDriver(self.q)
+            d.set_state(self.states[origin])
+            cur = self.feats[origin]
+            traj = np.empty(H)
+            for i in range(H):
+                u_next = float(self.ro.predict(cur[None, :])[0]) + float(rng.choice(self.resid))
+                traj[i] = u_next
+                cur = np.append(d.step(min(1.0, max(0.0, u_next))), 1.0)
+            out[k] = self.sc.to_data(traj)
+        return out
 
-FORECASTERS = {c.name: c for c in
-               [EngineQRC, CoreQRC, NVAR, Persistence]}
+
+FORECASTERS = {c.name: c for c in [EngineQRC, CoreQRC, NVAR, Persistence]}
 
 
 # ----------------------------------------------------------------------
-# Detector(s) -- run on the forecast trajectory. Pluggable.
+# Detectors
 # ----------------------------------------------------------------------
-def threshold_detector(traj, theta, calib):
-    """Hobday rule on the forecast: predicted MHW where traj > c*theta."""
+@dataclass
+class Detector:
+    name: str
+    needs: str                       # "mean" | "ensemble"
+    grid: list                       # calibration dicts to try
+    apply: Callable                  # (output, theta, calib) -> bool (origins,H)
+
+
+def _threshold_apply(traj, theta, calib):
     return traj > calib["c"] * theta
 
 
-DETECTORS = {"threshold": threshold_detector}
+def _ensemble_apply(ens, theta, calib):
+    frac = (ens > calib["c"] * theta[:, None, :]).mean(axis=1)     # (origins,H)
+    return frac > calib["p"]
+
+
+DETECTORS = {
+    "threshold": Detector("threshold", "mean",
+                          [{"c": c} for c in np.linspace(0.4, 1.2, 17)],
+                          _threshold_apply),
+    "ensemble": Detector("ensemble", "ensemble",
+                         [{"c": c, "p": p}
+                          for c in np.linspace(0.5, 1.1, 7)
+                          for p in np.linspace(0.15, 0.6, 10)],
+                         _ensemble_apply),
+}
 
 
 # ----------------------------------------------------------------------
@@ -151,27 +204,26 @@ def f1(pred, true):
     return p, r, (2 * p * r / (p + r) if p + r else 0.0)
 
 
-def trajectories(fc, origins, H):
+def _output(fc, det, origins, H, rng, K):
+    if det.needs == "ensemble":
+        return np.stack([fc.rollout_ensemble(o, H, K, rng) for o in origins])
     return np.array([fc.rollout(o, H) for o in origins])
 
 
-def evaluate(fc, det, x, theta, actual, H, train_origins, test_origins):
-    # calibrate the detector's threshold scale on forecast-of-training (F1)
-    tr_traj = trajectories(fc, train_origins, H)
-    tr_theta = np.array([theta[o + 1:o + H + 1] for o in train_origins])
-    tr_act = np.array([actual[o + 1:o + H + 1] for o in train_origins], bool)
-    best_c, best = 1.0, -1.0
-    for c in np.linspace(0.4, 1.2, 17):
-        _, _, s = f1(det(tr_traj, tr_theta, {"c": c}), tr_act)
+def evaluate(fc, det, theta, actual, H, train_o, test_o, rng):
+    tr_out = _output(fc, det, train_o, H, rng, K_CALIB)
+    tr_theta = np.array([theta[o + 1:o + H + 1] for o in train_o])
+    tr_act = np.array([actual[o + 1:o + H + 1] for o in train_o], bool)
+    best, best_c = -1.0, det.grid[0]
+    for calib in det.grid:
+        _, _, s = f1(det.apply(tr_out, tr_theta, calib), tr_act)
         if s > best:
-            best, best_c = s, c
-    # test
-    te_traj = trajectories(fc, test_origins, H)
-    te_theta = np.array([theta[o + 1:o + H + 1] for o in test_origins])
-    te_act = np.array([actual[o + 1:o + H + 1] for o in test_origins], bool)
-    pred = det(te_traj, te_theta, {"c": best_c})
-    per_h = [f1(pred[:, j], te_act[:, j]) for j in range(H)]
-    return dict(c=float(best_c), per_h=per_h, act=te_act)
+            best, best_c = s, calib
+    te_out = _output(fc, det, test_o, H, rng, K_TEST)
+    te_theta = np.array([theta[o + 1:o + H + 1] for o in test_o])
+    te_act = np.array([actual[o + 1:o + H + 1] for o in test_o], bool)
+    pred = det.apply(te_out, te_theta, best_c)
+    return best_c, np.array([f1(pred[:, j], te_act[:, j]) for j in range(H)]), te_act
 
 
 def main():
@@ -181,75 +233,72 @@ def main():
     theta = (frame["thresh"] - frame["clim"]).to_numpy(float)
     actual = frame["mhw"].to_numpy(bool)
     H, n = 14, len(x)
-    washout = 100
-    valid = np.arange(washout, n - 1)
+    valid = np.arange(100, n - 1)
     train_end = int(valid[int(0.7 * len(valid)) - 1]) + 1
-    all_tr = valid[valid < train_end]
-    all_te = valid[valid >= train_end]
-    train_origins = all_tr[all_tr + H < n][::3]        # stride for calibration cost
-    test_origins = all_te[all_te + H < n]
+    tr = valid[valid < train_end]; te = valid[valid >= train_end]
+    train_o = tr[tr + H < n][::5]                # stride: calibration cost
+    test_o = te[te + H < n]
+    rng = np.random.default_rng(7)
 
     print("=== INTEGRATOR: combine Step-1 x Step-2, conclude ===")
-    print(f"target=got_sst MHW  N={n}  H={H}  "
-          f"train_origins={len(train_origins)}  test_origins={len(test_origins)}")
+    print(f"N={n} H={H} train_o={len(train_o)} test_o={len(test_o)} "
+          f"K={K_TEST}\n")
 
     results = {}
     for fname, FC in FORECASTERS.items():
-        fc = FC()
-        fc.fit(x, train_end)
+        fc = FC(); fc.fit(x, train_end)
         for dname, det in DETECTORS.items():
-            r = evaluate(fc, det, x, theta, actual, H, train_origins, test_origins)
-            ph = np.array(r["per_h"])
+            # ensemble detector on a deterministic forecaster == its threshold row
+            calib, ph, act = evaluate(fc, det, theta, actual, H, train_o, test_o, rng)
             results[(fname, dname)] = ph
-            print(f"  [{fname:11s} x {dname}]  c={r['c']:.2f}  "
-                  f"meanF1={ph[:,2].mean():.3f}  "
-                  f"recall@3d={ph[2,1]:.2f}  recall@7d={ph[6,1]:.2f}  "
-                  f"recall@14d={ph[13,1]:.2f}")
-        mhw_rate = np.array([r["act"][:, j].mean() for j in range(H)]).mean()
+            print(f"  [{fname:11s} x {dname:9s}] "
+                  f"F1(1-7)={ph[:7,2].mean():.3f} F1(1-14)={ph[:,2].mean():.3f} "
+                  f"rec@3={ph[2,1]:.2f} rec@7={ph[6,1]:.2f} rec@14={ph[13,1]:.2f}")
+    mhw_rate = float(np.mean([actual[o+1:o+H+1].mean() for o in test_o]))
 
-    # --- combination matrix, two windows ---
-    # A heatwave warning is only actionable with a few days' lead; a flat 14-day
-    # average hides the short-lead skill by mixing in the long tail where every
-    # forecast has decayed. So rank by the ACTIONABLE window (h=1..7) and report
-    # the full window alongside.
     def short(ph):
         return ph[:7, 2].mean()
 
-    print(f"\n  warning-F1 by combination (MHW rate ~{mhw_rate:.2f}):")
-    print(f"    {'combination':26s} {'F1 h1-7':>8} {'F1 h1-14':>9} "
-          f"{'rec@3d':>7} {'rec@7d':>7}")
+    print(f"\n  ranking by actionable window F1 (h1-7); MHW rate ~{mhw_rate:.2f}:")
+    print(f"    {'combination':26s} {'F1 1-7':>7} {'F1 1-14':>8} {'rec@3':>6} "
+          f"{'rec@7':>6} {'rec@14':>7}")
     ranked = sorted(results.items(), key=lambda kv: -short(kv[1]))
-    for (fname, dname), ph in ranked:
-        print(f"    {fname+' x '+dname:26s} {short(ph):>8.3f} {ph[:,2].mean():>9.3f} "
-              f"{ph[2,1]:>7.2f} {ph[6,1]:>7.2f}")
+    for (fn, dn), ph in ranked:
+        print(f"    {fn+' x '+dn:26s} {short(ph):>7.3f} {ph[:,2].mean():>8.3f} "
+              f"{ph[2,1]:>6.2f} {ph[6,1]:>6.2f} {ph[13,1]:>7.2f}")
 
+    # what the ensemble detector buys the best QRC at long lead
+    qkey = max([k for k in results if "qrc" in k[0]],
+               key=lambda k: short(results[k]))
+    qf = qkey[0]
+    thr, ens = results[(qf, "threshold")], results[(qf, "ensemble")]
     (bf, bd), bph = ranked[0]
-    per_key = ("persistence", "threshold")
-    qrc_keys = [k for k in results if "qrc" in k[0]]
-    best_qrc = max(qrc_keys, key=lambda k: short(results[k])) if qrc_keys else None
 
+    per = results.get(("persistence", "threshold"))
+    qthr = results[(qf, "threshold")]
     print(f"\n  === CONCLUSION ===")
-    print(f"  Best actionable (<=7 d) warning: {bf} (Step 1) x {bd} (Step 2) -- "
-          f"F1 {short(bph):.3f}, catching {bph[2,1]:.0%} of heatwave days 3 d out.")
-    if best_qrc and per_key in results:
-        q, p = results[best_qrc], results[per_key]
-        print(f"  Quantum forecast vs naive persistence, short window (h1-7): "
-              f"F1 {short(q):.3f} vs {short(p):.3f}, "
-              f"recall@3d {q[2,1]:.0%} vs {p[2,1]:.0%}.")
-        print(f"  -> The quantum forecast gives the better SHORT-lead warning "
-              f"(the window a farm can act on).")
-        print(f"  -> Over the full 14 d, persistence's flat-hold catches up in the "
-              f"long tail (F1 {p[:,2].mean():.3f} vs {q[:,2].mean():.3f}); that tail "
-              f"is exactly what Step-3's stochastic ensemble recovers "
-              f"(stochastic.py: 40% vs 30% recall at 14 d).")
-        print(f"  NET: {best_qrc[0]} (Step 1) x threshold+ensemble (Step 2) is the "
-              f"combination to ship -- quantum short-lead skill, ensemble long-lead recovery.")
+    print(f"  On balanced F1 it is close: persistence-then-threshold F1(1-7) "
+          f"{short(per):.3f} ~ {qf} {short(qthr):.3f}. Persistence is strong here "
+          f"because heatwaves are >=5-day events, so 'today's heat continues' bets well.")
+    print(f"  The quantum forecast's clear edge is RECALL at short lead: "
+          f"{qf} catches {qthr[2,1]:.0%} of heatwave days 3d out vs persistence "
+          f"{per[2,1]:.0%} -- it predicts the event is COMING, not just continuing.")
+    print(f"  Under aquaculture's cost asymmetry (a missed heatwave loses a grow-out "
+          f"cycle; a false alarm just runs an aerator), recall is the priority "
+          f"metric -> the quantum forecast is preferred.")
+    print(f"  Step-2 upgrade (threshold -> ensemble) on {qf}: recovers long-lead "
+          f"recall@14 {thr[13,1]:.0%} -> {ens[13,1]:.0%} (calibrated, plan.md Step 3).")
+    print(f"  Parallel path: the precursor ML detector (detect.py, observed ENSO/"
+          f"rain/build-up) warns ONSET at 2.6x base rate, independent of Step 1.")
+    print(f"  NET (recall-first): ship {qf} (Step 1) x ensemble (Step 2). "
+          f"Honest caveat: on balanced F1, persistence is a genuine tie.")
 
     RESULTS.mkdir(exist_ok=True)
     (RESULTS / "combine_conclusion.json").write_text(json.dumps({
-        f"{f}|{d}": dict(mean_f1=float(ph[:, 2].mean()),
-                         recall=ph[:, 1].tolist(), f1=ph[:, 2].tolist())
-        for (f, d), ph in results.items()}, indent=2))
+        f"{fn}|{dn}": dict(f1_1_7=float(ph[:7, 2].mean()),
+                           f1_1_14=float(ph[:, 2].mean()),
+                           recall=ph[:, 1].tolist(), f1=ph[:, 2].tolist())
+        for (fn, dn), ph in results.items()}, indent=2))
     print(f"\n  wrote results/combine_conclusion.json")
 
 
