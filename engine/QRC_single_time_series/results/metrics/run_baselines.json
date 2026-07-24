@@ -1,0 +1,124 @@
+{
+  "torch_available": false,
+  "mackey_glass": {
+    "label": "mackey_glass_tau17",
+    "n_train": 1120,
+    "n": 1600,
+    "qrc_eff_rank": 1.7566894245351152,
+    "esn_size_matched_table": [
+      {
+        "n_reservoir": 2,
+        "eff_rank": 1.388396169041033
+      },
+      {
+        "n_reservoir": 3,
+        "eff_rank": 1.429338851031547
+      },
+      {
+        "n_reservoir": 5,
+        "eff_rank": 1.3535190295469701
+      },
+      {
+        "n_reservoir": 8,
+        "eff_rank": 1.6564336391170014
+      },
+      {
+        "n_reservoir": 12,
+        "eff_rank": 1.6452285522481815
+      },
+      {
+        "n_reservoir": 20,
+        "eff_rank": 2.4969544565397936
+      },
+      {
+        "n_reservoir": 40,
+        "eff_rank": 2.7722514777144056
+      },
+      {
+        "n_reservoir": 80,
+        "eff_rank": 2.623912532875304
+      }
+    ],
+    "esn_size_matched_Nr": 20,
+    "onestep_nmse": {
+      "persistence": 0.021823417076353675,
+      "climatology": 1.0,
+      "ridge_ar": 8.429389989258898e-07,
+      "nvar": 6.078807487668358e-06,
+      "esn_best_of_class": 1.2256688035174022e-08,
+      "esn_size_matched": 1.5094727671012842e-05,
+      "windowed_vqc": 0.0005791773997230037,
+      "lstm": null,
+      "gru": null,
+      "arima": {
+        "order": [
+          2,
+          0,
+          1
+        ],
+        "aic": -9677.91175834573
+      }
+    },
+    "qrc_onestep_nmse": 5.49088798466603e-05
+  },
+  "enso": {
+    "label": "enso_dev",
+    "n_train": 410,
+    "n": 586,
+    "qrc_eff_rank": 1.4913230616880562,
+    "esn_size_matched_table": [
+      {
+        "n_reservoir": 2,
+        "eff_rank": 1.6232885201321245
+      },
+      {
+        "n_reservoir": 3,
+        "eff_rank": 1.8400076444427693
+      },
+      {
+        "n_reservoir": 5,
+        "eff_rank": 1.447536391761527
+      },
+      {
+        "n_reservoir": 8,
+        "eff_rank": 1.648687988438117
+      },
+      {
+        "n_reservoir": 12,
+        "eff_rank": 1.6513382168163941
+      },
+      {
+        "n_reservoir": 20,
+        "eff_rank": 2.9386285367980594
+      },
+      {
+        "n_reservoir": 40,
+        "eff_rank": 3.787786507195547
+      },
+      {
+        "n_reservoir": 80,
+        "eff_rank": 3.0377274332834716
+      }
+    ],
+    "esn_size_matched_Nr": 2,
+    "onestep_nmse": {
+      "persistence": 0.11239031559673977,
+      "climatology": 1.0,
+      "ridge_ar": 0.10553825577005381,
+      "nvar": 0.09917685373205809,
+      "esn_best_of_class": 0.10140289098780657,
+      "esn_size_matched": 0.1026332711153265,
+      "windowed_vqc": 0.11025793732960139,
+      "lstm": null,
+      "gru": null,
+      "arima": {
+        "order": [
+          2,
+          0,
+          1
+        ],
+        "aic": -1115.6093530810822
+      }
+    }
+  }
+}

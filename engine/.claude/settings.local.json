@@ -26,7 +26,30 @@
       "Bash(/Users/tisornnaphattalung/Desktop/Quantathon2026/QRC_main_stack/QRC_code_stack/.venv/bin/python scripts/inspect_data.py)",
       "Bash(/Users/tisornnaphattalung/Desktop/Quantathon2026/QRC_main_stack/QRC_code_stack/.venv/bin/python scripts/inspect_repository.py)",
       "Bash(PYTHONPATH=src /Users/tisornnaphattalung/Desktop/Quantathon2026/QRC_main_stack/QRC_code_stack/.venv/bin/python -m pytest -q)",
-      "Bash(find /Users/tisornnaphattalung/Desktop/Quantathon2026/QRC_single_time_series/src -name *.py)"
+      "Bash(find /Users/tisornnaphattalung/Desktop/Quantathon2026/QRC_single_time_series/src -name *.py)",
+      "Bash(python3 -c \"import sys; sys.path.insert\\(0, '/Users/tisornnaphattalung/Desktop/Quantathon2026/final_pitch/Classical_ML_post_process'\\); import retrieve_data\")",
+      "Bash(pip3 list *)",
+      "Bash(python3 -m pip --version)",
+      "Bash(jupyter kernelspec *)",
+      "Bash(conda env *)",
+      "Bash(pyenv versions *)",
+      "Read(//opt/homebrew/bin/**)",
+      "Read(//Users/tisornnaphattalung/Library/Jupyter/kernels/quantathon-qrc/**)",
+      "Bash(python3 -c \"import json,sys; nb=json.load\\(sys.stdin\\); print\\(nb.get\\('metadata',{}\\)\\); print\\('cells:', len\\(nb['cells']\\)\\)\")",
+      "Bash(ls -la \"/Users/tisornnaphattalung/Desktop/Quantathon2026/final_pitch/Classical_ML_post_process/data_analysis.ipynb\" *)",
+      "Read(//opt/anaconda3/bin/**)",
+      "Bash(/opt/anaconda3/bin/python -c \"import numpy, pandas, matplotlib, statsmodels; print\\('numpy', numpy.__version__\\); print\\('pandas', pandas.__version__\\); print\\('matplotlib', matplotlib.__version__\\); print\\('statsmodels', statsmodels.__version__\\)\")",
+      "Bash(/opt/anaconda3/envs/qdrug/bin/python -c \"import statsmodels\")",
+      "Bash(python3 -c \"import pdfplumber; print\\('pdfplumber ok'\\)\")",
+      "Bash(python3 -c \"import PyPDF2; print\\('PyPDF2 ok'\\)\")",
+      "Bash(python3 -c \"import fitz; print\\('pymupdf ok'\\)\")",
+      "WebFetch(domain:dl.acm.org)",
+      "Bash(pip install *)",
+      "Bash(python3 -c \"import fitz; print\\('pymupdf ready'\\)\")",
+      "Bash(/opt/anaconda3/bin/python *)",
+      "Bash(cp /Users/tisornnaphattalung/Downloads/oni_enso_episodes.csv data/)",
+      "Bash(cp /Users/tisornnaphattalung/Downloads/got_sst_mhw_labeled.csv data/)",
+      "Bash(cp /Users/tisornnaphattalung/Downloads/got_sst_mhw_events.json data/)"
     ]
   }
 }

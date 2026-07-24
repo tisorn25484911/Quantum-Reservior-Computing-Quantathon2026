@@ -1,0 +1,31 @@
+# latency_assumptions.yaml -- ESTIMATED (never live) inputs for the sequential-QPU
+# latency ledger (spec s26, Phase 11). EVERY value here is an ASSUMPTION recorded
+# for reproducibility, NOT a reading from a live backend calibration. It sits beside
+# the (frozen) backend snapshot deliberately: the remote components of the ledger
+# (queue/network/execute) cannot be honestly measured on this machine, so they are
+# declared here and clearly labelled as assumptions when they enter results.
+#
+# Heron-class execution anchors are order-of-magnitude figures taken from published
+# IBM material; they are recorded as ASSUMPTIONS, not facts, and the ledger prints
+# them as such. Change these numbers to re-price the study -- nothing downstream
+# hard-codes them.
+backend:
+  name: ibm_heron_class          # assumed device CLASS (not a live calibration)
+  n_qubits: 5                    # reservoir width used in the P10/P11 rewind study
+  basis_gates: [rz, sx, x, cz, reset]
+  coupling: line                 # assumed connectivity used ONLY for transpile timing
+
+# --- remote timing (assumed; the QPU is never contacted) ---------------------
+per_shot_execution_s: 4.0e-4     # Heron-class per-shot circuit-layer execution anchor
+sampler_overhead_s: 2.0          # per-job runtime/session compile + dispatch overhead
+queue_s: 60.0                    # median fair-share queue wait (HIGHLY variable in practice)
+network_send_s: 0.25             # client -> runtime one-way payload/network
+result_return_s: 0.25            # runtime -> client result payload return
+
+# --- strategy G (periodic quantum refresh) -----------------------------------
+refresh_period_steps: 12         # one QPU round trip every R steps; surrogate in between
+
+sources:
+  - "Heron per-shot execution anchor ~1e-4 s/shot-layer: assumed from published IBM Heron figures (order of magnitude only)."
+  - "Queue wait: assumed median for fair-share access; real waits range seconds..hours and are not modelled as a distribution here."
+  - "Network round trip: assumed LAN/WAN client<->runtime latency; not measured."

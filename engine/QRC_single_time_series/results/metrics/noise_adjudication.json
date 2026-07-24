@@ -1,0 +1,101 @@
+{
+  "mackey_glass_tau17": {
+    "label": "mackey_glass_tau17",
+    "ridge_lam": 0.001,
+    "trunc_rank": 2,
+    "by_shots": {
+      "128": {
+        "arm_A_noise_nmse": 0.0057783328829980754,
+        "arm_A_noise_std": 0.00022785797915506718,
+        "arm_B_ridge_nmse": 0.0007705435062801303,
+        "arm_C_truncation_nmse": 0.005991531697078348,
+        "shots": 128,
+        "ridge_lam": 0.001,
+        "trunc_rank": 2,
+        "noise_helps_beyond_matched_regulariser": false
+      },
+      "512": {
+        "arm_A_noise_nmse": 0.004576927714005459,
+        "arm_A_noise_std": 0.00011468119082511496,
+        "arm_B_ridge_nmse": 0.0007705435062801303,
+        "arm_C_truncation_nmse": 0.005991531697078348,
+        "shots": 512,
+        "ridge_lam": 0.001,
+        "trunc_rank": 2,
+        "noise_helps_beyond_matched_regulariser": false
+      },
+      "2048": {
+        "arm_A_noise_nmse": 0.003175468110609931,
+        "arm_A_noise_std": 9.546702513100147e-05,
+        "arm_B_ridge_nmse": 0.0007705435062801303,
+        "arm_C_truncation_nmse": 0.005991531697078348,
+        "shots": 2048,
+        "ridge_lam": 0.001,
+        "trunc_rank": 2,
+        "noise_helps_beyond_matched_regulariser": false
+      },
+      "8192": {
+        "arm_A_noise_nmse": 0.002026723081074455,
+        "arm_A_noise_std": 4.281986243339449e-05,
+        "arm_B_ridge_nmse": 0.0007705435062801303,
+        "arm_C_truncation_nmse": 0.005991531697078348,
+        "shots": 8192,
+        "ridge_lam": 0.001,
+        "trunc_rank": 2,
+        "noise_helps_beyond_matched_regulariser": false
+      }
+    },
+    "noise_robustly_helps_beyond_regulariser": false,
+    "noise_helps_at_any_shot": false
+  },
+  "enso": {
+    "label": "enso",
+    "ridge_lam": 0.03619930178242847,
+    "trunc_rank": 2,
+    "by_shots": {
+      "128": {
+        "arm_A_noise_nmse": 0.3781954552680318,
+        "arm_A_noise_std": 0.003393291268859998,
+        "arm_B_ridge_nmse": 0.3819214434942244,
+        "arm_C_truncation_nmse": 0.3934023436627733,
+        "shots": 128,
+        "ridge_lam": 0.03619930178242847,
+        "trunc_rank": 2,
+        "noise_helps_beyond_matched_regulariser": true
+      },
+      "512": {
+        "arm_A_noise_nmse": 0.3829716558497469,
+        "arm_A_noise_std": 0.004188516186101723,
+        "arm_B_ridge_nmse": 0.3819214434942244,
+        "arm_C_truncation_nmse": 0.3934023436627733,
+        "shots": 512,
+        "ridge_lam": 0.03619930178242847,
+        "trunc_rank": 2,
+        "noise_helps_beyond_matched_regulariser": false
+      },
+      "2048": {
+        "arm_A_noise_nmse": 0.38174258236101816,
+        "arm_A_noise_std": 0.004218079165446781,
+        "arm_B_ridge_nmse": 0.3819214434942244,
+        "arm_C_truncation_nmse": 0.3934023436627733,
+        "shots": 2048,
+        "ridge_lam": 0.03619930178242847,
+        "trunc_rank": 2,
+        "noise_helps_beyond_matched_regulariser": true
+      },
+      "8192": {
+        "arm_A_noise_nmse": 0.37965630037473874,
+        "arm_A_noise_std": 0.004344953380291454,
+        "arm_B_ridge_nmse": 0.3819214434942244,
+        "arm_C_truncation_nmse": 0.3934023436627733,
+        "shots": 8192,
+        "ridge_lam": 0.03619930178242847,
+        "trunc_rank": 2,
+        "noise_helps_beyond_matched_regulariser": true
+      }
+    },
+    "noise_robustly_helps_beyond_regulariser": false,
+    "noise_helps_at_any_shot": true
+  },
+  "adjudication_verdict": "Across MG and ENSO over the shot grid, finite-shot noise did NOT ROBUSTLY beat a matched ridge / SVD-truncation on held-out error (MG: ridge dominates; ENSO: only within-noise, inconsistent <1% wins). Any conditioning benefit is recovered classically without noise -- H5 holds."
+}

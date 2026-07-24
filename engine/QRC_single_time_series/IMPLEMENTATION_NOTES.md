@@ -27,12 +27,25 @@ phase. Contracts are single-point-of-truth rules with one enforcing test each.
 1. **Hamhoum Lorenz (a,b,c)=(10,28,3/8).** Standard chaotic Lorenz uses β=8/3;
    their quoted LLE≈0.9 is the 8/3 figure. → Integrate BOTH at (σ,ρ)=(10,28);
    document which reproduces the behaviour; select and record (Phase 8).
+   **RESOLVED (P8):** Benettin QR on the exact Jacobian gives λ_max≈**0.898** for
+   β=8/3 (reproduces the ~0.906 claim) and ≈**0.0007** for β=3/8 (non-chaotic).
+   The project uses **β=8/3**. `dynamical_systems/lorenz63.py::beta_audit`;
+   `scripts/estimate_lyapunov_spectra.py`.
 2. **Hamhoum ENSO LLE 0.05–0.1** is quoted from an observational
    coastal-temperature study, not their ODE. → Never transfer; compute λ for the
-   actual integrated system (Phase 8).
+   actual integrated system (Phase 8). **RESOLVED (P8):** computed in-repo,
+   λ_max≈**0.26–0.28 per unit time** (LT≈3.6–3.8); the 0.05–0.1 figure is NOT used
+   anywhere. `dynamical_systems/enso_ode.py::audit`.
 3. **Hamhoum "ENSO" ODE = Vallis (1986, Science 232, 243) box model**
    (dimensional form). → Audit signs/parameters against Vallis 1986/1988 before
-   trusting Eq. 13 (Phase 8).
+   trusting Eq. 13 (Phase 8). **RESOLVED (P8, partial):** the dimensional box model
+   `[u,Te,Tw]` with Hamhoum's Eq. 13 parameters (B=940, Δx=7.5, C=3, u*=−14.2,
+   T̄=16, A=1, T*=28) is implemented and **verified chaotic numerically** (bounded
+   trajectory, λ_max>0). Caveat: the primary Vallis 1986/1988 PDFs are **scanned
+   images** that could not be machine-read in-session, so the sign convention is
+   the form reproduced in the secondary Vallis-chaos literature, adopted because it
+   reproduces the claimed chaotic behaviour; flagged for a later text-level
+   re-check. `dynamical_systems/enso_ode.py`.
 4. **FN Eq. 15 (trained observable) is written for V=1.** The V>1 operator is the
    Heisenberg-spread sum `Σ_{n,v} w_{nv} e^{iHvδt} Z_n e^{−iHvδt}`. → Read
    observables at `t+(v+1)τ/V`, v=0..V−1 (NV signals); resolves the index
