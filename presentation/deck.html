@@ -340,7 +340,7 @@
             <tr><td class="name">Gulf SST reconstruction — ERSSTv5</td><td>Is this event unusual vs 170&nbsp;yr?</td><td>Monthly · 2°</td><td class="num" data-span="got_ersst">1854–2026</td><td><span class="badge live">acquired</span></td></tr>
             <tr><td class="name">Oceanic Niño Index (ONI)</td><td>El Niño / La Niña loading</td><td>Monthly</td><td class="num" data-span="oni">1950–2026</td><td><span class="badge live">acquired</span></td></tr>
             <tr><td class="name">Mae Klong basin rainfall — NASA POWER</td><td>Freshwater salinity shock</td><td>Daily</td><td class="num" data-span="rain">1981–2026</td><td><span class="badge live">acquired</span></td></tr>
-            <tr><td class="name">Mae Klong SPEI-03 drought index</td><td>Drought-driven salinity risk</td><td>Monthly · 0.5°</td><td class="num" data-span="spei">1901–2015</td><td><span class="badge live">acquired</span></td></tr>
+            <tr><td class="name">Mae Klong SPEI-03 drought index</td><td>Drought-driven salinity risk</td><td>Monthly · 0.5°</td><td class="num" data-span="spei">1901–2015</td><td><span class="badge q">first forecast</span></td></tr>
           </tbody>
         </table>
       </div>
@@ -371,6 +371,41 @@
         reproducible script (<span class="kicker">fetch_cp_data.py</span>). Same loader, same forecast
         API, same detectors already validated on open-ocean data — the engine does not care whether the
         buoy sits on the equator or off Samut Songkhram.</p>
+    </div>
+  </section>
+
+  <!-- ============================================ 6b · DROUGHT -->
+  <section class="slide" id="s6b">
+    <div class="wrap stack">
+      <div class="eyebrow">The applied target · drought</div>
+      <h2>Drought is a <span class="qrc-ink">different target</span> — and we ran<br>a first honest forecast of it, not a promise.</h2>
+      <p class="lede">Marine heat is the <em class="hl">validated proof</em> (slides 5–6). Drought is a
+        separate target — a rainfall / soil-moisture deficit index (SPEI), not a temperature. So we
+        did the honest thing and <strong class="k">forecast the Mae Klong drought index itself</strong>:
+        the same 5-seed kill-test, on 115 years of SPEI-03, against persistence and a size-matched
+        classical ESN.</p>
+      <div class="two" style="align-items:stretch">
+        <div class="stats">
+          <div class="stat cool"><div class="n">1–2 mo</div><div class="l">real, honest lead on the drought index itself (NMSE 0.43 → 0.78, below the no-skill line) — then it runs out, and we say so</div></div>
+          <div class="stat"><div class="n">all 12</div><div class="l">horizons where the quantum reservoir beats persistence — SPEI decorrelates fast, so repeating last month is a poor forecast</div></div>
+          <div class="stat cool"><div class="n">11 / 12</div><div class="l">horizons where the reservoir beats the size-matched ESN — and here the winning kind is deterministic, so that edge is not a lucky seed</div></div>
+          <div class="stat warm"><div class="n">≈ 0.2</div><div class="l">ENSO→drought correlation: El Niño loads Mae Klong drought (correct sign) but modestly — a real driver, not a strong one</div></div>
+        </div>
+        <div class="stack">
+          <h3 class="kicker" style="letter-spacing:.14em">The honest scope</h3>
+          <p class="muted">This is a <em class="hl">univariate</em> first pass — the reservoir forecasts
+            SPEI from SPEI's own history. The physics behind the number: <strong class="k">SST/ENSO leads
+            the monsoon that drives this drought</strong>, and we already forecast that ocean signal
+            robustly (slides 5–6). Folding it in as an <em>exogenous driver</em> — an SST-conditioned
+            SPEI model — is the explicit next step, exactly the same discipline as our rain→salinity
+            caveat.</p>
+          <p class="footnote">What we will not claim: a long drought lead, or that ENSO alone predicts
+            Mae Klong drought. The lead is short and the teleconnection is modest — both measured, both
+            on the record. The claim is narrow and true: the pipeline already produces a skillful
+            short-range forecast of the drought index, and the validated ocean driver is the path to
+            extending it.</p>
+        </div>
+      </div>
     </div>
   </section>
 

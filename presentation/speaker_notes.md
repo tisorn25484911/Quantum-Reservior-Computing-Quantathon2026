@@ -120,6 +120,36 @@ heat record, not just acquired data.
 - One line: "the engine doesn't care whether the buoy sits on the equator or off
   Samut Songkhram — and now we've checked, not just claimed it."
 
+## Slide 6b — Drought (the applied target)
+
+**Land:** drought is a *different* target from ocean heat, and we ran a real
+first forecast of it rather than hand-waving — with the scope stated honestly.
+
+- The distinction to make out loud: slides 5–6 prove the engine on **sea-surface
+  temperature**. **Drought is not a temperature** — it's a rainfall/soil-moisture
+  deficit index (SPEI). Conflating them would be the dishonest move; we don't.
+- What we actually did: ran the **same 5-seed kill-test on the Mae Klong SPEI-03
+  drought index itself**, 115 years of monthly data. Result: **real skill at 1–2
+  months** (NMSE 0.43 at h=1, 0.78 at h=2 — below the no-skill line), it **beats
+  persistence at all 12 horizons** (SPEI decorrelates by ~3 months, so repeating
+  last month is a bad forecast), and it **beats the size-matched ESN at 11/12
+  horizons**. Note the winning kind here is `xxz_hx`, which is *deterministic* —
+  so unlike the seed-dependent SST result, that ESN edge is not a lucky draw.
+- Why `xxz_hx` wins here and `ising` won on SST: consistent with the QRC paper —
+  SPEI forecasting is a **memory-dominated** task, and the integrable chain has
+  high memory (but poor nonlinearity). Different task, different best reservoir;
+  we report what actually wins.
+- The driver story, stated at its true strength: **SST/ENSO leads the monsoon
+  that drives this drought** — El Niño loads Mae Klong toward drought, the
+  physically correct sign — but the correlation is **modest (~0.2)**, peaking at
+  0–3 months lead. So we present ENSO as a *real but modest* driver, and the
+  **SST-conditioned (multivariate) SPEI model as the explicit next step**, not as
+  a finished result.
+- The honesty line to say plainly: "The lead is short — one to two months — and
+  we forecast the drought index from its own past here. The ocean driver we've
+  already validated is how we extend it. That's the same rain→salinity caveat,
+  applied to drought." Backup figure: `Anomaly_Forecast/results/drought_spei.png`.
+
 ## Slide 7 — Honesty as a feature
 
 **Land:** every claim ships with the baseline that could beat it — and sometimes
@@ -205,6 +235,29 @@ empirical-quantile fallback when the tail is thin. We target the realised
 false-alarm rate landing within ~2× of the nominal budget on held-out data — and
 it's a number we report, not hide.
 
+**Q. You're pitching aquaculture heat but the slide says drought — which is it?**
+Both, honestly scoped. The *validated proof* is ocean heat (SST), which drives
+both marine-heat pond stress and — via the monsoon — regional drought. Drought is
+a distinct **applied target**: we ran a first forecast of the Mae Klong SPEI-03
+drought index and got real 1–2 month skill that beats persistence and the ESN
+over 5 seeds. We're not claiming a long-range drought forecaster; we're showing
+the same pipeline already produces a skillful short-range one, with SST as the
+validated driver to extend it.
+
+**Q. How strong is the ENSO → drought link you're leaning on?**
+Modest and we say so: peak correlation ~0.2 with the right sign (El Niño → Mae
+Klong drought), strongest at 0–3 months lead. That's a real teleconnection but a
+weak single predictor — which is exactly why the honest framing is "SST is *a*
+driver we fold in," not "ENSO predicts drought." The measured lead-lag is on the
+record (`drought_spei.py`).
+
+**Q. Why does a different quantum reservoir win on drought than on SST?**
+`xxz_hx` (a clean chain) wins on SPEI; `ising` (disordered) won on daily SST.
+Per the founding QRC paper this is expected: the integrable chain has high
+*memory* but poor *nonlinearity*, and SPEI forecasting is memory-dominated. We
+run both and report whichever actually wins — same discipline as the ESN seed
+sweep.
+
 **Q. Isn't rainfall → salinity a big modelling leap?**
 Yes, and we scope it honestly: rain is the *driver* we ingest; the rain-to-pond-
 salinity model is a Next-phase item, best fit against a pilot farm's own salinity
@@ -246,6 +299,9 @@ tell us whether an alarm was worth acting on.
 | ONI record | 1950→2026, range −2.0…+2.8 | CPC ONI |
 | Mae Klong rainfall | daily, 1981→2026, 0–109 mm/day | NASA POWER |
 | Mae Klong SPEI-03 | monthly, 1901→2015 (vintage stops there) | SPEIbase |
+| **SPEI drought forecast** | skill h=1–2 mo (NMSE 0.43/0.78), beats persistence all 12, beats ESN 11/12 | `seed_sweep.py --dataset maeklong_spei`, `step2_seedsweep_maeklong_spei.json` |
+| SPEI usable lead | ~2 months (short — stated as such) | same |
+| ENSO→SPEI teleconnection | peak corr −0.21, El Niño→drought, 0–3 mo lead (modest) | `drought_spei.py` |
 | Gulf SST kill-test | PASS: skill all 24 lead-days, beats persistence day 12-24, ESN never materially wins back | `seed_sweep.py --dataset got_sst`, seeds 7/11/23/42/101, `results/step2_seedsweep_got_sst.json` |
 | Gulf SST vs classical ESN | QRC (`ising`) beats mean-ESN curve at 16/24 horizons; per-seed win rate ≈3/5 at a typical horizon | same file |
 | Gulf SST honest horizon | ~day 20 (climatology floor catches every model from ~day 21) | same file |

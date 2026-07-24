@@ -68,6 +68,27 @@ Per `Anomaly_Forecast/plan.md` §3 (the next kill-test in the original line):
 - [ ] Adjust the deck's "calibrated probability" claim to whatever the coverage test
       actually shows.
 
+## Drought target (SPEI) 🌵
+
+- [x] **First SPEI drought forecast run.** Multi-seed kill-test on
+      `maeklong_spei` (`seed_sweep.py --dataset maeklong_spei`, H=12, 5 seeds,
+      115 yr). **Result: real skill at h=1–2 months** (NMSE 0.43/0.78), beats
+      persistence at all 12 horizons, beats the size-matched ESN at 11/12
+      (winning kind is the deterministic `xxz_hx` — a memory-dominated task, so
+      the integrable chain wins, consistent with the QRC paper). Usable lead ~2
+      months. Artifacts: `results/step2_seedsweep_maeklong_spei.json`,
+      `results/step2_maeklong_spei.json`, `results/drought_spei.png`.
+- [x] **Quantified the ENSO→drought driver** (`drought_spei.py`): El Niño → Mae
+      Klong drought, correct sign but **modest** (peak corr −0.21 at 0–3 mo lead).
+- [x] **Deck slide added** (slide 6b) + speaker notes + Q&A, scoping drought
+      honestly: SPEI as the applied target with a real short-range first forecast,
+      SST as the validated driver, short lead + weak teleconnection both stated.
+- [ ] **NEXT: SST-conditioned (multivariate) SPEI model.** The current run is
+      univariate (SPEI from its own past). Fold the validated ocean signal
+      (ONI/`got_sst`/`got_ersst`) in as an exogenous driver to try to extend the
+      drought lead. Needs the reservoir to accept an auxiliary input channel
+      (currently single-scalar) — a real code change, scoped as the next step.
+
 ## Product-facing follow-ups (lower priority)
 
 - [ ] **Rain → pond-salinity model** for `maeklong_rain` (currently ingested as a
