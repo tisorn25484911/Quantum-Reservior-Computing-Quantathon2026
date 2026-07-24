@@ -175,8 +175,15 @@ HTML = f"""<title>TideRead - Results Report</title>
    <em>ties</em> the classical one - we claim no quantum speed-up. The real win is over persistence,
    and it grows with lead.</p></div>
  <div class="card verdict"><strong>Verdict:</strong> the QRC beats persistence at 23 of 24 days
-  ahead, with a widening margin. Honest note: vs the classical model of equal size it's a <strong>tie</strong>
-  - no "quantum advantage" is claimed (that would be false at this scale), and we say so.</div>
+  ahead, with a widening margin. Honest note: vs strong classical models of equal size it's a
+  <strong>tie</strong> - no "quantum advantage" is claimed (that would be false at this scale), and we say so.</div>
+ <div class="read"><span class="h">Stress-test against a second classical method</span>
+  <p>Beating one baseline can be luck, so we also ran <b>NVAR</b> (next-generation reservoir
+   computing) - a different, cheap, seed-free classical method that usually beats echo-state networks.
+   Result over 24 days ahead: <b>QRC mean error 0.633, NVAR 0.653, classical ESN 0.648, persistence
+   0.792</b>. The quantum model holds <b>parity with both</b> strong classical methods (it edges them
+   slightly on average but not by a meaningful margin) - so the honest claim is <b>parity, tested
+   against two independent controls</b>, not one.</p></div>
 
  <h2>Step 2 - the detector beats the simple rules</h2>
  <p>Framed as genuine early warning - "will a heatwave <em>start</em> in the next 7 days?" - predicted
