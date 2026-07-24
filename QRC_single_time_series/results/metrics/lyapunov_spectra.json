@@ -1,0 +1,45 @@
+{
+  "lorenz_beta_audit": {
+    "beta_8_3": {
+      "beta": 2.6666666666666665,
+      "lambda_max": 0.8981450769214927,
+      "lyapunov_time": 1.1134058691582747
+    },
+    "beta_3_8": {
+      "beta": 0.375,
+      "lambda_max": 0.0007116294301214174,
+      "lyapunov_time": 1405.2257504715355
+    },
+    "reproduces_0.906": "beta_8_3"
+  },
+  "lorenz_estimator_crossval": {
+    "benettin_per_time": 0.8981450769214927,
+    "rosenstein_per_time": 1.2406231104811962,
+    "agree_sign": true
+  },
+  "vallis_enso_audit": {
+    "params": {
+      "B": 940.0,
+      "dx": 7.5,
+      "C": 3.0,
+      "u_star": -14.2,
+      "Tbar": 16.0,
+      "A": 1.0,
+      "T_star": 28.0
+    },
+    "lambda_max": 0.26218316219180815,
+    "lyapunov_time": 3.8141274658531246,
+    "chaotic": true,
+    "note": "computed in-repo; Hamhoum's observational 0.05-0.1 NOT reused"
+  },
+  "mackey_glass": {
+    "tau_16": {
+      "lambda_pair_per_sample": 0.0008261776912203683,
+      "chaotic": false
+    },
+    "tau_17": {
+      "lambda_pair_per_sample": 0.00913904644172672,
+      "chaotic": true
+    }
+  }
+}

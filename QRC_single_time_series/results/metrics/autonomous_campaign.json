@@ -1,0 +1,114 @@
+{
+  "mackey_glass_tau17": {
+    "n_origins": 8,
+    "n_train": 1950,
+    "onestep_dev_nmse": 5.6818245720713285e-05,
+    "lambda_per_step": 0.00787075407942838,
+    "lyapunov_time_steps": 127.05262925361605,
+    "H_error": {
+      "median": 50.0,
+      "iqr": [
+        38.25,
+        68.0
+      ]
+    },
+    "H_skill_vs_persistence": {
+      "median": 119.5
+    },
+    "H_effective": {
+      "median": 50.0,
+      "iqr": [
+        38.25,
+        68.0
+      ],
+      "in_lyapunov_times": 0.39353770397141896
+    },
+    "dynamical_fidelity_median": {
+      "invariant_measure_L1": 0.3583842083842084,
+      "spectral_L1": 0.547323182793336,
+      "acf_rms": 0.29530830472126,
+      "recurrence_rate_true": 0.18452005881117411,
+      "recurrence_rate_pred": 0.18777567737870193,
+      "std_ratio": 1.1376212074853629
+    }
+  },
+  "lorenz_x": {
+    "n_origins": 8,
+    "n_train": 2600,
+    "onestep_dev_nmse": 4.150255126657024e-05,
+    "lambda_per_step": 0.018605847177223314,
+    "lyapunov_time_steps": 53.74654486166952,
+    "H_error": {
+      "median": 32.0,
+      "iqr": [
+        23.0,
+        35.0
+      ]
+    },
+    "H_skill_vs_persistence": {
+      "median": 73.0
+    },
+    "H_effective": {
+      "median": 32.0,
+      "iqr": [
+        23.0,
+        35.0
+      ],
+      "in_lyapunov_times": 0.595387109671146
+    },
+    "dynamical_fidelity_median": {
+      "invariant_measure_L1": 0.5153940886699511,
+      "spectral_L1": 0.7313806351039293,
+      "acf_rms": 0.48716618067957523,
+      "recurrence_rate_true": 0.22342995169082125,
+      "recurrence_rate_pred": 0.14849821466078555,
+      "std_ratio": 0.9704243636083946
+    }
+  },
+  "vallis_enso_Te": {
+    "n_origins": 8,
+    "n_train": 2600,
+    "onestep_dev_nmse": 2.202438113310148e-06,
+    "lambda_per_step": 0.0033630479375728645,
+    "lyapunov_time_steps": 297.34931483662024,
+    "H_error": {
+      "median": 38.0,
+      "iqr": [
+        20.75,
+        53.5
+      ]
+    },
+    "H_skill_vs_persistence": {
+      "median": 40.5
+    },
+    "H_effective": {
+      "median": 28.5,
+      "iqr": [
+        8.5,
+        42.5
+      ],
+      "in_lyapunov_times": 0.09584686622082664
+    },
+    "dynamical_fidelity_median": {
+      "invariant_measure_L1": 0.5493522408963586,
+      "spectral_L1": 0.24998074042176333,
+      "acf_rms": 0.2256200600385394,
+      "recurrence_rate_true": 0.24233354337324092,
+      "recurrence_rate_pred": 0.22852341944969545,
+      "std_ratio": 2.0678114322857635
+    }
+  },
+  "shot_slope_mackey_glass": {
+    "exact_median_H_error": 45.5,
+    "shots_curve": {
+      "128": 0.0,
+      "512": 0.0,
+      "2048": 0.0,
+      "8192": 0.0
+    },
+    "slope_b_fit": 0.0,
+    "slope_b_theory_half_over_lambda": 63.52631462680802,
+    "slope_measurable": false,
+    "note": "shots collapse the closed loop at every tested count for this under-tuned config; the H~a+b lnS law is not measurable here -- needs a stronger-signal config + SVD-truncation mitigation (P10)"
+  }
+}

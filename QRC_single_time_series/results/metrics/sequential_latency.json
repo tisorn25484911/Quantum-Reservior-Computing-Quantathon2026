@@ -1,0 +1,438 @@
+{
+  "config": {
+    "N": 5,
+    "t_w": 10,
+    "tau": 1.0,
+    "shots": 1024,
+    "h_eff": 4,
+    "h_eff_raw": 4.5,
+    "backtest_origins": 20,
+    "backtest_steps": 80,
+    "step_counts": {
+      "1": 1,
+      "12": 12,
+      "H_eff": 4,
+      "100": 100,
+      "1000": 1000
+    }
+  },
+  "assumptions": {
+    "backend_name": "ibm_heron_class",
+    "per_shot_execution_s": 0.0004,
+    "sampler_overhead_s": 2.0,
+    "queue_s": 60.0,
+    "network_send_s": 0.25,
+    "result_return_s": 0.25,
+    "refresh_period_steps": 12,
+    "sources": [
+      "Heron per-shot execution anchor ~1e-4 s/shot-layer: assumed from published IBM Heron figures (order of magnitude only).",
+      "Queue wait: assumed median for fair-share access; real waits range seconds..hours and are not modelled as a distribution here.",
+      "Network round trip: assumed LAN/WAN client<->runtime latency; not measured."
+    ],
+    "note": "remote components are ASSUMPTIONS, not live-backend measurements."
+  },
+  "measured_local_s": {
+    "construct": 0.00046962499618530273,
+    "bind": 5.491706542670727e-05,
+    "transpile": 0.0034529580734670162,
+    "readout": 0.000803167000412941,
+    "local_execute": 0.0036836250219494104,
+    "buffer": 3.7509016692638397e-07,
+    "meta": {
+      "N": 5,
+      "t_w": 10,
+      "tau": 1.0,
+      "shots": 1024,
+      "circuit_depth": 44,
+      "repeats": 7
+    }
+  },
+  "surrogate": {
+    "qrc_test_nmse": 0.3610016879726798,
+    "surrogate_test_nmse": 0.40322088965465086,
+    "feature_rmse": 0.07048739492034076,
+    "predict_s": 6.854208186268806e-05,
+    "meta": {
+      "N": 4,
+      "t_w": 6,
+      "tau": 1.0,
+      "n": 726,
+      "cut": 581,
+      "hidden": [
+        64
+      ],
+      "series": "enso"
+    }
+  },
+  "ledgers": {
+    "A_fresh_circuits": {
+      "strategy": "A_fresh_circuits",
+      "label": "A: fresh circuits (transpile every step)",
+      "components_s": {
+        "construct": 0.00046962499618530273,
+        "bind": 0.0,
+        "transpile": 0.0034529580734670162,
+        "queue": 60.0,
+        "network_send": 0.25,
+        "execute": 2.4096,
+        "result_return": 0.25,
+        "readout": 0.000803167000412941,
+        "buffer": 3.7509016692638397e-07
+      },
+      "total_s": 62.91432612516023,
+      "remote": true,
+      "closed_loop_capable": true,
+      "estimated": true,
+      "requires_dynamic": false,
+      "note": "worst case: full construct+transpile per step, one QPU round trip."
+    },
+    "B_pretranspiled_templates": {
+      "strategy": "B_pretranspiled_templates",
+      "label": "B: pre-transpiled parameterised template (bind only)",
+      "components_s": {
+        "construct": 0.0,
+        "bind": 5.491706542670727e-05,
+        "transpile": 0.0,
+        "queue": 60.0,
+        "network_send": 0.25,
+        "execute": 2.4096,
+        "result_return": 0.25,
+        "readout": 0.000803167000412941,
+        "buffer": 3.7509016692638397e-07
+      },
+      "total_s": 62.910458459156004,
+      "remote": true,
+      "closed_loop_capable": true,
+      "estimated": true,
+      "requires_dynamic": false,
+      "note": "template transpiled once; per step only binds angles + one round trip."
+    },
+    "C_dynamic_circuits": {
+      "strategy": "C_dynamic_circuits",
+      "label": "C: dynamic circuits (on-device feedforward)",
+      "components_s": {
+        "construct": 0.0,
+        "bind": 0.0,
+        "transpile": 0.0,
+        "queue": 60.0,
+        "network_send": 0.25,
+        "execute": 2.4096,
+        "result_return": 0.25,
+        "readout": 0.000803167000412941,
+        "buffer": 3.7509016692638397e-07
+      },
+      "total_s": 62.91040354209058,
+      "remote": true,
+      "closed_loop_capable": true,
+      "estimated": true,
+      "requires_dynamic": true,
+      "note": "needs snapshot-confirmed dynamic-circuit support; angles set on-device, still one QPU round trip per FORECAST step (cross-step dependency stays)."
+    },
+    "D_local_noisy_sim": {
+      "strategy": "D_local_noisy_sim",
+      "label": "D: local noisy simulator (no QPU)",
+      "components_s": {
+        "construct": 0.00046962499618530273,
+        "bind": 0.0,
+        "transpile": 0.0034529580734670162,
+        "local_execute": 0.0036836250219494104,
+        "readout": 0.000803167000412941,
+        "buffer": 3.7509016692638397e-07
+      },
+      "total_s": 0.008409750182181597,
+      "remote": false,
+      "closed_loop_capable": true,
+      "estimated": false,
+      "requires_dynamic": false,
+      "note": "research mode: everything local; no queue/network."
+    },
+    "E_offline_features_classical_deploy": {
+      "strategy": "E_offline_features_classical_deploy",
+      "label": "E: offline QPU features + classical deploy",
+      "components_s": {
+        "construct": 0.0,
+        "bind": 0.0,
+        "transpile": 0.0,
+        "readout": 0.000803167000412941,
+        "buffer": 3.7509016692638397e-07
+      },
+      "total_s": 0.0008035420905798674,
+      "remote": false,
+      "closed_loop_capable": false,
+      "estimated": false,
+      "requires_dynamic": false,
+      "note": "QPU paid ONCE offline; deploy is classical readout only. Cannot obtain quantum features for its OWN predicted inputs -> not closed-loop capable."
+    },
+    "F_classical_surrogate": {
+      "strategy": "F_classical_surrogate",
+      "label": "F: classical surrogate of the feature map (no QPU)",
+      "components_s": {
+        "construct": 0.0,
+        "bind": 0.0,
+        "transpile": 0.0,
+        "surrogate_features": 6.854208186268806e-05,
+        "readout": 0.000803167000412941,
+        "buffer": 3.7509016692638397e-07
+      },
+      "total_s": 0.0008720841724425554,
+      "remote": false,
+      "closed_loop_capable": true,
+      "estimated": false,
+      "requires_dynamic": false,
+      "note": "small model maps window->features locally; the Gate-7 cost comparator."
+    },
+    "G_periodic_refresh": {
+      "strategy": "G_periodic_refresh",
+      "label": "G: periodic quantum refresh (QPU every R steps)",
+      "components_s": {
+        "amortised_over_R": 12.0,
+        "refresh_step_total_s": 62.910458459156004,
+        "surrogate_step_total_s": 0.0008720841724425554
+      },
+      "total_s": 5.243337615421073,
+      "remote": true,
+      "closed_loop_capable": true,
+      "estimated": true,
+      "requires_dynamic": false,
+      "note": "amortised: one QPU round trip (template B) every R steps; surrogate carries the other R-1 steps."
+    }
+  },
+  "totals": {
+    "A_fresh_circuits": {
+      "per_step_s": 62.91432612516023,
+      "totals_s": {
+        "1": 62.91432612516023,
+        "12": 754.9719135019227,
+        "H_eff": 251.65730450064092,
+        "100": 6291.432612516023,
+        "1000": 62914.32612516023,
+        "backtest": 5033.146090012819
+      },
+      "closed_loop_capable": true,
+      "remote": true
+    },
+    "B_pretranspiled_templates": {
+      "per_step_s": 62.910458459156004,
+      "totals_s": {
+        "1": 62.910458459156004,
+        "12": 754.925501509872,
+        "H_eff": 251.64183383662402,
+        "100": 6291.045845915601,
+        "1000": 62910.458459156005,
+        "backtest": 5032.836676732481
+      },
+      "closed_loop_capable": true,
+      "remote": true
+    },
+    "C_dynamic_circuits": {
+      "per_step_s": 62.91040354209058,
+      "totals_s": {
+        "1": 62.91040354209058,
+        "12": 754.9248425050869,
+        "H_eff": 251.6416141683623,
+        "100": 6291.040354209058,
+        "1000": 62910.40354209058,
+        "backtest": 5032.832283367246
+      },
+      "closed_loop_capable": true,
+      "remote": true
+    },
+    "D_local_noisy_sim": {
+      "per_step_s": 0.008409750182181597,
+      "totals_s": {
+        "1": 0.008409750182181597,
+        "12": 0.10091700218617916,
+        "H_eff": 0.03363900072872639,
+        "100": 0.8409750182181597,
+        "1000": 8.409750182181597,
+        "backtest": 0.6727800145745277
+      },
+      "closed_loop_capable": true,
+      "remote": false
+    },
+    "E_offline_features_classical_deploy": {
+      "per_step_s": 0.0008035420905798674,
+      "totals_s": {
+        "1": 0.0008035420905798674,
+        "12": 0.009642505086958408,
+        "H_eff": 0.0032141683623194695,
+        "100": 0.08035420905798674,
+        "1000": 0.8035420905798674,
+        "backtest": 0.06428336724638939
+      },
+      "closed_loop_capable": false,
+      "remote": false
+    },
+    "F_classical_surrogate": {
+      "per_step_s": 0.0008720841724425554,
+      "totals_s": {
+        "1": 0.0008720841724425554,
+        "12": 0.010465010069310665,
+        "H_eff": 0.0034883366897702217,
+        "100": 0.08720841724425554,
+        "1000": 0.8720841724425554,
+        "backtest": 0.06976673379540443
+      },
+      "closed_loop_capable": true,
+      "remote": false
+    },
+    "G_periodic_refresh": {
+      "per_step_s": 5.243337615421073,
+      "totals_s": {
+        "1": 5.243337615421073,
+        "12": 62.92005138505287,
+        "H_eff": 20.97335046168429,
+        "100": 524.3337615421073,
+        "1000": 5243.337615421073,
+        "backtest": 419.4670092336858
+      },
+      "closed_loop_capable": true,
+      "remote": true
+    }
+  },
+  "accuracy_onestep_nmse": {
+    "A_fresh_circuits": 0.3610016879726798,
+    "B_pretranspiled_templates": 0.3610016879726798,
+    "C_dynamic_circuits": 0.3610016879726798,
+    "D_local_noisy_sim": 0.3610016879726798,
+    "E_offline_features_classical_deploy": 0.3610016879726798,
+    "F_classical_surrogate": 0.40322088965465086,
+    "G_periodic_refresh": 0.3610016879726798
+  },
+  "pareto": [
+    {
+      "strategy": "A_fresh_circuits",
+      "label": "A: fresh circuits (transpile every step)",
+      "per_step_s": 62.91432612516023,
+      "nmse": 0.3610016879726798,
+      "closed_loop_capable": true,
+      "remote": true,
+      "pareto_optimal": false
+    },
+    {
+      "strategy": "B_pretranspiled_templates",
+      "label": "B: pre-transpiled parameterised template (bind only)",
+      "per_step_s": 62.910458459156004,
+      "nmse": 0.3610016879726798,
+      "closed_loop_capable": true,
+      "remote": true,
+      "pareto_optimal": false
+    },
+    {
+      "strategy": "C_dynamic_circuits",
+      "label": "C: dynamic circuits (on-device feedforward)",
+      "per_step_s": 62.91040354209058,
+      "nmse": 0.3610016879726798,
+      "closed_loop_capable": true,
+      "remote": true,
+      "pareto_optimal": false
+    },
+    {
+      "strategy": "D_local_noisy_sim",
+      "label": "D: local noisy simulator (no QPU)",
+      "per_step_s": 0.008409750182181597,
+      "nmse": 0.3610016879726798,
+      "closed_loop_capable": true,
+      "remote": false,
+      "pareto_optimal": true
+    },
+    {
+      "strategy": "E_offline_features_classical_deploy",
+      "label": "E: offline QPU features + classical deploy",
+      "per_step_s": 0.0008035420905798674,
+      "nmse": 0.3610016879726798,
+      "closed_loop_capable": false,
+      "remote": false,
+      "pareto_optimal": false
+    },
+    {
+      "strategy": "F_classical_surrogate",
+      "label": "F: classical surrogate of the feature map (no QPU)",
+      "per_step_s": 0.0008720841724425554,
+      "nmse": 0.40322088965465086,
+      "closed_loop_capable": true,
+      "remote": false,
+      "pareto_optimal": true
+    },
+    {
+      "strategy": "G_periodic_refresh",
+      "label": "G: periodic quantum refresh (QPU every R steps)",
+      "per_step_s": 5.243337615421073,
+      "nmse": 0.3610016879726798,
+      "closed_loop_capable": true,
+      "remote": true,
+      "pareto_optimal": false
+    }
+  ],
+  "verdicts": {
+    "horizon_label": "H_eff",
+    "research_sim": {
+      "strategy": "D_local_noisy_sim",
+      "latency_s": 0.03363900072872639,
+      "verdict": "practical: fully local, seconds; the study path.",
+      "by_use_case": {
+        "monthly_index": {
+          "deadline_s": 2592000.0,
+          "latency_s": 0.03363900072872639,
+          "feasible": true
+        },
+        "daily_ops": {
+          "deadline_s": 86400.0,
+          "latency_s": 0.03363900072872639,
+          "feasible": true
+        },
+        "intraday_trading": {
+          "deadline_s": 60.0,
+          "latency_s": 0.03363900072872639,
+          "feasible": true
+        }
+      }
+    },
+    "delayed_batch": {
+      "strategy": "B_pretranspiled_templates",
+      "latency_s": 251.64183383662402,
+      "verdict": "practical for overnight/daily reporting: a whole-horizon forecast completes well inside a daily batch window.",
+      "by_use_case": {
+        "monthly_index": {
+          "deadline_s": 2592000.0,
+          "latency_s": 251.64183383662402,
+          "feasible": true
+        },
+        "daily_ops": {
+          "deadline_s": 86400.0,
+          "latency_s": 251.64183383662402,
+          "feasible": true
+        },
+        "intraday_trading": {
+          "deadline_s": 60.0,
+          "latency_s": 251.64183383662402,
+          "feasible": false
+        }
+      }
+    },
+    "operational": {
+      "strategy": "B_pretranspiled_templates",
+      "latency_s": 251.64183383662402,
+      "verdict": "latency-vs-deadline: feasible for monthly/daily indices (minutes << cycle) but NOT for a sub-minute loop; the binding constraint for monthly climate work is QPU access/cost, not per-forecast latency.",
+      "by_use_case": {
+        "monthly_index": {
+          "deadline_s": 2592000.0,
+          "latency_s": 251.64183383662402,
+          "feasible": true
+        },
+        "daily_ops": {
+          "deadline_s": 86400.0,
+          "latency_s": 251.64183383662402,
+          "feasible": true
+        },
+        "intraday_trading": {
+          "deadline_s": 60.0,
+          "latency_s": 251.64183383662402,
+          "feasible": false
+        }
+      }
+    }
+  },
+  "structural_conclusion": "The rewind loop is inherently sequential: circuit t+1 depends on result t, so a k-step forecast is k QPU round trips, each dominated by the queue assumption. On the accuracy-vs-latency plane the local simulator (D) and classical surrogate (F) dominate every remote-QPU strategy at this problem size. For a MONTHLY index the horizon latency (minutes) is far inside the decision deadline, so the binding constraint is QPU access/cost, not per-forecast latency.",
+  "figure": "results/figures/latency_pareto.png"
+}

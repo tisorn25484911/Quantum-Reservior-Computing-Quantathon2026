@@ -106,3 +106,24 @@ def nn_tfi(N, J=1.0, h=1.0, seed=7, periodic=False):
     for i in range(N):
         H += h * embed(Z, i, N)
     return Reservoir(N=N, H=H, J=Jmat, h=h, seed=seed, topology="nn")
+
+
+def haar_reservoir(N, seed=7, spread=1.0):
+    """Structureless Haar control (G7): Haar-random eigenvectors, no Ising structure.
+
+    Builds a Hermitian H = Q diag(theta) Q^dag with Q Haar-distributed (QR of a
+    complex Gaussian, phase-fixed) and theta ~ U[-pi,pi]*spread, so that the
+    evolution operator exp(-i H tau) is a fixed Haar-like unitary in place of the
+    structured TFI e^{-iH tau}, with injection and readout left IDENTICAL. Any
+    "structured reservoir dynamics matter" claim must beat this control. The object
+    is a drop-in ``Reservoir`` (feeds ``ExactQRC`` unchanged). Implemented in P7.
+    """
+    rng = np.random.default_rng(seed)
+    dim = 2 ** N
+    A = rng.standard_normal((dim, dim)) + 1j * rng.standard_normal((dim, dim))
+    Q, Rup = np.linalg.qr(A)
+    Q = Q * (np.diagonal(Rup) / np.abs(np.diagonal(Rup)))   # fix phases -> Haar
+    theta = rng.uniform(-np.pi, np.pi, dim) * spread
+    H = (Q * theta) @ Q.conj().T
+    H = 0.5 * (H + H.conj().T)                               # symmetrise round-off
+    return Reservoir(N=N, H=H, J=np.zeros((N, N)), h=0.0, seed=seed, topology="haar")

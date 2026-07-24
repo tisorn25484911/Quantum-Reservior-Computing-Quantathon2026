@@ -1,0 +1,29 @@
+{
+  "mackey_glass_tau17": {
+    "H_effective_steps": 50.0,
+    "H_effective_LT": 0.39353770397141896,
+    "invariant_measure_L1": 0.3583842083842084,
+    "spectral_L1": 0.547323182793336,
+    "acf_rms": 0.29530830472126,
+    "std_ratio": 1.1376212074853629,
+    "verdict": "attractor-faithful"
+  },
+  "lorenz_x": {
+    "H_effective_steps": 32.0,
+    "H_effective_LT": 0.595387109671146,
+    "invariant_measure_L1": 0.5153940886699511,
+    "spectral_L1": 0.7313806351039293,
+    "acf_rms": 0.48716618067957523,
+    "std_ratio": 0.9704243636083946,
+    "verdict": "pointwise-only / partial"
+  },
+  "vallis_enso_Te": {
+    "H_effective_steps": 28.5,
+    "H_effective_LT": 0.09584686622082664,
+    "invariant_measure_L1": 0.5493522408963586,
+    "spectral_L1": 0.24998074042176333,
+    "acf_rms": 0.2256200600385394,
+    "std_ratio": 2.0678114322857635,
+    "verdict": "pointwise-only / partial"
+  }
+}

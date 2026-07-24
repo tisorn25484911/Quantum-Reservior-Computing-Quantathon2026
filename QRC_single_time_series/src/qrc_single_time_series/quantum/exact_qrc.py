@@ -130,6 +130,21 @@ class ExactQRC:
             rows = np.hstack([rows, np.ones((L, 1))])
         return rows
 
+    def step(self, rho, s):
+        """Advance one input step: inject s, read V virtual nodes, return (row, rho_next).
+
+        ``row`` is the length-M*V feature block (no bias) for this step; ``rho_next``
+        is the reservoir state after a full tau of evolution, ready for the next
+        injection. This is the incremental primitive the stateful-FN autonomous
+        adapter drives (spec s16.1: rho is retained across autonomous steps).
+        """
+        rho = inject(rho, float(s), self.N, site=self.inject_site)
+        sigma = self._sigma(rho)
+        obs = self._obs_at_subtimes(sigma)                 # (V, M)
+        row = (0.5 * (1.0 + obs)).reshape(-1)
+        rho_next = self.W @ (sigma * self._Phi_end) @ self.Wd
+        return row, rho_next
+
     # -- reference generator (materialises rho; slow path for exactness tests) -
     def run(self, inputs, x0=None, debug_postinjection=False):
         """Yield ``(k, v, rho)`` at every virtual-node time (reference/debug path).

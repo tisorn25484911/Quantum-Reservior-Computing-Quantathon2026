@@ -57,3 +57,19 @@ def clip_report(u_unclipped: np.ndarray) -> dict:
         "max_below": float((-u_unclipped[below]).max()) if below.any() else 0.0,
         "max_above": float((u_unclipped[above] - 1.0).max()) if above.any() else 0.0,
     }
+
+
+def invert_scaler(bounds):
+    """Inverse of ``fit_scaler``: map s in [0,1] back to physical units.
+
+    ``bounds`` is the (lo, hi) returned by ``fit_scaler``. On in-range values the
+    round trip ``invert(scale(x)) == x`` holds exactly (used by the autonomous
+    feedback identity, spec s16 / test_feedback_scaling).
+    """
+    lo, hi = bounds
+    span = hi - lo if hi > lo else 1.0
+
+    def decode(s):
+        return lo + np.asarray(s, dtype=float) * span
+
+    return decode

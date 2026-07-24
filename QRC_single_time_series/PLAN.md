@@ -4,8 +4,8 @@ Derived from `IMPLEMENTATION_PHASES.md` (13 phases P0–P12) and the master
 specification (33 sections). This is the required §6 first deliverable; the
 phase file is the authoritative build order, this file is the standing plan.
 
-Status: **Phase 3 complete** (see `handoffs/HANDOFF_P0.md`, `HANDOFF_P1.md`,
-`HANDOFF_P2.md`, `HANDOFF_P3.md`). Phases 4–12 pending user confirmation, one at a time.
+Status: **Phase 10 complete** (see `handoffs/HANDOFF_P0.md` … `HANDOFF_P10.md`).
+Phases 11–12 pending, one at a time.
 
 ---
 

@@ -12,3 +12,8 @@ registry:
     script: scripts/validate_qiskit_qrc.py
     make_target: validate-ladder
     outputs: [results/metrics/validate_qiskit_qrc.json]
+  reproduce_mackey_glass:    # P5 GATE: teacher-forced -> autonomous Mackey-Glass
+    configs: [configs/dynamical_systems.yaml, configs/qrc_exact.yaml]
+    script: scripts/reproduce_mackey_glass.py
+    make_target: mackey-glass
+    outputs: [results/metrics/reproduce_mackey_glass.json]
