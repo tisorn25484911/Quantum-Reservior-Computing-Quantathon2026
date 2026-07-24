@@ -229,11 +229,24 @@ class Readout:
 
 
 def fit_readout(x: np.ndarray, res, washout: int = 100, train_frac: float = 0.7,
-                lam: float = 1e-6, scaler: Scaler | None = None) -> Readout:
+                lam: float = 1e-6, scaler: Scaler | None = None,
+                train_noise: float = 0.0,
+                rng: np.random.Generator | None = None) -> Readout:
     """Train the ridge read-out for one-step-ahead prediction.
 
     ``x`` is the raw series; targets are the *scaled* next value so the
     read-out's own output can be fed straight back during rollout.
+
+    ``train_noise`` implements the closed-loop robustness trick from
+    Fujii & Nakajima (2017), Appendix A 3 (their Mackey-Glass task): fit the
+    read-out on **noise-perturbed** reservoir features so that, when the loop is
+    later closed and the reservoir is driven by its own imperfect output, the
+    read-out has learned to correct back toward the trajectory instead of
+    overfitting the exact clean training states. Without it, a recursive rollout
+    of a mean read-out contracts to a fixed point (the free-run flat-line). The
+    noise is zero-mean Gaussian, s.d. ``train_noise`` in scaled feature units;
+    ``0.0`` reproduces the previous behaviour exactly. Residuals are computed on
+    the **clean** features so the Step-3 bootstrap pool stays honest.
     """
     x = np.asarray(x, float)
     n = len(x)
@@ -253,8 +266,14 @@ def fit_readout(x: np.ndarray, res, washout: int = 100, train_frac: float = 0.7,
     feats, _ = drive(res, np.clip(u, 0.0, 1.0))
     y = u[1:]                                   # scaled next value
 
-    w = ridge_fit(feats[train_idx], y[train_idx], lam=lam)
-    resid = y[train_idx] - ridge_predict(feats[train_idx], w)
+    X_tr = feats[train_idx]
+    if train_noise > 0.0:
+        if rng is None:
+            rng = np.random.default_rng(SEED)
+        X_tr = X_tr + rng.normal(0.0, float(train_noise), size=X_tr.shape)
+
+    w = ridge_fit(X_tr, y[train_idx], lam=lam)
+    resid = y[train_idx] - ridge_predict(feats[train_idx], w)   # clean features
 
     return Readout(w=w, scaler=scaler, washout=washout, train_idx=train_idx,
                    test_idx=test_idx, residuals=resid,

@@ -87,6 +87,14 @@ def xxz_hx_hamiltonian(n, J=1.0, h=1.0, delta=1.0, periodic=False, rng=None):
     rng : ignored
         Accepted for a signature compatible with `ising_hamiltonian`; this
         Hamiltonian is deterministic (no disorder).
+
+    Note (Fujii & Nakajima 2017, Sec. IV A): a 1D nearest-neighbour chain like
+    this XXZ model is *integrable* (Bethe ansatz / Jordan-Wigner). Integrable
+    reservoirs have high memory (STM) but structurally poor *nonlinear* (PC)
+    capacity, which "cannot improve even if the time intervals or the number of
+    virtual nodes are changed." The disordered fully-connected `ising` reservoir
+    is nonintegrable and is therefore the accuracy default -- this is why it
+    beats `xxz_hx` on daily SST (`got_sst`). See `capacity_vs_V.py`.
     """
     dim = 2 ** n
     H = np.zeros((dim, dim), dtype=complex)

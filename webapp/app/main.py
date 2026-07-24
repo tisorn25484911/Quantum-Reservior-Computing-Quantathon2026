@@ -304,15 +304,16 @@ def freerun_submit(
     train_frac: float = Form(0.5),
     n_qubits: int = Form(5),
     dt: float = Form(2.0),
-    virtual_nodes: int = Form(4),
+    virtual_nodes: int = Form(10),
+    train_noise: float = Form(0.0),
     seed: int = Form(SEED),
     max_points: int = Form(2000),
 ):
     try:
         cfg = FreeRunConfig(dataset=dataset, kind=kind, train_frac=train_frac,
                             n_qubits=n_qubits, dt=dt,
-                            virtual_nodes=virtual_nodes, seed=seed,
-                            max_points=max_points)
+                            virtual_nodes=virtual_nodes, train_noise=train_noise,
+                            seed=seed, max_points=max_points)
         cfg.validate()
     except (TypeError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc))

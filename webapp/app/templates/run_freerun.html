@@ -72,6 +72,8 @@
       <tr><td>Priming</td><td>reservoir state built from train history only</td></tr>
       <tr><td>Seasonal period</td><td class="num">{{ r.period if r.period else 'none detected' }}</td></tr>
       <tr><td>Reservoir</td><td>{{ r.config.kind }}, {{ r.config.n_qubits }} qubits, seed {{ r.config.seed }}</td></tr>
+      <tr><td>Virtual nodes V</td><td class="num">{{ r.config.virtual_nodes }} <span class="muted">(nonlinearity lever; 0 at V=1)</span></td></tr>
+      <tr><td>Training noise &sigma;</td><td class="num">{{ r.config.train_noise }} <span class="muted">(closed-loop robustness; 0 = off)</span></td></tr>
     </tbody>
   </table>
 </div>

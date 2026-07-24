@@ -50,19 +50,29 @@ class FreeRunConfig:
     kind: str = "ising"              # "ising" | "xxz_hx" | "esn"
     n_qubits: int = 5
     dt: float = 2.0
-    virtual_nodes: int = 4
+    virtual_nodes: int = 10          # paper regime (STM saturates ~V=10)
     seed: int = SEED
     washout: int = 100
     train_frac: float = 0.5          # the rest is free-run BLIND
     max_points: int = 2000
+    # Closed-loop robustness (Fujii & Nakajima 2017, MG task): fit the read-out
+    # on noise-perturbed features so the self-fed rollout corrects back toward
+    # the trajectory instead of collapsing to a fixed point. Available as a knob,
+    # but OFF by default: on the got_sst blind free-run it did not help and added
+    # seed variance (verified 5-seed), so shipping it on would be an overclaim.
+    train_noise: float = 0.0
 
     def validate(self) -> None:
         if self.kind not in ("ising", "xxz_hx", "esn"):
             raise ValueError(f"unknown reservoir kind {self.kind!r}")
         if not 1 <= self.n_qubits <= 8:
             raise ValueError("n_qubits must be between 1 and 8 (cost ~4^n)")
+        if not 1 <= self.virtual_nodes <= 50:
+            raise ValueError("virtual_nodes must be between 1 and 50")
         if not 0.1 <= self.train_frac <= 0.9:
             raise ValueError("train_frac must lie in [0.1, 0.9]")
+        if not 0.0 <= self.train_noise <= 1.0:
+            raise ValueError("train_noise must lie in [0.0, 1.0]")
         if self.max_points < 300:
             raise ValueError("max_points must be at least 300")
 
@@ -94,7 +104,9 @@ def _free_run(x, kind, cfg, origin, H):
     """
     res = make_reservoir(kind, n_qubits=cfg.n_qubits, dt=cfg.dt,
                          virtual_nodes=cfg.virtual_nodes, seed=cfg.seed)
-    ro = fit_readout(x, res, washout=cfg.washout, train_frac=cfg.train_frac)
+    ro = fit_readout(x, res, washout=cfg.washout, train_frac=cfg.train_frac,
+                     train_noise=cfg.train_noise,
+                     rng=np.random.default_rng(cfg.seed))
     ex = rollout(x, res, ro, origin, H)
     return ex.yhat, int(ex.n_clipped), ro
 
@@ -121,7 +133,9 @@ def run_freerun(cfg: FreeRunConfig, progress=None) -> dict:
     # Build the readout once to discover the split, then free-run from it.
     res0 = make_reservoir(cfg.kind, n_qubits=cfg.n_qubits, dt=cfg.dt,
                           virtual_nodes=cfg.virtual_nodes, seed=cfg.seed)
-    ro = fit_readout(x, res0, washout=cfg.washout, train_frac=cfg.train_frac)
+    ro = fit_readout(x, res0, washout=cfg.washout, train_frac=cfg.train_frac,
+                     train_noise=cfg.train_noise,
+                     rng=np.random.default_rng(cfg.seed))
     origin = int(ro.train_idx[-1])
     H = len(ro.test_idx)
     if H < 10:
