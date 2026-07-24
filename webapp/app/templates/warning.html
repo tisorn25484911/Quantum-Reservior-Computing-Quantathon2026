@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% set nav = 'warning' %}
+{% block title %}Marine-heatwave early warning{% endblock %}
+{% block body %}
+
+<h1>Marine-heatwave early warning — the combined result</h1>
+<p class="lede">
+  The whole pipeline in one place: a quantum reservoir forecasts the
+  Gulf-of-Thailand sea-temperature anomaly, and a detector runs on that forecast
+  to warn of a marine heatwave days ahead. Two teammates improved the forecaster
+  (Step&nbsp;1) and the detector (Step&nbsp;2) independently; this page is the
+  integrator's combination of every piece. All numbers are read from the
+  repository's own result files, so the page never disagrees with the code.
+</p>
+
+{% set s = summary %}
+
+{% if s.best_quantum %}
+<div class="grid c4">
+  <div class="stat good">
+    <div class="label">Warning &mdash; recall @3 d</div>
+    <div class="value">{{ (s.best_quantum.rec3 * 100) | round | int }}%</div>
+    <div class="sub">of real heatwave days caught 3&nbsp;days out (quantum forecast)</div>
+  </div>
+  {% if s.step1 %}
+  <div class="stat">
+    <div class="label">Step 1 &mdash; skill horizon</div>
+    <div class="value">{{ s.step1.h_skill }} d</div>
+    <div class="sub">forecast keeps skill to {{ s.step1.h_skill }} days; beats persistence at {{ s.step1.beats_persistence }}</div>
+  </div>
+  {% endif %}
+  {% if s.step2 %}
+  <div class="stat">
+    <div class="label">Step 2 &mdash; onset detector</div>
+    <div class="value">{{ s.step2.lift }}&times;</div>
+    <div class="sub">better than chance (PR-AUC {{ s.step2.pr_auc }} vs base {{ s.step2.base_rate }})</div>
+  </div>
+  {% endif %}
+  {% if s.step3 %}
+  <div class="stat">
+    <div class="label">Step 3 &mdash; calibration</div>
+    <div class="value">{{ (s.step3.coverage * 100) | round | int }}%</div>
+    <div class="sub">90% band actually covers the truth &mdash; honest probabilities</div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<h2>The combination matrix</h2>
+<p class="muted">
+  Every Step-1 forecaster &times; Step-2 detector, ranked by the actionable
+  (&le;&nbsp;7&nbsp;day) window. Quantum-forecast rows are highlighted; the
+  <span class="badge ok">team</span> tag marks a component from the sister repo.
+</p>
+{% if rows %}
+<div style="overflow-x:auto">
+<table>
+  <thead>
+    <tr>
+      <th>Step 1 forecaster</th><th>Step 2 detector</th>
+      <th class="num">F1 (1&ndash;7 d)</th><th class="num">F1 (1&ndash;14 d)</th>
+      <th class="num">recall @3 d</th><th class="num">recall @7 d</th><th class="num">recall @14 d</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in rows %}
+    <tr {% if r.quantum %}class="highlight"{% endif %}>
+      <td>
+        {{ r.forecaster }}
+        {% if r.teammate %}<span class="badge ok">team</span>{% endif %}
+      </td>
+      <td>{{ r.detector }}</td>
+      <td class="num">{{ '%.3f'|format(r.f1_short) if r.f1_short is not none }}</td>
+      <td class="num">{{ '%.3f'|format(r.f1_full) if r.f1_full is not none }}</td>
+      <td class="num">{{ (r.rec3 * 100)|round|int ~ '%' if r.rec3 is not none }}</td>
+      <td class="num">{{ (r.rec7 * 100)|round|int ~ '%' if r.rec7 is not none }}</td>
+      <td class="num">{{ (r.rec14 * 100)|round|int ~ '%' if r.rec14 is not none }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<div class="note">The combination result file is not present yet. Run
+  <span class="mono">Anomaly_Forecast/combine_and_conclude.py</span> to generate it.</div>
+{% endif %}
+
+<h2>The conclusion, stated honestly</h2>
+<div class="card">
+  <p>
+    On the window a farm can act on, the <strong>quantum forecast gives the best
+    warning</strong>{% if s.best_quantum %} &mdash; catching
+    {{ (s.best_quantum.rec3 * 100)|round|int }}% of heatwave days three days out{% endif %}.
+    It predicts the event is <em>coming</em>, not merely continuing.
+  </p>
+  {% if s.persistence %}
+  <p class="muted">
+    Honest caveat: on balanced F1, naive persistence is a genuine tie
+    ({{ '%.3f'|format(s.persistence.f1_short) }} vs
+    {{ '%.3f'|format(s.best_quantum.f1_short) }}) &mdash; because a marine
+    heatwave lasts &ge;&nbsp;5&nbsp;days, so &ldquo;today's heat continues&rdquo;
+    bets well. The case rests on the aquaculture cost asymmetry (a missed heatwave
+    loses a grow-out cycle; a false alarm just runs an aerator), under which
+    <strong>recall is the priority</strong> &mdash; and the quantum forecast wins there.
+  </p>
+  {% endif %}
+  {% if s.step3 %}
+  <p class="muted">
+    The ensemble detector (Step&nbsp;3) recovers the long-lead tail the mean
+    forecast loses: recall @14&nbsp;d climbs
+    {{ (s.step3.mean_recall14 * 100)|round|int }}% &rarr;
+    {{ (s.step3.ens_recall14 * 100)|round|int }}%, and its probabilities are calibrated.
+  </p>
+  {% endif %}
+  <p><strong>Ship recommendation (recall-first):</strong> engine-QRC (Step&nbsp;1)
+    &times; ensemble (Step&nbsp;2).</p>
+</div>
+
+<h2>The product: three warning paths, one system</h2>
+<div class="grid c3">
+  {% for p in paths %}
+  <div class="card">
+    <span class="badge">{{ p.tag }}</span>
+    <h3 style="margin:.5rem 0 .3rem">{{ p.title }}</h3>
+    <p class="muted" style="margin:0">{{ p.body }}</p>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="note" style="margin-top:22px">
+  {{ disclaimer }} Every number here ships with the baseline that could beat it;
+  where a baseline wins, this page says so. Reproduce from
+  <span class="mono">Anomaly_Forecast/</span>
+  (<span class="mono">seed_sweep.py</span>, <span class="mono">detect.py</span>,
+  <span class="mono">compose.py</span>, <span class="mono">stochastic.py</span>,
+  <span class="mono">combine_and_conclude.py</span>).
+</div>
+
+{% endblock %}

@@ -323,6 +323,16 @@ def freerun_submit(
     return RedirectResponse(f"/runs/{job.id}", status_code=303)
 
 
+@app.get("/warning", response_class=HTMLResponse)
+def warning_page(request: Request):
+    from .domain import warning
+    return templates.TemplateResponse(request, "warning.html", {
+        "summary": warning.summary(),
+        "rows": warning.matrix_rows(),
+        "paths": warning.paths(),
+    })
+
+
 @app.get("/about", response_class=HTMLResponse)
 def about_page(request: Request):
     return templates.TemplateResponse(request, "about.html", {})
