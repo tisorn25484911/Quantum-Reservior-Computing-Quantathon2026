@@ -170,8 +170,10 @@ def _oisst_daily(out):
         _say(f"  OISST {y} ...")
         try:
             text = _http_get(OISST_CHUNK_URL.format(y0=y, y1=y), timeout=150)
-        except RuntimeError as exc:
-            _say(f"    {y} failed ({exc}); stopping, rerun to resume")
+        except (RuntimeError, OSError) as exc:
+            # OSError covers the ssl TimeoutError the certifi path can raise;
+            # stop here but still assemble the years already cached below.
+            _say(f"    {y} failed ({exc!r}); stopping, rerun to resume")
             break
         if text.lstrip().startswith("Error"):
             _say(f"    {y} not yet available; stopping")
