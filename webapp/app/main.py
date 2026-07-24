@@ -27,6 +27,7 @@ from .domain import catalog, chaos, charts
 from .domain.anomaly import AnomalyConfig, run_rollout_study
 from .domain.engine import (ForecastConfig, run_forecast, run_horizon_sweep,
                             run_memory_capacity)
+from .domain.freerun import FreeRunConfig, run_freerun
 from .domain.jobs import registry
 
 app = FastAPI(
@@ -182,6 +183,7 @@ def run_detail(request: Request, job_id: str):
     tpl = {"forecast": "run_forecast.html", "sweep": "run_sweep.html",
            "memory": "run_memory.html",
            "anomaly": "run_anomaly.html",
+           "freerun": "run_freerun.html",
            "compare": "run_compare.html"}.get(job.kind, "run_forecast.html")
     if job.status != "done":
         tpl = "run_pending.html"
@@ -287,6 +289,39 @@ def anomaly_submit(
     return RedirectResponse(f"/runs/{job.id}", status_code=303)
 
 
+# -------------------------------------------------------------- free-run
+@app.get("/freerun", response_class=HTMLResponse)
+def freerun_page(request: Request, dataset: str = "got_sst"):
+    return templates.TemplateResponse(request, "freerun.html", {
+        "datasets": catalog.list_datasets(),
+        "defaults": {**asdict(FreeRunConfig()), "dataset": dataset}})
+
+
+@app.post("/freerun", response_class=HTMLResponse)
+def freerun_submit(
+    dataset: str = Form("got_sst"),
+    kind: str = Form("ising"),
+    train_frac: float = Form(0.5),
+    n_qubits: int = Form(5),
+    dt: float = Form(2.0),
+    virtual_nodes: int = Form(4),
+    seed: int = Form(SEED),
+    max_points: int = Form(2000),
+):
+    try:
+        cfg = FreeRunConfig(dataset=dataset, kind=kind, train_frac=train_frac,
+                            n_qubits=n_qubits, dt=dt,
+                            virtual_nodes=virtual_nodes, seed=seed,
+                            max_points=max_points)
+        cfg.validate()
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    job = registry.submit("freerun",
+                          f"{dataset} free-run (train {train_frac:.0%})",
+                          run_freerun, cfg)
+    return RedirectResponse(f"/runs/{job.id}", status_code=303)
+
+
 @app.get("/about", response_class=HTMLResponse)
 def about_page(request: Request):
     return templates.TemplateResponse(request, "about.html", {})
@@ -361,6 +396,11 @@ def chart_anomaly(job_id: str):
 def chart_anomaly_example(job_id: str):
     return _png_response(
         charts.anomaly_example_png(_require_result(job_id, "anomaly")))
+
+
+@app.get("/charts/freerun/{job_id}.png")
+def chart_freerun(job_id: str):
+    return _png_response(charts.freerun_png(_require_result(job_id, "freerun")))
 
 
 @app.get("/charts/memory/{job_id}.png")

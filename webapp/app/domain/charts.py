@@ -298,6 +298,72 @@ def anomaly_example_png(r: dict) -> bytes:
     return _png(fig)
 
 
+def freerun_png(r: dict) -> bytes:
+    """The free-running forecast: train history, then a blind self-fed rollout
+    across the whole test span, against persistence and the seasonal average."""
+    s = r["series"]
+    x = np.asarray(s["observed_full"], float)
+    truth = np.asarray(s["truth"], float)
+    qrc = np.asarray(s["qrc"], float)
+    esn = np.asarray(s["esn"], float)
+    persist = np.asarray(s["persistence"], float)
+    clim = (np.asarray(s["climatology"], float)
+            if s.get("climatology") is not None else None)
+    origin = int(r["origin"])
+    z = r["zones"]
+    sc = r["scores"]
+    ds = r["dataset"]
+    unit = f" [{ds['unit']}]" if ds.get("unit") else ""
+
+    ctx0 = int(s.get("context_start", max(0, origin - 3 * len(truth))))
+    t_ctx = np.arange(ctx0, origin + 1)
+    t_fut = np.arange(origin + 1, origin + 1 + len(truth))
+
+    fig, ax = plt.subplots(figsize=(10.5, 4.4))
+    # Shade: everything up to the boundary is real data the model trained on;
+    # everything after is generated blind from the model's own output.
+    ax.axvspan(ctx0 - 0.5, origin + 0.5, color=ZONE_TRAIN, alpha=0.07, lw=0)
+    ax.axvspan(origin + 0.5, origin + len(truth) + 0.5, color=ZONE_TEST,
+               alpha=0.09, lw=0)
+
+    ax.plot(t_ctx, x[ctx0:origin + 1], color="#666", lw=0.9, zorder=3,
+            label="TRAIN history (real, primes the state)")
+    ax.plot(t_fut, truth, color="k", lw=2.6, alpha=0.28, solid_capstyle="round",
+            zorder=3, label="TEST actual (never seen)")
+    ax.plot(t_fut, persist, color=PERSIST, lw=1.0, ls=":", zorder=4,
+            label=_lbl("persistence", sc.get("persistence")))
+    if clim is not None:
+        ax.plot(t_fut, clim, color="#009E73", lw=1.2, ls="--", zorder=5,
+                label=_lbl("seasonal average", sc.get("climatology")))
+    ax.plot(t_fut, esn, color=ESN, lw=1.1, alpha=0.85, zorder=5,
+            label=_lbl("ESN free-run", sc.get("esn")))
+    ax.plot(t_fut, qrc, color=QRC, lw=1.7, zorder=6,
+            label=_lbl(f"QRC free-run ({r['config']['kind']})", sc.get("qrc")))
+
+    ax.axvline(origin, color=QRC, lw=0.9, ls=":", zorder=2)
+    ax.text(origin, ax.get_ylim()[1], " train/test boundary", fontsize=8,
+            color=QRC, va="top")
+    ax.text((origin + len(truth)), ax.get_ylim()[0],
+            "blind: self-fed, no test data  ", fontsize=7.5, color="#00614a",
+            va="bottom", ha="right", fontstyle="italic")
+
+    yrs = r["free_years"]
+    ax.set_xlabel(f"step (dt = {ds['dt']:.4g} {ds['time_unit']})")
+    ax.set_ylabel(f"{ds['name']}{unit}")
+    ax.set_title(f"{ds['name']} -- trained on {r['config']['train_frac']:.0%}, "
+                 f"free-run the remaining {len(truth)} steps "
+                 f"(~{yrs:.0f} {ds['time_unit']}) BLIND. "
+                 "NMSE in legend; 1.0 = mean predictor.", fontsize=9)
+    ax.legend(ncol=3, fontsize=7.6, loc="upper center",
+              bbox_to_anchor=(0.5, -0.2))
+    _grid(ax)
+    return _png(fig)
+
+
+def _lbl(name: str, nmse_val) -> str:
+    return f"{name}  (NMSE {nmse_val:.2f})" if nmse_val is not None else name
+
+
 def series_png(x: np.ndarray, meta: dict, n_show: int = 1500) -> bytes:
     """A dataset preview for the catalogue page."""
     x = np.asarray(x, float)[-int(n_show):]

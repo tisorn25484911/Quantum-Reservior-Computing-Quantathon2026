@@ -141,7 +141,18 @@ class JobRegistry:
             result = json.loads(path.read_text())
         except (OSError, json.JSONDecodeError):
             return None
-        kind = "memory" if "max_delay" in result else "forecast"
+        # Recover the run kind from distinctive keys so a restored result
+        # renders with the right template after a process restart.
+        if "max_delay" in result:
+            kind = "memory"
+        elif "n_free" in result:
+            kind = "freerun"
+        elif "useful_horizons" in result:
+            kind = "anomaly"
+        elif "nrmse" in result:
+            kind = "sweep"
+        else:
+            kind = "forecast"
         label = str(result.get("config", {}).get("dataset", job_id))
         return Job(id=job_id, kind=kind, label=label, status="done",
                    progress=1.0, message="done (restored from disk)",

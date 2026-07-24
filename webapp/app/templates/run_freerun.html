@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% set nav = 'freerun' %}
+{% set v = r.verdict %}
+{% set sc = r.scores %}
+{% block title %}{{ r.dataset.name }} free-run{% endblock %}
+{% block body %}
+<div class="row">
+  <h1 style="margin:0">{{ r.dataset.name }} &mdash; free-running forecast</h1>
+  <span class="badge {{ r.dataset.tier }}">{{ r.dataset.tier_label }}</span>
+</div>
+<p class="lede" style="margin-top:10px">
+  Trained on {{ r.config.train_frac|pct }} &middot; {{ r.config.kind }} reservoir
+  ({{ r.config.n_qubits }} qubits) &middot; free-ran
+  <strong>{{ r.n_free }}</strong> blind steps
+  (~{{ r.free_years|num('.0f') }} {{ r.dataset.time_unit }}) &middot;
+  run <span class="mono">{{ job.id }}</span>
+</p>
+
+{# The headline is allowed to be bad news, and usually is. #}
+<div class="note {{ '' if (v.beat_mean and v.beat_climatology) else ('bad' if not v.beat_mean else 'warn') }}">
+  <strong>{{ v.headline }}</strong>
+  {% if v.notes %}<ul>{% for n in v.notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
+</div>
+
+<div class="grid c4">
+  <div class="stat {{ 'good' if v.beat_mean else 'bad' }}">
+    <div class="label">QRC free-run NMSE</div>
+    <div class="value">{{ sc.qrc|num('.2f') }}</div>
+    <div class="sub">1.00 = mean predictor</div>
+  </div>
+  <div class="stat">
+    <div class="label">Seasonal average</div>
+    <div class="value">{{ sc.climatology|num('.2f') if v.has_climatology else '&mdash;'|safe }}</div>
+    <div class="sub">{{ 'the line to beat' if v.has_climatology else 'no cycle at this rate' }}</div>
+  </div>
+  <div class="stat">
+    <div class="label">Persistence</div>
+    <div class="value">{{ sc.persistence|num('.2f') }}</div>
+    <div class="sub">repeat last train value</div>
+  </div>
+  <div class="stat">
+    <div class="label">ESN free-run</div>
+    <div class="value">{{ sc.esn|num('.2f') }}</div>
+    <div class="sub">size-matched classical</div>
+  </div>
+</div>
+
+<figure class="card" style="margin-top:18px">
+  <img src="/charts/freerun/{{ job.id }}.png" alt="free-running forecast against test">
+  <figcaption>
+    Blue is the quantum reservoir free-running blind across the whole
+    <span style="color:#00795a;font-weight:600">TEST</span> span (shaded);
+    left of the boundary is the real
+    <span style="color:#0072B2;font-weight:600">TRAIN</span> history that primed
+    it. Every baseline &mdash; persistence (dotted), seasonal average (green
+    dashed), ESN &mdash; is on the same axis with its NMSE. Lower is better; a
+    flat blue line means the closed-loop rollout decayed to a fixed point.
+    {% if r.clipped.qrc %}
+      <strong>{{ r.clipped.qrc }} step(s)</strong> hit the encoding bound and
+      were clipped when fed back.
+    {% endif %}
+  </figcaption>
+</figure>
+
+<h2>What this evaluation is, precisely</h2>
+<div class="card">
+  <table>
+    <tbody>
+      <tr><td>Train span</td><td class="num">steps 0 &ndash; {{ r.origin }} (only {{ r.config.train_frac|pct }})</td></tr>
+      <tr><td>Free-run span</td><td class="num">{{ r.n_free }} steps, all blind</td></tr>
+      <tr><td>Feedback</td><td>predictions fed back into the reservoir every step; no test value ever read</td></tr>
+      <tr><td>Priming</td><td>reservoir state built from train history only</td></tr>
+      <tr><td>Seasonal period</td><td class="num">{{ r.period if r.period else 'none detected' }}</td></tr>
+      <tr><td>Reservoir</td><td>{{ r.config.kind }}, {{ r.config.n_qubits }} qubits, seed {{ r.config.seed }}</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="note">
+  <strong>How to read the verdict honestly.</strong> &ldquo;Beating the mean&rdquo;
+  (NMSE&nbsp;&lt;&nbsp;1) is the floor, not success. On a seasonal series the real
+  bar is the <em>seasonal average</em>; if the model does not beat that green
+  line, it is not adding anything a lookup table could not. On a chaotic series a
+  long free-run cannot beat the mean at all &mdash; that is physics, and the flat
+  blue line is the model correctly admitting it.
+</div>
+
+<p><a class="btn ghost" href="/freerun?dataset={{ r.config.dataset }}">Run another</a>
+   <a class="btn ghost" href="/forecast?dataset={{ r.config.dataset }}">Re-anchored forecast (easier)</a>
+   <a class="btn ghost" href="/chaos/{{ r.config.dataset }}">Predictability of this series</a>
+   <a class="btn ghost" href="/api/runs/{{ job.id }}">Raw JSON</a></p>
+{% endblock %}
