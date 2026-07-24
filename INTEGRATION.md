@@ -76,10 +76,17 @@ For a few-days deadline, **Option A** keeps everyone moving with the least frict
   bit-identical — a later task is to align configs and assert ~1e-10, or simply
   adopt the engine's config as canonical.
 
-**Day 2 — re-run the headline results on the canonical engine + full baselines.**
-- Step-1 skill on `got_sst_mhwi` through the ENGINE core, scored against the whole
-  battery (ESN, NVAR, LSTM, statistical) with the ENGINE's horizon taxonomy.
-  Expect: QRC parity confirmed against a stronger field. (NVAR half already done.)
+**Day 2 — re-run the headline on the canonical engine. ✅ DONE 2026-07-24.**
+- `engine_step1.py` runs Step-1 on `got_sst_mhwi` through the ENGINE's validated
+  exact FN reservoir (a fast stateful stepper built on their per-step ops), scored
+  on identical origins against persistence + ESN + NVAR (their model battery is
+  still stubs — Phase 7 — so the classical field is ours for now).
+- **Result:** engine-QRC mean NMSE **0.623** (ESN 0.657, NVAR 0.659, persistence
+  0.797). Taxonomy: **H_skill = 24, beats persistence at all 24, classical never
+  beats it** (QRC edges best-classical at 5/24 short leads). Cross-check: our
+  `qrc_core` gives 0.633 — **consistent**, so the two engines tell the same story.
+  Verdict: *parity with classical, no quantum advantage — confirmed on the
+  validated core.*
 
 **Day 3 — compose + rigor gates.**
 - Re-run Detect→Warn (`compose.py`, `stochastic.py`) on the canonical engine;
