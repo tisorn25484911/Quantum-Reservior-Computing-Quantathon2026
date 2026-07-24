@@ -1,0 +1,72 @@
+# preregistration.yaml -- FROZEN in Phase 0, before any test-span contact (G6).
+# Changing any value here is a preregistration amendment and MUST be recorded in
+# the phase handoff with a reason. Nothing below may be tuned after seeing test
+# results. Thresholds are chosen from the literature/spec, not from our data.
+version: 1
+frozen_utc: "2026-07-24"
+frozen_in_phase: 0
+
+# --- Autonomous valid-horizon thresholds (spec s16.1) -----------------------
+# Instantaneous normalised error NE_h = |x_hat_{T+h} - x_{T+h}| / sigma_train.
+error_thresholds_epsilon: [0.25, 0.5, 1.0]     # normalised by sigma_train
+# also reported converted to each series' raw index units (computed per series)
+sustained_failure_K: 3                          # consecutive breaches to declare failure
+horizon_primary_epsilon: 0.5                    # the headline epsilon
+
+# --- Product reliability (spec s16 / s25) -----------------------------------
+reliability_levels_p: [0.8, 0.9]                # H_product(p) = horizon with survival >= p
+
+# --- Domain / saturation budgets (spec s16.4) -------------------------------
+clip_budget_c_max: 0.20                         # max fraction of clipped autonomous inputs
+boundary_dwell_budget: 0.30                     # max fraction of steps within 1% of a boundary
+# A trajectory exceeding either budget is classified 'saturation failure', not success.
+
+# --- Failure-rule defaults (spec s16.3; dev-tunable only, never on test) -----
+failure_rules:
+  blowup_range_mult: 1.5           # |x_hat| > 1.5 * train range
+  fixed_point_std: 0.05            # rolling std < 0.05*sigma_train over `window`
+  mean_collapse: 0.10              # |x_hat - mu_train| < 0.10*sigma_train over `window`
+  var_collapse_mult: 0.25          # window var < 0.25 * train var
+  var_explosion_mult: 4.0          # window var > 4 * train var
+  spurious_cycle_power: 0.60       # dominant spectral peak > 60% power + periodic ACF
+  window: 24                       # months for the rolling failure windows
+
+# --- Uncertainty / bootstrap (spec s16 / s23) -------------------------------
+bootstrap:
+  method: stationary_moving_block   # Politis-Romano stationary bootstrap
+  block_length: decorrelation_time  # first ACF zero-crossing or 1/e time, TRAIN only
+  n_resamples: 2000
+
+# --- Shots and noise (spec s10 / s23; G6) -----------------------------------
+shot_grid: [128, 256, 512, 1024, 2048, 4096, 8192]
+shot_seeds_per_config: 8
+
+# --- Mandatory sweeps that must NEVER be defaulted (playbook) ---------------
+sweeps:
+  J_tau_decades: 2                 # J*tau log-spaced over >= 2 decades
+  J_tau_grid: [0.1, 0.3, 1.0, 3.0, 10.0]
+  input_gain_settings:             # encoding range [s_lo, s_hi] subset of [0,1], >= 3
+    - [0.0, 1.0]
+    - [0.1, 0.9]
+    - [0.25, 0.75]
+
+# --- Forecast horizons (months; monthly frequency verified in audit) --------
+horizons_months: [1, 3, 6, 12]
+primary_task: one_step_teacher_forced
+
+# --- Multi-origin autonomous evaluation (spec s21) --------------------------
+autonomous_origins:
+  n_origins_range: [20, 50]
+  min_spacing: decorrelation_time  # avoid excessive overlap
+
+# --- GATE 1 written success criterion (spec s25.7; locked now) --------------
+gate1_success_criterion: >
+  On the UNTOUCHED final-20% test span of each observational index, the exact
+  QRC (teacher-forced) achieves a positive persistence skill score
+  Skill(h) = 1 - MSE_QRC(h)/MSE_persistence(h) > 0 at leads h in {1, 3} months,
+  with the lower bound of a block-bootstrap 90% CI above 0, on at least one of
+  {enso, pdo, soi}. Autonomous usefulness (Gate 3) additionally requires
+  H_effective at epsilon=0.5 >= 3 months with survival >= 0.8 at that horizon.
+gate1_margin_note: >
+  'Beats persistence' is the minimum bar; magnitude and cross-seed/origin
+  stability decide practical significance (spec s25.7, acceptance item 22).

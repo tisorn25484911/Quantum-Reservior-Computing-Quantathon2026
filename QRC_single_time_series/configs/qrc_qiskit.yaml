@@ -1,0 +1,8 @@
+# qrc_qiskit.yaml -- ideal Qiskit reservoir (Phase 3)
+# Stub (Phase 0). Populated in the phase noted below.
+backend: aer
+method: density_matrix      # {statevector | density_matrix}
+shots: null                 # null -> exact expectation; int -> finite-shot
+trotter: {order: 1, kappa: 1}
+transpiler_seed: 303
+

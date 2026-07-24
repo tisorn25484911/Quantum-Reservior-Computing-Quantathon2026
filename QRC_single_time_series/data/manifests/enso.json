@@ -1,0 +1,48 @@
+{
+  "name": "enso",
+  "filename": "enso.csv",
+  "sha256": "5ad05f6f50b68d0df8ed2fb8e194639491ac2467c3dca33d1ff797f99cb3ce4d",
+  "generated_utc": "2026-07-24T05:56:18+00:00",
+  "n_rows": 732,
+  "columns": [
+    "date",
+    "year",
+    "month",
+    "sst"
+  ],
+  "dtypes": {
+    "date": "str",
+    "year": "int64",
+    "month": "int64",
+    "sst": "float64"
+  },
+  "timestamp_column": "date",
+  "target_column": "sst",
+  "frequency": "monthly",
+  "coverage_start": "1950-01-01",
+  "coverage_end": "2010-12-01",
+  "n_duplicate_dates": 0,
+  "monthly_step_diffs": [
+    1.0
+  ],
+  "missing": {
+    "n_nan": 0,
+    "sentinels_found": {}
+  },
+  "missing_value_policy": "MASK (never silent interpolation); none present in these files",
+  "scaling_policy": "affine [0,1] fit on TRAIN rows only (encoder needs s in [0,1]); test values outside train range are clipped and counted",
+  "value_stats": {
+    "min": 18.95,
+    "max": 29.24,
+    "mean": 23.09262295081967,
+    "std": 2.2443681683984593
+  },
+  "looks_like_anomaly": false,
+  "value_col": "sst",
+  "units": "degC",
+  "is_anomaly": false,
+  "source": "statsmodels.datasets.elnino (NOAA); pinned copy",
+  "identity": "NOAA Nino 1+2 region SST (0-10S, 90-80W), raw monthly SST",
+  "not": "NOT ONI / Nino3.4 / MEI; NOT an anomaly index",
+  "transform_policy": "model as anomaly vs TRAIN-YEARS-ONLY monthly climatology (removes strong annual cycle); detrend/deseasonalise as ablations"
+}

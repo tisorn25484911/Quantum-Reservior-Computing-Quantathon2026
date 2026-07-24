@@ -1,0 +1,8 @@
+# qrc_noisy_simulator.yaml -- noisy Aer (Phase 3/10)
+# Stub (Phase 0). Populated in the phase noted below.
+backend: aer
+noise_model: synthetic      # {synthetic | backend_snapshot}
+shots: 1024
+optimization_level: 1
+transpiler_seed: 303
+

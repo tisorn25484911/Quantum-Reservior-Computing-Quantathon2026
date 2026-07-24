@@ -1,0 +1,48 @@
+{
+  "name": "soi",
+  "filename": "soi.csv",
+  "sha256": "f0e5a98e93d42697376ef7bfa02bcc7aae4a965b54c3a20208221c7c58d2ab37",
+  "generated_utc": "2026-07-24T05:56:18+00:00",
+  "n_rows": 906,
+  "columns": [
+    "date",
+    "year",
+    "month",
+    "value"
+  ],
+  "dtypes": {
+    "date": "str",
+    "year": "int64",
+    "month": "int64",
+    "value": "float64"
+  },
+  "timestamp_column": "date",
+  "target_column": "value",
+  "frequency": "monthly",
+  "coverage_start": "1951-01-01",
+  "coverage_end": "2026-06-01",
+  "n_duplicate_dates": 0,
+  "monthly_step_diffs": [
+    1.0
+  ],
+  "missing": {
+    "n_nan": 0,
+    "sentinels_found": {}
+  },
+  "missing_value_policy": "MASK (never silent interpolation); none present in these files",
+  "scaling_policy": "affine [0,1] fit on TRAIN rows only (encoder needs s in [0,1]); test values outside train range are clipped and counted",
+  "value_stats": {
+    "min": -6.0,
+    "max": 4.8,
+    "mean": 0.25275938189845476,
+    "std": 1.5463901215044646
+  },
+  "looks_like_anomaly": true,
+  "value_col": "value",
+  "units": "index",
+  "is_anomaly": true,
+  "source": "NOAA CPC soi (ANOMALY block: Tahiti-Darwin SLP anomaly); pinned copy",
+  "identity": "Southern Oscillation Index -- sea-level-pressure ANOMALY (Tahiti-Darwin)",
+  "not": "NOT the Troup-standardised SOI (differs by a scale factor)",
+  "transform_policy": "already an anomaly; optional train-only deseasonalise as ablation"
+}

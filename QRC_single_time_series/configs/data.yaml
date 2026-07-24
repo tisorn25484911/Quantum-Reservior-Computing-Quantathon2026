@@ -1,0 +1,38 @@
+# data.yaml -- dataset registry, identities, split, transform policy (Phase 0).
+datasets:
+  enso:
+    file: data/raw/enso.csv
+    target_column: sst
+    units: degC
+    identity: "NOAA Nino 1+2 SST (statsmodels elnino); RAW, not an anomaly, not ONI/Nino3.4/MEI"
+    is_anomaly: false
+    transform_default: anomaly_vs_train_climatology   # removes annual cycle
+  pdo:
+    file: data/raw/pdo.csv
+    target_column: value
+    units: index
+    identity: "NOAA PSL Mantua-style PDO index"
+    is_anomaly: true
+    transform_default: none    # already an anomaly; deseasonalise is an ablation
+  soi:
+    file: data/raw/soi.csv
+    target_column: value
+    units: index
+    identity: "NOAA CPC SOI = Tahiti-Darwin SLP anomaly (not Troup-standardised)"
+    is_anomaly: true
+    transform_default: none
+
+split:
+  test_fraction: 0.20          # FROZEN chronology; final 20% untouched test
+  dev_validation: rolling_origin
+  rolling_origin:
+    n_folds: 6
+    min_train_frac: 0.40
+
+encoding:
+  scale_to: [0.0, 1.0]         # required by |psi(s)> = sqrt(1-s)|0> + sqrt(s)|1>
+  fit_on: train_only
+  out_of_range_policy: clip_and_report
+
+transforms_as_ablations: [none, anomaly, deseasonalise, detrend, difference]
+missing_value_policy: mask_never_interpolate

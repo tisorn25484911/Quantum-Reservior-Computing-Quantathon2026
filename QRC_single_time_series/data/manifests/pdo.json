@@ -1,0 +1,48 @@
+{
+  "name": "pdo",
+  "filename": "pdo.csv",
+  "sha256": "82e94fd452b6b0123a600316f13ab407265fdc0d5478864cc43b550425a32c90",
+  "generated_utc": "2026-07-24T05:56:18+00:00",
+  "n_rows": 932,
+  "columns": [
+    "date",
+    "year",
+    "month",
+    "value"
+  ],
+  "dtypes": {
+    "date": "str",
+    "year": "int64",
+    "month": "int64",
+    "value": "float64"
+  },
+  "timestamp_column": "date",
+  "target_column": "value",
+  "frequency": "monthly",
+  "coverage_start": "1948-01-01",
+  "coverage_end": "2025-08-01",
+  "n_duplicate_dates": 0,
+  "monthly_step_diffs": [
+    1.0
+  ],
+  "missing": {
+    "n_nan": 0,
+    "sentinels_found": {}
+  },
+  "missing_value_policy": "MASK (never silent interpolation); none present in these files",
+  "scaling_policy": "affine [0,1] fit on TRAIN rows only (encoder needs s in [0,1]); test values outside train range are clipped and counted",
+  "value_stats": {
+    "min": -3.6,
+    "max": 3.51,
+    "mean": -0.1757510729613734,
+    "std": 1.1441509091209063
+  },
+  "looks_like_anomaly": true,
+  "value_col": "value",
+  "units": "index",
+  "is_anomaly": true,
+  "source": "NOAA PSL pdo.data (Mantua-style); pinned copy",
+  "identity": "Pacific Decadal Oscillation index (leading PC of N-Pacific SST anomaly)",
+  "not": "distinguish from ERSSTv5-based PDO variants (differ after ~2002)",
+  "transform_policy": "already an anomaly; optional train-only deseasonalise as ablation"
+}

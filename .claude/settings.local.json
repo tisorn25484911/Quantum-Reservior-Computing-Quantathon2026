@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import json;nb=json.load\\(open\\('notebooks/walkthrough.ipynb'\\)\\);print\\('cells:',len\\(nb['cells']\\)\\);[print\\(i,c['cell_type'],''.join\\(c['source']\\)[:70].replace\\(chr\\(10\\),' '\\)\\) for i,c in enumerate\\(nb['cells']\\)]\")",
+      "Read(//private/tmp/**)",
+      "Bash(curl -s --max-time 20 \"https://psl.noaa.gov/data/correlation/pdo.data\" -o pdo.data)",
+      "Bash(curl -s --max-time 20 \"https://www.cpc.ncep.noaa.gov/data/indices/soi\" -o soi.txt)",
+      "Bash(mkdir -p data)",
+      "Bash(cp /Users/tisornnaphattalung/Desktop/Quantathon2026/QRC_main_stack/QRC_code_stack/stage1_numpy_core/data/raw/enso.csv data/enso.csv)",
+      "Bash(QRC_main_stack/QRC_code_stack/.venv/bin/python \"/private/tmp/claude-501/-Users-tisornnaphattalung-Desktop-Quantathon2026-final-pitch/570425cf-36b5-43e0-a398-75e13c49962a/scratchpad/fetch_indices.py\")",
+      "Skill(schedule)",
+      "Read(//Users/tisornnaphattalung/Downloads/**)",
+      "Bash(/Users/tisornnaphattalung/Desktop/Quantathon2026/QRC_main_stack/QRC_code_stack/.venv/bin/python -c ' *)",
+      "Bash(/Users/tisornnaphattalung/Desktop/Quantathon2026/QRC_main_stack/QRC_code_stack/.venv/bin/pip install *)",
+      "Bash(/Users/tisornnaphattalung/Desktop/Quantathon2026/QRC_main_stack/QRC_code_stack/.venv/bin/python -c \"import pypdf; print\\('pypdf', pypdf.__version__\\)\")",
+      "Bash(/Users/tisornnaphattalung/Desktop/Quantathon2026/QRC_main_stack/QRC_code_stack/.venv/bin/python -)",
+      "Bash(time /Users/tisornnaphattalung/Desktop/Quantathon2026/QRC_main_stack/QRC_code_stack/.venv/bin/python \"/private/tmp/claude-501/-Users-tisornnaphattalung-Desktop-Quantathon2026-final-pitch/570425cf-36b5-43e0-a398-75e13c49962a/scratchpad/audit_qrc.py\")",
+      "WebSearch",
+      "Bash(/Users/tisornnaphattalung/Desktop/Quantathon2026/QRC_main_stack/QRC_code_stack/.venv/bin/python *)",
+      "Bash(time /Users/tisornnaphattalung/Desktop/Quantathon2026/QRC_main_stack/QRC_code_stack/.venv/bin/python tools/build_notebook.py)",
+      "Bash(time ../../QRC_main_stack/QRC_code_stack/.venv/bin/python tools/build_notebook.py)",
+      "Bash(../../QRC_main_stack/QRC_code_stack/.venv/bin/python -)",
+      "Bash(sed -n '/^def ridge_gcv/,/return w, lam/p' QRC_theoretical.py)",
+      "Bash(sed -n '/^def add_bias/,/return .*Xf.*/p; /^def ridge_fit/,/np.linalg.solve/p' QRC_theoretical.py)",
+      "Bash($PY *)",
+      "Bash(/Users/tisornnaphattalung/Desktop/Quantathon2026/QRC_main_stack/QRC_code_stack/.venv/bin/python scripts/inspect_data.py)",
+      "Bash(/Users/tisornnaphattalung/Desktop/Quantathon2026/QRC_main_stack/QRC_code_stack/.venv/bin/python scripts/inspect_repository.py)",
+      "Bash(PYTHONPATH=src /Users/tisornnaphattalung/Desktop/Quantathon2026/QRC_main_stack/QRC_code_stack/.venv/bin/python -m pytest -q)",
+      "Bash(find /Users/tisornnaphattalung/Desktop/Quantathon2026/QRC_single_time_series/src -name *.py)"
+    ]
+  }
+}

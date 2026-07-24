@@ -1,0 +1,9 @@
+# baselines.yaml -- baseline battery (Phase 7)
+# Stub (Phase 0). Populated in the phase noted below.
+simple: [mean, persistence, seasonal_persistence]
+statistical: [ridge_ar, arima, sarima]
+reservoir: [esn_size_matched, esn_best, nvar]
+neural: [lstm, gru]
+quantum_variational: [qlstm, windowed_vqc]
+controls: [haar_random_reservoir]
+

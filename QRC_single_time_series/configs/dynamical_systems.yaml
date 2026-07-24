@@ -1,0 +1,6 @@
+# dynamical_systems.yaml -- controlled systems (Phase 5/8)
+# Stub (Phase 0). Populated in the phase noted below.
+mackey_glass: {tau_MG: [16, 17], alpha: 0.2, beta: 10, gamma: 0.1, euler_sigma: 0.1, subsample: 10}
+lorenz63: {sigma: 10, rho: 28, beta_variants: [2.6667, 0.375]}   # 8/3 vs printed 3/8 (audit G8-1)
+enso_ode: {model: vallis_1986, audit: required}                  # G8-3
+

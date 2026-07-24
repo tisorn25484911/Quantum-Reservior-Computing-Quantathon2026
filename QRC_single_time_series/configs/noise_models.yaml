@@ -1,0 +1,9 @@
+# noise_models.yaml -- synthetic + snapshot channels (Phase 3/10)
+# Stub (Phase 0). Populated in the phase noted below.
+synthetic:
+  readout_p: 0.015
+  depol_1q: 3.0e-4
+  depol_2q: 7.0e-3
+  thermal_relaxation: {t1_us: 100, t2_us: 80, use_durations: true}
+backend_snapshot: results/backend_snapshots/  # frozen; never live calibration
+
