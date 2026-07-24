@@ -40,6 +40,7 @@ import pandas as pd
 _HERE = Path(__file__).resolve().parent
 _REPO = _HERE.parents[1]
 sys.path.insert(0, str(_REPO / "engine" / "QRC_single_time_series" / "src"))
+sys.path.insert(0, str(_REPO / "engine" / "Classical_ML_post_process"))
 sys.path.insert(0, str(_HERE))
 sys.path.insert(0, str(_HERE.parent / "DataBase_Analysis"))
 
@@ -50,6 +51,7 @@ from engine_step1 import _EngineDriver, engine_features, engine_rollout  # noqa:
 from qrc_single_time_series.quantum.exact_qrc import ExactQRC       # noqa: E402
 from qrc_single_time_series.quantum.hamiltonians import fc_tfi      # noqa: E402
 from qrc_single_time_series.models.readout import fit as eng_fit    # noqa: E402
+from pca_subspace import PCASubspaceDetector                        # noqa: E402
 
 LABELS = _HERE / "labels"
 RESULTS = _HERE / "results"
@@ -172,13 +174,35 @@ class Detector:
     apply: Callable                  # (output, theta, calib) -> bool (origins,H)
 
 
-def _threshold_apply(traj, theta, calib):
+def _threshold_apply(traj, theta, calib, ctx=None):
     return traj > calib["c"] * theta
 
 
-def _ensemble_apply(ens, theta, calib):
+def _ensemble_apply(ens, theta, calib, ctx=None):
     frac = (ens > calib["c"] * theta[:, None, :]).mean(axis=1)     # (origins,H)
     return frac > calib["p"]
+
+
+def _pca_t2_apply(traj, theta, calib, ctx):
+    """Teammate's EGADS/PCA-subspace detector (Hotelling T^2) on the forecast.
+
+    The model is fit once on OBSERVED training intensity in delay coordinates
+    (engine/Classical_ML_post_process/pca_subspace.py). Each forecast trajectory
+    is scored with its observed context prepended so lead h=1 has a full
+    embedding window; predicted-anomaly where T^2 exceeds the calibrated
+    quantile of training scores. Note T^2 is two-sided (cold excursions also
+    score) -- whatever that costs in precision is reported, not hidden.
+    """
+    model, x = ctx["pca_model"], ctx["x"]
+    need = model.emb * model.lag
+    H = traj.shape[1]
+    flags = np.empty(traj.shape[:2], dtype=bool)
+    thr = ctx["pca_train_q"][calib["q"]]
+    for i, o in enumerate(ctx["origins"]):
+        seq = np.concatenate([x[o - need + 1:o + 1], traj[i]])
+        t2 = model.score(seq[:, None])["t2"][-H:]
+        flags[i] = t2 > thr
+    return flags
 
 
 DETECTORS = {
@@ -190,6 +214,10 @@ DETECTORS = {
                           for c in np.linspace(0.5, 1.1, 7)
                           for p in np.linspace(0.15, 0.6, 10)],
                          _ensemble_apply),
+    "pca_t2": Detector("pca_t2", "mean",
+                       [{"q": q} for q in (0.30, 0.40, 0.50, 0.60, 0.70,
+                                           0.80, 0.90, 0.95)],
+                       _pca_t2_apply),
 }
 
 
@@ -210,19 +238,20 @@ def _output(fc, det, origins, H, rng, K):
     return np.array([fc.rollout(o, H) for o in origins])
 
 
-def evaluate(fc, det, theta, actual, H, train_o, test_o, rng):
+def evaluate(fc, det, theta, actual, H, train_o, test_o, rng, ctx):
     tr_out = _output(fc, det, train_o, H, rng, K_CALIB)
     tr_theta = np.array([theta[o + 1:o + H + 1] for o in train_o])
     tr_act = np.array([actual[o + 1:o + H + 1] for o in train_o], bool)
     best, best_c = -1.0, det.grid[0]
     for calib in det.grid:
-        _, _, s = f1(det.apply(tr_out, tr_theta, calib), tr_act)
+        _, _, s = f1(det.apply(tr_out, tr_theta, calib,
+                               {**ctx, "origins": train_o}), tr_act)
         if s > best:
             best, best_c = s, calib
     te_out = _output(fc, det, test_o, H, rng, K_TEST)
     te_theta = np.array([theta[o + 1:o + H + 1] for o in test_o])
     te_act = np.array([actual[o + 1:o + H + 1] for o in test_o], bool)
-    pred = det.apply(te_out, te_theta, best_c)
+    pred = det.apply(te_out, te_theta, best_c, {**ctx, "origins": test_o})
     return best_c, np.array([f1(pred[:, j], te_act[:, j]) for j in range(H)]), te_act
 
 
@@ -240,6 +269,18 @@ def main():
     test_o = te[te + H < n]
     rng = np.random.default_rng(7)
 
+    # teammate's PCA-subspace model (Step 2), fit once on OBSERVED training
+    # intensity in weekly delay coordinates; threshold grid = quantiles of its
+    # training-span T^2 scores
+    pca = PCASubspaceDetector(emb=7, lag=1)
+    pca.fit(x[:train_end, None])
+    t2_tr = pca.score(x[:train_end, None])["t2"]
+    t2_tr = t2_tr[t2_tr > 0]
+    ctx = {"x": x, "pca_model": pca,
+           "pca_train_q": {q: float(np.quantile(t2_tr, q))
+                           for q in (0.30, 0.40, 0.50, 0.60, 0.70,
+                                     0.80, 0.90, 0.95)}}
+
     print("=== INTEGRATOR: combine Step-1 x Step-2, conclude ===")
     print(f"N={n} H={H} train_o={len(train_o)} test_o={len(test_o)} "
           f"K={K_TEST}\n")
@@ -249,7 +290,8 @@ def main():
         fc = FC(); fc.fit(x, train_end)
         for dname, det in DETECTORS.items():
             # ensemble detector on a deterministic forecaster == its threshold row
-            calib, ph, act = evaluate(fc, det, theta, actual, H, train_o, test_o, rng)
+            calib, ph, act = evaluate(fc, det, theta, actual, H, train_o, test_o,
+                                      rng, ctx)
             results[(fname, dname)] = ph
             print(f"  [{fname:11s} x {dname:9s}] "
                   f"F1(1-7)={ph[:7,2].mean():.3f} F1(1-14)={ph[:,2].mean():.3f} "

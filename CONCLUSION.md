@@ -18,7 +18,7 @@ Validated on 45 years of real Gulf-of-Thailand data, marine-heatwave labels from
 the Hobday (2016) standard (165 events), chronological train/val/test, every
 number against persistence + classical controls on identical origins.
 
-## What wins — the full combination matrix (2 forecasters shown × 2 detectors)
+## What wins — the full combination matrix (teammates' components included)
 
 | Step 1 × Step 2 | F1 (1–7 d) | F1 (1–14 d) | recall @3 d | recall @7 d | recall @14 d |
 |---|---|---|---|---|---|
@@ -27,11 +27,16 @@ number against persistence + classical controls on identical origins.
 | engine-QRC × **ensemble** | 0.703 | 0.602 | 0.78 | 0.61 | **0.42** |
 | core-QRC × threshold | 0.693 | 0.552 | 0.80 | 0.50 | 0.24 |
 | NVAR × threshold | 0.684 | 0.500 | 0.80 | 0.45 | 0.10 |
+| NVAR × PCA-T² (teammate) | 0.520 | 0.404 | 0.80 | 0.50 | 0.11 |
+| engine-QRC × PCA-T² (teammate) | 0.467 | 0.346 | 0.62 | 0.37 | 0.09 |
 
-*(engine-QRC = the sister repo's validated exact reservoir; core-QRC = ours.
-"threshold" = Hobday rule on the mean forecast; "ensemble" = fraction of K=60
-sampled futures breaching it — the Step-3 calibrated alarm. Deterministic models
-have no ensemble row.)*
+*(engine-QRC = the sister repo's validated exact reservoir — now Phase 11, with
+the Mackey–Glass autonomous gate PASSED; core-QRC = ours. "threshold" = Hobday
+rule on the mean forecast; "ensemble" = fraction of K=60 sampled futures
+breaching it — the Step-3 calibrated alarm; "PCA-T²" = the teammate's
+EGADS/PCA-subspace Hotelling-T² detector from
+`engine/Classical_ML_post_process`, fit on observed training intensity in weekly
+delay coordinates and calibrated fairly on forecast-of-training.)*
 
 ## The conclusion, stated plainly (and honestly)
 
@@ -64,6 +69,27 @@ There is also a **parallel warning path**: the precursor ML detector (`detect.py
 predicts heatwave *onset* from observed ENSO / rainfall / build-up at 2.6× the base
 rate — independent of Step 1, so it is a hedge when the forecast is weak.
 
+## Teammates' contributions, integrated (2026-07-24)
+
+- **Step 1 (engine repo, phases 3–11):** the engine is now complete — Qiskit
+  parity ladder, autonomous engine, **Mackey–Glass gate PASSED** (the "engine is
+  faithful" checkpoint that was an open item), baseline battery, climate
+  campaign on ENSO/PDO/SOI, shot/noise adjudication, QPU latency feasibility.
+  Pulled into `engine/` by subtree; our matrix already runs on their validated
+  core (`engine_qrc` rows).
+- **Step 2 (`engine/Classical_ML_post_process`):** an EGADS/PCA-subspace
+  detector suite (Hotelling T² + SPE + feature clustering), grounded in the
+  EGADS KDD-2015 taxonomy, already tested on our MHW labels. Wired into the
+  matrix as `pca_t2`. **Finding:** in the composed warning it reaches F1 0.47–0.52
+  — real skill, but behind the Hobday threshold/ensemble family (0.68–0.72),
+  because a marine heatwave is a *level exceedance vs a seasonal threshold* at
+  ~30 % base rate, while T² hunts *rare structural/joint* excursions. That is
+  EGADS' own thesis (no single detector wins every use-case), demonstrated on our
+  data. **Its home turf stays the compound co-exceedance task, where the teammate
+  reports ROC-AUC 0.96 at base rate 0.04** — so it joins the ML onset detector as
+  a *parallel path* for rare multi-driver events (ENSO-compound warnings), while
+  the composed farm warning ships with threshold+ensemble.
+
 ## How each teammate's improvement plugs in
 
 - **Better Step 1** (teammate): a stronger forecaster → register it in
@@ -80,11 +106,10 @@ rate — independent of Step 1, so it is a hedge when the forecast is weak.
 
 ## Open items before the final claim
 
-- Fold the stochastic-ensemble detector and the ML onset detector into the harness
-  as first-class `DETECTORS` so the matrix covers all Step-2 variants, not just the
-  threshold.
-- Add the sister repo's Mackey–Glass autonomous gate as the "engine is faithful"
-  checkpoint (their Phase 5).
-- When teammates deliver improved Step 1/Step 2, re-run
-  `combine_and_conclude.py` and update this file — it is regenerated, not
-  hand-written.
+- ~~Fold the stochastic-ensemble detector into the harness~~ **done** (`ensemble`).
+- ~~Mackey–Glass autonomous gate~~ **done by teammate** (engine Phase 5, PASSED).
+- ~~Integrate teammates' Step 1 / Step 2~~ **done** — engine phases 3–11 pulled,
+  PCA-T² wired into the matrix (see "Teammates' contributions" above).
+- Remaining: fold the precursor ML onset detector (`detect.py`) and the
+  teammate's compound co-exceedance task into one combined multi-path warning
+  product view; refresh the report/deck with the final matrix.
