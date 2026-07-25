@@ -15,16 +15,16 @@
 <form class="card" method="post" action="/demo">
   <label style="margin-bottom:10px">Mode</label>
   <div class="segmented" role="radiogroup" aria-label="Demo mode">
-    <input type="radio" id="m-detect" name="mode" value="detect" {{ 'checked' if mode != 'forecast' and mode != 'freerun' else '' }}>
+    <input type="radio" id="m-forecast" name="mode" value="forecast" {{ 'checked' if mode not in ('detect','freerun') else '' }}>
+    <label for="m-forecast">Forecast</label>
+    <input type="radio" id="m-detect" name="mode" value="detect" {{ 'checked' if mode == 'detect' else '' }}>
     <label for="m-detect">Forecast&nbsp;+&nbsp;Detect</label>
-    <input type="radio" id="m-forecast" name="mode" value="forecast" {{ 'checked' if mode == 'forecast' else '' }}>
-    <label for="m-forecast">Forecast only</label>
     <input type="radio" id="m-freerun" name="mode" value="freerun" {{ 'checked' if mode == 'freerun' else '' }}>
     <label for="m-freerun">Free-run (blind)</label>
   </div>
   <p class="hint" id="mode-help" style="margin:10px 0 20px">
-    <strong>Forecast + Detect</strong> — the main path: recursive rollout for anomaly
-    warning, with usable-lead and skill-decay against every floor.
+    <strong>Forecast</strong> — direct H-step forecast: observed vs QRC vs the
+    baselines (persistence, size-matched ESN), inside a calibrated conformal band.
   </p>
 
   <div class="grid c4">

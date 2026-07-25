@@ -114,8 +114,9 @@ def index(request: Request):
 
 
 @app.get("/demo", response_class=HTMLResponse)
-def demo_page(request: Request, dataset: str = "got_sst", mode: str = "detect"):
-    """The product demo: one form, three modes. Default = Forecast + Detect."""
+def demo_page(request: Request, dataset: str = "got_sst", mode: str = "forecast"):
+    """The product demo: one form, three modes. Default = Forecast (observed vs
+    QRC vs baselines, with the conformal band)."""
     datasets = catalog.list_datasets()
     return templates.TemplateResponse(request, "demo.html", {
         "datasets": datasets,
@@ -132,7 +133,7 @@ def demo_page(request: Request, dataset: str = "got_sst", mode: str = "detect"):
 @app.post("/demo", response_class=HTMLResponse)
 def demo_submit(
     request: Request,
-    mode: str = Form("detect"),
+    mode: str = Form("forecast"),
     dataset: str = Form("got_sst"),
     horizon: int = Form(12),
     n_qubits: int = Form(5),

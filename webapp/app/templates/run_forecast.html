@@ -149,6 +149,16 @@
   chronological and never shuffled.
 </div>
 
-<p><a class="btn ghost" href="/forecast?dataset={{ r.config.dataset }}">Run another</a>
-   <a class="btn ghost" href="/api/runs/{{ job.id }}">Raw JSON</a></p>
+<h2>Go deeper</h2>
+<div class="row">
+  <a class="btn arrow" href="/demo?mode=detect&amp;dataset={{ r.config.dataset }}">Detect on this forecast</a>
+  <a class="btn ghost" href="/warning">Early-warning result</a>
+  <a class="btn ghost" href="/diagnostics">Reservoir diagnostics</a>
+  <a class="btn ghost" href="/chaos/{{ r.config.dataset }}">Predictability of this series</a>
+</div>
+<p style="margin-top:14px">
+  <a class="btn ghost" href="/demo?mode=forecast&amp;dataset={{ r.config.dataset }}">Run another</a>
+  <a class="btn ghost" href="/forecast?dataset={{ r.config.dataset }}">Advanced config</a>
+  <a class="btn ghost" href="/api/runs/{{ job.id }}">Raw JSON</a>
+</p>
 {% endblock %}
