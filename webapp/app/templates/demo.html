@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% set nav = 'demo' %}
+{% block title %}Live demo — forecast &amp; detect{% endblock %}
+{% block body %}
+
+<p class="eyebrow">PronoiaQ · live demo</p>
+<h1>Forecast the series, then warn on the forecast.</h1>
+<p class="lede">
+  Pick an environmental series and run the whole pipeline: a quantum reservoir
+  produces a multi-step forecast, and the detector reads that forecast to raise an
+  anomaly signal <em>before</em> the event. Every result is scored against the
+  baselines that decide whether it means anything.
+</p>
+
+<form class="card" method="post" action="/demo">
+  <label style="margin-bottom:10px">Mode</label>
+  <div class="segmented" role="radiogroup" aria-label="Demo mode">
+    <input type="radio" id="m-detect" name="mode" value="detect" {{ 'checked' if mode != 'forecast' and mode != 'freerun' else '' }}>
+    <label for="m-detect">Forecast&nbsp;+&nbsp;Detect</label>
+    <input type="radio" id="m-forecast" name="mode" value="forecast" {{ 'checked' if mode == 'forecast' else '' }}>
+    <label for="m-forecast">Forecast only</label>
+    <input type="radio" id="m-freerun" name="mode" value="freerun" {{ 'checked' if mode == 'freerun' else '' }}>
+    <label for="m-freerun">Free-run (blind)</label>
+  </div>
+  <p class="hint" id="mode-help" style="margin:10px 0 20px">
+    <strong>Forecast + Detect</strong> — the main path: recursive rollout for anomaly
+    warning, with usable-lead and skill-decay against every floor.
+  </p>
+
+  <div class="grid c4">
+    <div class="field">
+      <label for="dataset">Dataset</label>
+      <select id="dataset" name="dataset">
+        {% for d in datasets %}
+          {% if not d.error %}
+          <option value="{{ d.key }}" {{ 'selected' if d.key == anom.dataset }}>
+            {{ d.name }} — {{ d.tier }}
+          </option>
+          {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field" id="f-horizon">
+      <label for="horizon">Horizon H (steps)</label>
+      <input id="horizon" type="number" name="horizon" value="{{ anom.horizon }}" min="1" max="60">
+      <div class="hint">Warning lead / forecast reach.</div>
+    </div>
+    <div class="field" id="f-kind">
+      <label for="kind">Reservoir</label>
+      <select id="kind" name="kind">
+        <option value="ising" selected>ising — accuracy default</option>
+        <option value="xxz_hx">xxz_hx — XXZ chain</option>
+        <option value="esn">esn — classical control</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="n_qubits">Qubits</label>
+      <input id="n_qubits" type="number" name="n_qubits" value="{{ anom.n_qubits }}" min="1" max="8">
+      <div class="hint">Exact sim; cost ~4<sup>n</sup>.</div>
+    </div>
+  </div>
+
+  <div class="row">
+    <button type="submit" class="btn lg arrow">Run the pipeline</button>
+    <span class="muted">Typically a few seconds. Seed {{ anom.seed }} · advanced knobs on the
+      <a href="/forecast">Forecast</a> and <a href="/freerun">Free-run</a> pages.</span>
+  </div>
+</form>
+
+<div class="card flat" style="background:var(--surface-2)">
+  <div class="pipe-flow">
+    <span class="node">Inputs</span><span class="arr">&rarr;</span>
+    <span class="node on">Quantum reservoir</span><span class="arr">&rarr;</span>
+    <span class="node">Ridge read-out</span><span class="arr">&rarr;</span>
+    <span class="node on">Forecast</span><span class="arr">&rarr;</span>
+    <span class="node on">Detector</span><span class="arr">&rarr;</span>
+    <span class="node" style="border-color:var(--bad);color:var(--bad)">Warning</span>
+  </div>
+  <p class="muted" style="margin:14px 0 0;font-size:13.5px">
+    Want the finished, calibrated combination of every forecaster &times; detector?
+    That's the <a href="/warning">early-warning result</a> — this demo is where you run
+    the pieces yourself.
+  </p>
+</div>
+
+<h2>Featured series</h2>
+<div class="grid c2">
+  {% for d in featured %}
+  <div class="card">
+    <div class="row">
+      <h3 style="margin:0"><a href="/datasets/{{ d.key }}">{{ d.name }}</a></h3>
+      <span class="badge {{ d.tier }}">{{ d.tier_label }}</span>
+    </div>
+    <p class="muted" style="font-size:13px;margin:8px 0 0">
+      {{ d.n }} samples · dt = {{ d.dt|num }} {{ d.time_unit }}
+      · lag-1 autocorr {{ d.lag1_autocorr|num('.3f') }}
+    </p>
+  </div>
+  {% endfor %}
+</div>
+<p class="muted">{{ n_datasets }} datasets available — <a href="/datasets">browse all</a>.</p>
+
+{% if recent %}
+<h2>Recent runs</h2>
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Run</th><th>Kind</th><th>Status</th><th>Started</th></tr></thead>
+    <tbody>
+      {% for j in recent %}
+      <tr>
+        <td><a href="/runs/{{ j.id }}">{{ j.label }}</a></td>
+        <td class="muted">{{ j.kind }}</td>
+        <td>{% if j.status == 'done' %}<span class="badge ok">done</span>
+            {% elif j.status == 'error' %}<span class="badge fail">error</span>
+            {% else %}<span class="badge">{{ j.status }}</span>{% endif %}</td>
+        <td class="mono">{{ j.created_at }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<script>
+  (function () {
+    var help = document.getElementById("mode-help");
+    var hz = document.getElementById("f-horizon");
+    var kd = document.getElementById("f-kind");
+    var texts = {
+      detect:   "<strong>Forecast + Detect</strong> — the main path: recursive rollout for anomaly warning, with usable-lead and skill-decay against every floor.",
+      forecast: "<strong>Forecast only</strong> — direct H-step forecast with a calibrated conformal band, scored against persistence and a size-matched ESN.",
+      freerun:  "<strong>Free-run (blind)</strong> — train on the train span, then recurse across the whole test span on the model's own output. The strictest test."
+    };
+    function sync() {
+      var m = document.querySelector('input[name=mode]:checked').value;
+      help.innerHTML = texts[m];
+      hz.style.opacity = (m === "freerun") ? .45 : 1;
+      kd.style.opacity = (m === "forecast") ? .45 : 1;
+    }
+    document.querySelectorAll('input[name=mode]').forEach(function (r) {
+      r.addEventListener("change", sync);
+    });
+    sync();
+  })();
+</script>
+{% endblock %}

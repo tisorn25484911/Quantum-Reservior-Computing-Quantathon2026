@@ -1,0 +1,18 @@
+# Keep the Vercel upload lean: exclude everything the runtime does not need.
+.venv/
+.git/
+.claude/
+node_modules/
+**/__pycache__/
+**/*.pyc
+
+# Heavy / non-runtime project material
+LaTeX_logbook/
+presentation/
+engine/
+**/figures/
+**/_oisst_chunks/
+*.pdf
+
+# Local scratch
+webapp/results/

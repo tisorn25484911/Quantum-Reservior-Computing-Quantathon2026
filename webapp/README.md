@@ -1,13 +1,39 @@
-# QRC forecasting demo
+# PronoiaQ — company website + live demo
 
-A judge-facing web demo for the Quantathon project: drive a real time series
-through the project's exactly-simulated quantum reservoir, read out a forecast
-with a calibrated uncertainty band, and score it against the baselines that
-decide whether the result means anything.
+The public face of **Quantum Machine Dynamics (QMD)** and its product
+**PronoiaQ**: a marketing **home** (mission, vision, the 3-step solution, impact,
+team) and a **live demo** where a visitor drives a real environmental series
+through the project's exactly-simulated quantum reservoir, reads out a forecast
+with a calibrated band, and runs a detector on that forecast to warn of an
+anomaly days ahead — all scored against the baselines that decide whether it
+means anything.
 
 FastAPI + Jinja + HTMX. No build step, no node toolchain, no broker.
 
-## Running it
+## Site map
+
+| Top-level | Route | What it is |
+|---|---|---|
+| **Home** | `/` | Company mission & vision, the problem, the PronoiaQ solution, the 3-step story, honest impact numbers (read live from the result files), and the team. |
+| **Demo** | `/demo` | One form, three modes — **Forecast + Detect** (default), **Forecast only**, **Free-run**. Runs the pipeline and lands on a result with drill-downs to the forecast and diagnostics. |
+| **Info ▾** | | Dropdown grouping everything else (below). |
+
+Under **Info**:
+
+| Route | What it is |
+|---|---|
+| `/warning` | **Early-warning result** — the combined forecaster × detector matrix, one page. |
+| `/datasets`, `/datasets/{key}` | Every series with provenance tier, sample count, lag-1 autocorrelation. |
+| `/chaos` | **Predictability**: λ₁, Lyapunov time, `H_max`, divergence curve, spectrum. |
+| `/compare` | Cross-dataset QRC-vs-baselines pass. |
+| `/forecast` | Advanced forecast config: every reservoir knob. |
+| `/freerun` | Blind closed-loop rollout (the strictest test). |
+| `/diagnostics` | Memory capacity of the configured reservoir, on an i.i.d. drive. |
+| `/runs`, `/runs/{id}` | Run history and results. |
+| `/about` | The method, and what these numbers are and are not allowed to claim. |
+| `/docs` | JSON API (OpenAPI). |
+
+## Running it locally
 
 ```bash
 # from the repository root
@@ -24,6 +50,41 @@ Then open <http://127.0.0.1:8000>. Interactive API docs are at `/docs`.
 > only some of them carry `matplotlib`/`pandas`. The venv created above is the
 > one the app expects; running `uvicorn` from a different interpreter will fail
 > on imports. `qutip` is *not* needed — the reservoir used here is pure NumPy.
+
+## Deploy
+
+Config lives at the **repository root**: `api/index.py` (ASGI entrypoint),
+`vercel.json`, `requirements.txt`, `.vercelignore`, and a `Procfile`.
+
+### Vercel (the marketing site + read-only pages)
+
+1. Import the GitHub repo at <https://vercel.com/new>. Leave the **Root
+   Directory** at the repo root (not `webapp/`) — the app imports the sibling
+   `QRC_code_stack/` and `Quantathon_stack/` trees, which `vercel.json` bundles
+   via `includeFiles`.
+2. Framework preset: **Other**. No build command needed; `vercel.json` builds
+   `api/index.py` with `@vercel/python` and routes all paths to it.
+3. Deploy. The home, early-warning result, method, datasets, and predictability
+   pages render from files and work well.
+
+> **Serverless caveat (by design).** Vercel functions are stateless and their
+> filesystem is read-only, so the interactive job-runner — which keeps run state
+> in memory and writes finished runs to disk — does **not** persist a run across
+> the redirect on Vercel. Use Vercel for the site and the read-from-file result
+> pages; run the fully-live demo locally or on a stateful host below.
+
+### Render / Railway / Fly (the fully-live demo)
+
+Any host that runs a long-lived process works with the included `Procfile`:
+
+```
+web: uvicorn app.main:app --host 0.0.0.0 --port $PORT --app-dir webapp
+```
+
+Point the service at the repo, set the install step to
+`pip install -r webapp/requirements.txt`, and use that start command. Here the
+interactive demo (job registry + progress polling) runs exactly as it does
+locally.
 
 ## What it does
 
@@ -82,11 +143,14 @@ the reservoir is driven by **its own output** after step 1, so errors compound.
 Reports NMSE against lead time versus persistence and a size-matched ESN, the
 usable lead, an example trajectory, and the encoding-clip count.
 
-**Only the forecast half exists.** Steps 3–8 of that plan — stochastic ensembles,
-matrix-profile / isolation-forest scorers, EVT thresholds, event debouncing,
-injected ground truth — are not implemented, so **no anomaly probability is
-shown**. A probability from uncalibrated machinery would be the most misleading
-number this app could display; the page lists exactly what is missing.
+This page produces the **forecast trajectory** a detector runs on, and measures
+how far its skill survives — it does not itself show an anomaly probability,
+because a probability from uncalibrated machinery would be the most misleading
+number this app could display. The **calibrated detection layer** (thresholds,
+stochastic ensembles, PCA-subspace scorers) is combined across every forecaster
+on the [`/warning`](/warning) early-warning result page, and reproduced offline
+from `Anomaly_Forecast/` (`detect.py`, `compose.py`, `stochastic.py`,
+`combine_and_conclude.py`).
 
 Long runs execute on a worker thread; the page polls a progress partial and
 reloads when finished. Completed runs are written to `webapp/results/<id>.json`

@@ -1,0 +1,9 @@
+# Root requirements for the Vercel Python build (api/index.py).
+# Mirrors webapp/requirements.txt; kept here because Vercel reads the
+# requirements.txt at the project root.
+fastapi==0.139.2
+Jinja2==3.1.6
+python-multipart==0.0.32
+numpy==2.5.1
+pandas==3.0.3
+matplotlib==3.11.1

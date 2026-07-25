@@ -23,7 +23,6 @@ EVALUATION_DIR = PROJECT_ROOT / "Quantathon_stack" / "Main_run_Evaluation"
 ANOMALY_DIR = PROJECT_ROOT / "Quantathon_stack" / "Anomaly_Forecast"
 DATA_DIR = PROJECT_ROOT / "Quantathon_stack" / "Data"
 
-RESULTS_DIR = WEBAPP_DIR / "results"
 STATIC_DIR = APP_DIR / "static"
 TEMPLATES_DIR = APP_DIR / "templates"
 
@@ -31,7 +30,17 @@ for _p in (QRC_CORE_DIR, DB_ANALYSIS_DIR, EVALUATION_DIR, ANOMALY_DIR):
     if str(_p) not in sys.path:
         sys.path.insert(0, str(_p))
 
-RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+# Runs are written here. On a normal host this is beside the app; on a
+# read-only serverless filesystem (e.g. Vercel) fall back to a writable temp
+# dir so import never crashes -- the interactive runner degrades, the
+# read-from-file pages keep working.
+RESULTS_DIR = WEBAPP_DIR / "results"
+try:
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+except OSError:
+    import tempfile
+    RESULTS_DIR = Path(tempfile.gettempdir()) / "pronoiaq_results"
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 # Project-wide seed (repository law R4: printed configuration, fixed seed).
 SEED = 7

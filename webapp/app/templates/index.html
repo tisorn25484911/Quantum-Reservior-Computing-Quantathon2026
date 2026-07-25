@@ -1,92 +1,260 @@
 {% extends "base.html" %}
-{% block body %}
+{% set nav = 'home' %}
+{% block title %}PronoiaQ — quantum foresight for a warming world{% endblock %}
+{% block main %}
+{% set s = summary %}
 
-<h1>Forecasting with a quantum reservoir</h1>
-<p class="lede">
-  Drive a real time series through an exactly-simulated quantum reservoir, read
-  out a forecast with a calibrated uncertainty band, and score it against the
-  baselines that decide whether it means anything.
-</p>
-
-<div class="note">
-  Every run is reported against <strong>two reference points</strong>: persistence
-  (repeat the last observation) and a <strong>size-matched echo-state network</strong>
-  trained on the same number of parameters. If the reservoir loses, the page says
-  so &mdash; that is the point of showing them.
-</div>
-
-<h2>Start a forecast</h2>
-<form class="card" method="post" action="/forecast">
-  <div class="grid c4">
-    <div class="field">
-      <label for="dataset">Dataset</label>
-      <select id="dataset" name="dataset">
-        {% for d in featured %}
-          <option value="{{ d.key }}">{{ d.name }} ({{ d.tier }})</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="field">
-      <label for="horizon">Horizon (steps ahead)</label>
-      <input id="horizon" type="number" name="horizon" value="1" min="1" max="200">
-    </div>
-    <div class="field">
-      <label for="n_qubits">Reservoir qubits</label>
-      <input id="n_qubits" type="number" name="n_qubits" value="{{ defaults.n_qubits }}" min="1" max="8">
-      <div class="hint">Exact simulation; cost grows as 4<sup>n</sup>.</div>
-    </div>
-    <div class="field">
-      <label for="mode">Run</label>
-      <select id="mode" name="mode">
-        <option value="single">Single horizon</option>
-        <option value="sweep">Sweep horizons 1&ndash;24</option>
-      </select>
+{# ------------------------------------------------------------------ hero #}
+<section class="hero">
+  <div class="wrap">
+    <img class="hero-blob" src="/static/brand/blob.png" alt="" aria-hidden="true">
+    <div class="hero-inner">
+      <p class="eyebrow">Quantum Machine Dynamics</p>
+      <h1>Foresight, before uncertainty<br>becomes <span class="grad">disruption</span>.</h1>
+      <p class="lede">
+        <strong>PronoiaQ</strong> is an evolving quantum solution that works today and
+        grows stronger with every qubit tomorrow. A quantum reservoir forecasts
+        environmental time series and warns of anomalies <em>days ahead</em> —
+        turning climate volatility into decisions farmers and agribusinesses can act on.
+      </p>
+      <div class="hero-cta">
+        <a href="/demo" class="btn lg arrow">Launch the demo</a>
+        <a href="/warning" class="btn lg ghost">See the result</a>
+      </div>
+      <div class="hero-meta">
+        {% if s and s.best_quantum %}
+        <div><b>{{ (s.best_quantum.rec3 * 100)|round|int }}%</b> of heatwave days caught 3 days out</div>
+        {% endif %}
+        {% if s and s.step2 %}<div><b>{{ s.step2.lift }}&times;</b> better-than-chance onset detection</div>{% endif %}
+        <div><b>&le;8</b> qubits, exact density-matrix simulation</div>
+      </div>
     </div>
   </div>
-  <div class="row">
-    <button type="submit">Run forecast</button>
-    <span class="muted">Typically under 2&nbsp;s. Advanced settings on the
-      <a href="/forecast">full forecast page</a>.</span>
-  </div>
-</form>
+</section>
 
-<h2>Featured series</h2>
-<div class="grid c2">
-  {% for d in featured %}
-  <div class="card">
-    <div class="row">
-      <h3 style="margin:0"><a href="/datasets/{{ d.key }}">{{ d.name }}</a></h3>
-      <span class="badge {{ d.tier }}">{{ d.tier_label }}</span>
+{# ------------------------------------------------------------- the problem #}
+<section class="band">
+  <div class="wrap">
+    <p class="eyebrow">The problem</p>
+    <h2>Southeast Asia grows the food — and takes the drought.</h2>
+    <p class="lede">
+      The region produces about a third of the world's rice, feeding ~557 million
+      people. Drought is its costliest weather, and the driver is accelerating:
+      strong El&nbsp;Niño events went from one in 1901–1960 to four in 1961–2020,
+      arriving closer together.
+    </p>
+    <div class="grid c3">
+      <div class="card">
+        <div class="feature-ico">&#9888;</div>
+        <h3>A plan with no forecast</h3>
+        <p class="muted">A rainfall or heat deficit is confirmed only once crops are
+          already dying. National outlooks rarely become farm-level lead time.</p>
+      </div>
+      <div class="card">
+        <div class="feature-ico">&#127788;</div>
+        <h3>One dry season ends a crop</h3>
+        <p class="muted">El&nbsp;Niño years bring ~17% less rain and ~9% lower rice
+          yields. A single failed monsoon wipes a season's feed supply and income.</p>
+      </div>
+      <div class="card">
+        <div class="feature-ico">&#9201;</div>
+        <h3>Prepare cheap, or pay late</h3>
+        <p class="muted">Storing water, tougher seed, shifting planting are all cheap —
+          <em>if</em> you have a head start. Waiting means the harvest is already gone.</p>
+      </div>
     </div>
-    <p class="muted" style="font-size:13px;margin:8px 0 0">
-      {{ d.n }} samples &middot; dt = {{ d.dt|num }} {{ d.time_unit }}
-      &middot; lag-1 autocorr {{ d.lag1_autocorr|num('.3f') }}
+  </div>
+</section>
+
+{# ------------------------------------------------------------ the solution #}
+<section class="wrap" style="padding-top:56px">
+  <p class="eyebrow">Introducing</p>
+  <h2 style="margin-top:0">PronoiaQ — the reservoir that sees the anomaly coming.</h2>
+  <p class="lede">
+    We drive an environmental series through an exactly-simulated quantum reservoir,
+    read out a calibrated forecast, then run anomaly detectors <em>on the forecast</em> —
+    so an event is flagged before it happens, with warning time built in.
+  </p>
+  <div class="card flat" style="background:var(--surface-2)">
+    <div class="pipe-flow">
+      <span class="node">Inputs</span><span class="arr">&rarr;</span>
+      <span class="node">Data encoding</span><span class="arr">&rarr;</span>
+      <span class="node on">Quantum reservoir</span><span class="arr">&rarr;</span>
+      <span class="node">Ridge read-out</span><span class="arr">&rarr;</span>
+      <span class="node on">Forecast</span><span class="arr">&rarr;</span>
+      <span class="node on">Anomaly detection</span><span class="arr">&rarr;</span>
+      <span class="node" style="border-color:var(--bad);color:var(--bad)">Signal</span>
+    </div>
+  </div>
+
+  <h2>Three steps — working today, scaling tomorrow.</h2>
+  <div class="grid c3">
+    <div class="card step">
+      <div class="no">STEP 01</div>
+      <div class="feature-ico" style="margin-top:8px">&#128200;</div>
+      <h3>Time-series forecasting</h3>
+      <p class="muted">A quantum reservoir forecasts sea-surface temperature and ENSO
+        anomalies, at parity with a size-matched classical baseline.</p>
+      {% if s and s.step1 %}
+      <div class="tagline">NMSE {{ s.step1.mean_nmse }} vs ESN {{ s.step1.esn }} · skill to H&nbsp;=&nbsp;{{ s.step1.h_skill }}</div>
+      {% endif %}
+    </div>
+    <div class="card step">
+      <div class="no">STEP 02</div>
+      <div class="feature-ico" style="margin-top:8px">&#128680;</div>
+      <h3>Anomaly detection</h3>
+      <p class="muted">Detectors run on the forecast trajectory to flag marine-heatwave
+        onset days ahead — tuned recall-first for the aquaculture cost asymmetry.</p>
+      {% if s and s.best_quantum %}
+      <div class="tagline">{{ (s.best_quantum.rec3 * 100)|round|int }}% of heatwave days caught 3&nbsp;days out</div>
+      {% endif %}
+    </div>
+    <div class="card step future">
+      <div class="no">STEP 03 · FUTURE</div>
+      <div class="feature-ico" style="margin-top:8px">&#9883;</div>
+      <h3>Dense multivariate encoding</h3>
+      <p class="muted">Explore dense encodings for multivariate time series, scaling with
+        the physical-qubit counts that hardware vendors keep delivering.</p>
+      <div class="tagline">Works today at 8 qubits · gets stronger with every qubit</div>
+    </div>
+  </div>
+</section>
+
+{# ---------------------------------------------------------------- impact #}
+<section class="band">
+  <div class="wrap">
+    <p class="eyebrow">The result, stated honestly</p>
+    <h2 style="margin-top:0">On the window a farm can act on, the quantum forecast gives the best warning.</h2>
+    <div class="grid c4">
+      {% if s and s.best_quantum %}
+      <div class="stat accent">
+        <div class="label">Recall @ 3 days</div>
+        <div class="value">{{ (s.best_quantum.rec3 * 100)|round|int }}%</div>
+        <div class="sub">real heatwave days caught 3 days out</div>
+      </div>{% endif %}
+      {% if s and s.step1 %}
+      <div class="stat good">
+        <div class="label">Forecast skill</div>
+        <div class="value">{{ s.step1.mean_nmse }}</div>
+        <div class="sub">NMSE, beating ESN ({{ s.step1.esn }}) &amp; NVAR ({{ s.step1.nvar }})</div>
+      </div>{% endif %}
+      {% if s and s.step2 %}
+      <div class="stat">
+        <div class="label">Onset detector</div>
+        <div class="value">{{ s.step2.lift }}&times;</div>
+        <div class="sub">above chance (PR-AUC {{ s.step2.pr_auc }} vs {{ s.step2.base_rate }})</div>
+      </div>{% endif %}
+      {% if s and s.step3 %}
+      <div class="stat">
+        <div class="label">Calibration</div>
+        <div class="value">{{ (s.step3.coverage * 100)|round|int }}%</div>
+        <div class="sub">90% band actually covers the truth</div>
+      </div>{% endif %}
+    </div>
+    <p class="muted" style="margin-top:18px">
+      Every number ships with the baseline that could beat it. On balanced F1, naive
+      persistence is a genuine tie — the case rests on recall under a cost asymmetry
+      where a missed heatwave loses a grow-out cycle and a false alarm just runs an aerator.
+      <a href="/warning">See the full combination matrix &rarr;</a>
     </p>
   </div>
-  {% endfor %}
-</div>
-<p class="muted">{{ n_datasets }} datasets available &mdash;
-  <a href="/datasets">browse all</a>.</p>
+</section>
 
-{% if recent %}
-<h2>Recent runs</h2>
-<div class="card">
-  <table>
-    <thead><tr><th>Run</th><th>Kind</th><th>Status</th><th>Started</th></tr></thead>
-    <tbody>
-      {% for j in recent %}
-      <tr>
-        <td><a href="/runs/{{ j.id }}">{{ j.label }}</a></td>
-        <td class="muted">{{ j.kind }}</td>
-        <td>{% if j.status == 'done' %}<span class="badge ok">done</span>
-            {% elif j.status == 'error' %}<span class="badge fail">error</span>
-            {% else %}<span class="badge">{{ j.status }}</span>{% endif %}</td>
-        <td class="mono">{{ j.created_at }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-{% endif %}
+{# ------------------------------------------------------- vision & mission #}
+<section class="band deep">
+  <div class="wrap">
+    <div class="grid c2" style="gap:40px">
+      <div>
+        <p class="eyebrow">Vision</p>
+        <p style="font-size:20px;line-height:1.5;margin:0">
+          A future where quantum intelligence gives organisations the foresight to act
+          <strong>before environmental uncertainty becomes disruption</strong>.
+        </p>
+      </div>
+      <div>
+        <p class="eyebrow">Mission</p>
+        <p style="font-size:20px;line-height:1.5;margin:0">
+          To build practical quantum solutions that start working today, scale with every
+          generation of hardware, and turn complex data into earlier predictions, resilient
+          decisions, and a more sustainable future.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
 
+{# ------------------------------------------------------- market opportunity #}
+<section class="wrap" style="padding-top:56px">
+  <p class="eyebrow">Market opportunity</p>
+  <h2 style="margin-top:0">A worked example: Charoen Pokphand Foods, feed at national scale.</h2>
+  <div class="grid c3">
+    <div class="stat"><div class="label">TAM · predictive climate-risk analytics</div>
+      <div class="value">$988M</div><div class="sub">2035 projection, 10.9% CAGR (Global Insight Services, 2026)</div></div>
+    <div class="stat"><div class="label">SAM · agriculture segment</div>
+      <div class="value">$296M</div><div class="sub">~30% of the market applied to the 2035 TAM</div></div>
+    <div class="stat accent"><div class="label">SOM · 3–5 yr obtainable</div>
+      <div class="value">$10–25M</div><div class="sub">enterprise deployments at large diversified agribusinesses</div></div>
+  </div>
+</section>
+
+{# ------------------------------------------------------------------- team #}
+<section class="band">
+  <div class="wrap">
+    <p class="eyebrow">Team QMooDieng</p>
+    <h2 style="margin-top:0">Multidisciplinary minds, one working solution.</h2>
+    <div class="team-grid">
+      <div class="member">
+        <img class="photo" src="/static/team/tisorn.jpg" alt="Tisorn Na Phattalung">
+        <div class="body">
+          <div class="role">CEO</div>
+          <div class="name">Tisorn Na Phattalung</div>
+          <div class="aff">NTU · President, QuEST@EEE</div>
+          <div class="desc">Sets direction and partnerships — turning quantum progress into a product businesses can buy.</div>
+        </div>
+      </div>
+      <div class="member">
+        <img class="photo" src="/static/team/potchara.jpg" alt="Potchara Sukrason">
+        <div class="body">
+          <div class="role">CPO</div>
+          <div class="name">Potchara Sukrason</div>
+          <div class="aff">KAIST · Computer Science</div>
+          <div class="desc">Owns the product — integrating forecasting and detection into one early-warning pipeline.</div>
+        </div>
+      </div>
+      <div class="member">
+        <img class="photo" src="/static/team/popsuk.jpg" alt="Popsuk Sumetchoengprachya">
+        <div class="body">
+          <div class="role">CTO</div>
+          <div class="name">Popsuk Sumetchoengprachya</div>
+          <div class="aff">SUTD · Deputy Chief of Acads, SQYC</div>
+          <div class="desc">Owns the quantum reservoir core and the detection models behind the warning signal.</div>
+        </div>
+      </div>
+      <div class="member">
+        <img class="photo" src="/static/team/thanchon.jpg" alt="Thanchon Boonkrong">
+        <div class="body">
+          <div class="role">COO</div>
+          <div class="name">Thanchon Boonkrong</div>
+          <div class="aff">MIT · Computer Science &amp; Chemistry</div>
+          <div class="desc">Runs delivery, data provenance, and the benchmarking discipline that keeps claims honest.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# --------------------------------------------------------------- final CTA #}
+<section class="band deep">
+  <div class="wrap" style="text-align:center">
+    <h2 style="margin:0 0 12px">See it forecast, then warn.</h2>
+    <p class="lede" style="margin:0 auto 24px;max-width:44rem;color:#cfcdf1">
+      Run the whole pipeline yourself — pick a series, get a forecast with a calibrated
+      band, and watch the detector raise the anomaly signal.
+    </p>
+    <div class="hero-cta" style="justify-content:center">
+      <a href="/demo" class="btn lg on-dark arrow">Launch the demo</a>
+      <a href="/about" class="btn lg on-dark ghost">How it works</a>
+    </div>
+  </div>
+</section>
 {% endblock %}

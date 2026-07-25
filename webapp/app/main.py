@@ -105,14 +105,63 @@ def _require_result(job_id: str, kind: str | None = None) -> dict:
 # ======================================================================
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
-    datasets = catalog.list_datasets()
-    featured = [d for d in datasets if d.get("featured")]
+    """Marketing home: mission/vision, solution, the 3-step story, live impact
+    numbers (read from the result files, never hardcoded), and the team."""
+    from .domain import warning
     return templates.TemplateResponse(request, "index.html", {
-        "featured": featured,
+        "summary": warning.summary(),
+    })
+
+
+@app.get("/demo", response_class=HTMLResponse)
+def demo_page(request: Request, dataset: str = "got_sst", mode: str = "detect"):
+    """The product demo: one form, three modes. Default = Forecast + Detect."""
+    datasets = catalog.list_datasets()
+    return templates.TemplateResponse(request, "demo.html", {
+        "datasets": datasets,
+        "featured": [d for d in datasets if d.get("featured")],
         "n_datasets": len(datasets),
         "recent": registry.list(limit=5),
-        "defaults": asdict(ForecastConfig()),
+        "mode": mode,
+        "anom": {**asdict(AnomalyConfig()), "dataset": dataset},
+        "fore": asdict(ForecastConfig()),
+        "free": asdict(FreeRunConfig()),
     })
+
+
+@app.post("/demo", response_class=HTMLResponse)
+def demo_submit(
+    request: Request,
+    mode: str = Form("detect"),
+    dataset: str = Form("got_sst"),
+    horizon: int = Form(12),
+    n_qubits: int = Form(5),
+    kind: str = Form("ising"),
+    seed: int = Form(SEED),
+):
+    """Route the one demo form to the right job by mode, then land on the run."""
+    try:
+        if mode == "forecast":
+            cfg = ForecastConfig(dataset=dataset, horizon=horizon,
+                                 n_qubits=n_qubits, seed=seed)
+            cfg.validate()
+            job = registry.submit("forecast", f"{dataset} h={horizon}",
+                                  run_forecast, cfg)
+        elif mode == "freerun":
+            cfg = FreeRunConfig(dataset=dataset, kind=kind, n_qubits=n_qubits,
+                                seed=seed)
+            cfg.validate()
+            job = registry.submit("freerun", f"{dataset} free-run",
+                                  run_freerun, cfg)
+        else:  # detect (default): forecast-then-detect rollout study
+            cfg = AnomalyConfig(dataset=dataset, horizon=horizon, kind=kind,
+                                n_qubits=n_qubits, seed=seed)
+            cfg.validate()
+            job = registry.submit("anomaly", f"{dataset} forecast+detect H={horizon}",
+                                  run_rollout_study, cfg)
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return RedirectResponse(f"/runs/{job.id}", status_code=303)
 
 
 @app.get("/datasets", response_class=HTMLResponse)

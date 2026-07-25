@@ -10,13 +10,12 @@
   happens, with warning time up to H.
 </p>
 
-<div class="note warn">
-  <strong>Only the forecast half is built.</strong> This page runs the recursive
-  rollout and measures how far its skill survives. The detection half
-  (stochastic ensembles, matrix-profile / isolation-forest scorers, extreme-value
-  thresholds, event debouncing) is <em>not implemented</em>, so no anomaly
-  probability is shown. A probability from uncalibrated machinery would be the
-  most misleading number this app could display.
+<div class="note">
+  <strong>This is the forecast half — the raw material a detector runs on.</strong>
+  It runs the recursive rollout and measures how far its skill survives, and does
+  not itself show an anomaly probability. The tuned, calibrated detection layer
+  (thresholds, stochastic ensembles, PCA&nbsp;subspace) is combined across every
+  forecaster on the <a href="/warning">early-warning result</a> page.
 </div>
 
 <form class="card" method="post" action="/anomaly">

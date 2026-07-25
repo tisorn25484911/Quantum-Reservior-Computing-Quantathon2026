@@ -86,8 +86,13 @@
 </table>
 </div>
 
-<div class="note warn">
-  <strong>Not implemented &mdash; what would be needed for actual detection</strong>
+<div class="note">
+  <strong>Where the calibrated detector lives.</strong> This page produces the
+  forecast trajectory and measures how far its skill survives &mdash; the raw
+  material a detector runs on. The tuned, calibrated detection layer (thresholds,
+  stochastic ensembles, PCA&nbsp;subspace) is combined across every forecaster on
+  the <a href="/warning">early-warning result</a> page. What that layer still
+  needs on this specific rollout:
   <ul>{% for n in r.not_implemented %}<li>{{ n }}</li>{% endfor %}</ul>
 </div>
 
@@ -98,7 +103,15 @@
   silently applied.</p>
 {% endif %}
 
-<p><a class="btn ghost" href="/anomaly?dataset={{ r.config.dataset }}">Run another</a>
-   <a class="btn ghost" href="/chaos/{{ r.config.dataset }}">Predictability of this series</a>
-   <a class="btn ghost" href="/api/runs/{{ job.id }}">Raw JSON</a></p>
+<h2>Go deeper</h2>
+<div class="row">
+  <a class="btn arrow" href="/warning">Full early-warning result</a>
+  <a class="btn ghost" href="/demo?mode=forecast&amp;dataset={{ r.config.dataset }}">View the forecast</a>
+  <a class="btn ghost" href="/diagnostics">Reservoir diagnostics</a>
+  <a class="btn ghost" href="/chaos/{{ r.config.dataset }}">Predictability of this series</a>
+</div>
+<p style="margin-top:14px">
+  <a class="btn ghost" href="/demo?dataset={{ r.config.dataset }}">Run another</a>
+  <a class="btn ghost" href="/api/runs/{{ job.id }}">Raw JSON</a>
+</p>
 {% endblock %}
