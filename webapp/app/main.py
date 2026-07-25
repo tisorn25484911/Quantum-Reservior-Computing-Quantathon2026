@@ -113,20 +113,36 @@ def index(request: Request):
     })
 
 
+# The tuned PronoiaQ reference reservoir the demo runs. These are the reservoir
+# hyper-parameters the simple demo form does not expose; the advanced /forecast
+# and /freerun pages let a user sweep them. Kept in one place so the demo form
+# and the submit handler agree. (Matches the tuned Gulf-SST forecast config.)
+DEMO_MODEL = {
+    "dataset": "got_ersst",   # Gulf of Thailand SST (ERSSTv5 monthly reconstruction)
+    "horizon": 6,
+    "n_qubits": 7,
+    "dt": 2.05,               # input interval J*dt (the temporal edge)
+    "virtual_nodes": 16,
+    "use_zz": True,           # two-point <Zi Zj> read-out features
+    "alpha": 0.11,            # 1 - alpha nominal band coverage
+    "kind": "ising",          # reservoir family for detect / free-run modes
+}
+
+
 @app.get("/demo", response_class=HTMLResponse)
-def demo_page(request: Request, dataset: str = "got_sst", mode: str = "forecast"):
-    """The product demo: one form, three modes. Default = Forecast (observed vs
-    QRC vs baselines, with the conformal band)."""
+def demo_page(request: Request, dataset: str | None = None, mode: str = "forecast"):
+    """The product demo: one form, three modes, driven by the tuned reference
+    reservoir (:data:`DEMO_MODEL`). Default = Forecast (observed vs QRC vs
+    baselines, with the conformal band)."""
     datasets = catalog.list_datasets()
+    model = {**DEMO_MODEL, "dataset": dataset or DEMO_MODEL["dataset"]}
     return templates.TemplateResponse(request, "demo.html", {
         "datasets": datasets,
         "featured": [d for d in datasets if d.get("featured")],
         "n_datasets": len(datasets),
         "recent": registry.list(limit=5),
         "mode": mode,
-        "anom": {**asdict(AnomalyConfig()), "dataset": dataset},
-        "fore": asdict(ForecastConfig()),
-        "free": asdict(FreeRunConfig()),
+        "model": model,
     })
 
 
@@ -134,29 +150,36 @@ def demo_page(request: Request, dataset: str = "got_sst", mode: str = "forecast"
 def demo_submit(
     request: Request,
     mode: str = Form("forecast"),
-    dataset: str = Form("got_sst"),
-    horizon: int = Form(12),
-    n_qubits: int = Form(5),
-    kind: str = Form("ising"),
+    dataset: str = Form(DEMO_MODEL["dataset"]),
+    horizon: int = Form(DEMO_MODEL["horizon"]),
+    n_qubits: int = Form(DEMO_MODEL["n_qubits"]),
+    kind: str = Form(DEMO_MODEL["kind"]),
     seed: int = Form(SEED),
 ):
-    """Route the one demo form to the right job by mode, then land on the run."""
+    """Route the one demo form to the right job by mode, applying the tuned
+    reference reservoir (dt / virtual nodes / ZZ / alpha) the form does not
+    expose, then land on the run."""
+    m = DEMO_MODEL
     try:
         if mode == "forecast":
             cfg = ForecastConfig(dataset=dataset, horizon=horizon,
-                                 n_qubits=n_qubits, seed=seed)
+                                 n_qubits=n_qubits, dt=m["dt"],
+                                 virtual_nodes=m["virtual_nodes"],
+                                 use_zz=m["use_zz"], alpha=m["alpha"], seed=seed)
             cfg.validate()
             job = registry.submit("forecast", f"{dataset} h={horizon}",
                                   run_forecast, cfg)
         elif mode == "freerun":
             cfg = FreeRunConfig(dataset=dataset, kind=kind, n_qubits=n_qubits,
+                                dt=m["dt"], virtual_nodes=m["virtual_nodes"],
                                 seed=seed)
             cfg.validate()
             job = registry.submit("freerun", f"{dataset} free-run",
                                   run_freerun, cfg)
         else:  # detect (default): forecast-then-detect rollout study
             cfg = AnomalyConfig(dataset=dataset, horizon=horizon, kind=kind,
-                                n_qubits=n_qubits, seed=seed)
+                                n_qubits=n_qubits, dt=m["dt"],
+                                virtual_nodes=m["virtual_nodes"], seed=seed)
             cfg.validate()
             job = registry.submit("anomaly", f"{dataset} forecast+detect H={horizon}",
                                   run_rollout_study, cfg)

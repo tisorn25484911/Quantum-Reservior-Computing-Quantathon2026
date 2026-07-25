@@ -33,7 +33,7 @@
       <select id="dataset" name="dataset">
         {% for d in datasets %}
           {% if not d.error %}
-          <option value="{{ d.key }}" {{ 'selected' if d.key == anom.dataset }}>
+          <option value="{{ d.key }}" {{ 'selected' if d.key == model.dataset }}>
             {{ d.name }} — {{ d.tier }}
           </option>
           {% endif %}
@@ -42,28 +42,34 @@
     </div>
     <div class="field" id="f-horizon">
       <label for="horizon">Horizon H (steps)</label>
-      <input id="horizon" type="number" name="horizon" value="{{ anom.horizon }}" min="1" max="60">
+      <input id="horizon" type="number" name="horizon" value="{{ model.horizon }}" min="1" max="60">
       <div class="hint">Warning lead / forecast reach.</div>
     </div>
     <div class="field" id="f-kind">
       <label for="kind">Reservoir</label>
       <select id="kind" name="kind">
-        <option value="ising" selected>ising — accuracy default</option>
-        <option value="xxz_hx">xxz_hx — XXZ chain</option>
-        <option value="esn">esn — classical control</option>
+        <option value="ising" {{ 'selected' if model.kind == 'ising' }}>ising — accuracy default</option>
+        <option value="xxz_hx" {{ 'selected' if model.kind == 'xxz_hx' }}>xxz_hx — XXZ chain</option>
+        <option value="esn" {{ 'selected' if model.kind == 'esn' }}>esn — classical control</option>
       </select>
     </div>
     <div class="field">
       <label for="n_qubits">Qubits</label>
-      <input id="n_qubits" type="number" name="n_qubits" value="{{ anom.n_qubits }}" min="1" max="8">
+      <input id="n_qubits" type="number" name="n_qubits" value="{{ model.n_qubits }}" min="1" max="8">
       <div class="hint">Exact sim; cost ~4<sup>n</sup>.</div>
     </div>
   </div>
 
+  <p class="hint" style="margin:-2px 0 16px">
+    Running the tuned <strong>PronoiaQ reference reservoir</strong> —
+    J·Δt&nbsp;=&nbsp;{{ model.dt }}, {{ model.virtual_nodes }}&nbsp;virtual nodes,
+    ⟨Z<sub>i</sub>Z<sub>j</sub>⟩ features on, {{ ((1 - model.alpha) * 100)|round|int }}%&nbsp;band.
+    Sweep these on the <a href="/forecast">Forecast</a> / <a href="/freerun">Free-run</a> pages.
+  </p>
+
   <div class="row">
     <button type="submit" class="btn lg arrow">Run the pipeline</button>
-    <span class="muted">Typically a few seconds. Seed {{ anom.seed }} · advanced knobs on the
-      <a href="/forecast">Forecast</a> and <a href="/freerun">Free-run</a> pages.</span>
+    <span class="muted">Typically a few seconds. Seed {{ seed }}.</span>
   </div>
 </form>
 
