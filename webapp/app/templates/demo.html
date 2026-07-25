@@ -30,15 +30,17 @@
   <div class="grid c4">
     <div class="field">
       <label for="dataset">Dataset</label>
-      <select id="dataset" name="dataset">
+      <select id="dataset" name="dataset"
+              onchange="location.href='/demo?dataset='+encodeURIComponent(this.value)+'&mode='+(document.querySelector('input[name=mode]:checked')||{value:'forecast'}).value">
         {% for d in datasets %}
           {% if not d.error %}
           <option value="{{ d.key }}" {{ 'selected' if d.key == model.dataset }}>
-            {{ d.name }} — {{ d.tier }}
+            {{ d.name }} — {{ d.tier }}{{ ' ·  tuned' if d.key in tuned else '' }}
           </option>
           {% endif %}
         {% endfor %}
       </select>
+      <div class="hint">{{ 'Tuned reservoir auto-loaded for this series.' if model.dataset in tuned else 'Using default reservoir (not individually tuned).' }}</div>
     </div>
     <div class="field" id="f-horizon">
       <label for="horizon">Horizon H (steps)</label>
@@ -64,8 +66,9 @@
     Running the tuned <strong>PronoiaQ reference reservoir</strong> —
     J·Δt&nbsp;=&nbsp;{{ model.dt }}, {{ model.virtual_nodes }}&nbsp;virtual nodes,
     ⟨Z<sub>i</sub>Z<sub>j</sub>⟩ features on, {{ ((1 - model.alpha) * 100)|round|int }}%&nbsp;band.
-    Tuned by a leakage-safe sweep; strongest at <strong>short lead (H&nbsp;=&nbsp;1–3)</strong>,
-    where it beats a size-matched classical ESN by ~25–33%. Sweep the knobs on the
+    The best config found for <em>this series</em> by a leakage-safe sweep
+    (validation-selected, reported against persistence and a size-matched ESN).
+    Sweep the knobs yourself on the
     <a href="/forecast">Forecast</a> / <a href="/freerun">Free-run</a> pages.
   </p>
 

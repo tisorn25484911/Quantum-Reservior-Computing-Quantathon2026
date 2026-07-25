@@ -18,6 +18,7 @@ summary to results/forecast_tuning.json and prints the tables.
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 import time
@@ -32,28 +33,38 @@ sys.path.insert(0, str(_WEBAPP))
 from app.domain.catalog import series_values          # noqa: E402
 from qrc_core import QuantumReservoir, ESN, ridge_fit, ridge_predict  # noqa: E402
 
-DATASET = "got_ersst"
-MAXP = 2000
 WASHOUT = 100
 SEED = 7
 TRAIN_FRAC, VAL_FRAC = 0.6, 0.2          # remainder is test
 LAM_GRID = [1e-8, 1e-6, 1e-4, 1e-2]
-H_GRID = [1, 2, 3, 6, 9, 12, 18, 24]
-SELECT_HS = (1, 3, 6)                     # actionable short-lead window
 DT_GRID = [0.5, 1.0, 1.5, 2.05, 3.0, 4.5, 6.0]
 VN_GRID = [8, 16, 24]
 ZZ_GRID = [True, False]
 
-# --------------------------------------------------------------------- data
-x, META = series_values(DATASET, max_points=MAXP)
-T = len(x)
-# Scaler on a FIXED early train span (independent of horizon) so the reservoir
-# features can be cached across horizons. Uses only early data -> leakage-safe.
-_train_end = int(TRAIN_FRAC * T)
-_lo, _hi = float(np.min(x[:_train_end])), float(np.max(x[:_train_end]))
-U = np.clip((x - _lo) / (_hi - _lo), 0.0, 1.0)
-
+# Set by setup(); module globals so the hot inner functions stay allocation-free.
+DATASET = "got_ersst"
+MAXP = 2000
+H_GRID = [1, 2, 3, 6, 9, 12, 18, 24]
+SELECT_HS = (1, 3, 6)                     # actionable short-lead window
+x = np.empty(0)
+META: dict = {}
+T = 0
+U = np.empty(0)
 _feat_cache: dict[tuple, np.ndarray] = {}
+
+
+def setup(dataset, max_points, h_grid, select_hs):
+    """Load the series and build the fixed, leakage-safe scaler once."""
+    global DATASET, MAXP, H_GRID, SELECT_HS, x, META, T, U, _feat_cache
+    DATASET, MAXP, H_GRID, SELECT_HS = dataset, max_points, h_grid, select_hs
+    x, META = series_values(dataset, max_points=max_points)
+    T = len(x)
+    # Scaler on a FIXED early train span (independent of horizon) so reservoir
+    # features can be cached across horizons. Early data only -> leakage-safe.
+    train_end = int(TRAIN_FRAC * T)
+    lo, hi = float(np.min(x[:train_end])), float(np.max(x[:train_end]))
+    U = np.clip((x - lo) / (hi - lo), 0.0, 1.0)
+    _feat_cache = {}
 
 
 def features(q, dt, vn, zz):
@@ -202,9 +213,25 @@ def main():
         "elapsed_s": round(time.time() - t0, 1),
     }
     (_HERE / "results").mkdir(exist_ok=True)
-    (_HERE / "results" / "forecast_tuning.json").write_text(json.dumps(out, indent=1))
-    print(f"\n  wrote results/forecast_tuning.json  ({out['elapsed_s']}s)", flush=True)
+    fname = f"forecast_tuning_{DATASET}.json"
+    (_HERE / "results" / fname).write_text(json.dumps(out, indent=1))
+    print(f"\n  wrote results/{fname}  ({out['elapsed_s']}s)", flush=True)
+
+
+def _ints(s):
+    return [int(v) for v in s.split(",") if v.strip()]
 
 
 if __name__ == "__main__":
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--dataset", default="got_ersst")
+    ap.add_argument("--max-points", type=int, default=2000)
+    ap.add_argument("--hs", type=_ints, default=[1, 2, 3, 6, 9, 12, 18, 24],
+                    help="horizons to evaluate, comma-separated")
+    ap.add_argument("--select", type=_ints, default=[1, 3, 6],
+                    help="horizons the config is selected on (the actionable window)")
+    a = ap.parse_args()
+    setup(a.dataset, a.max_points, sorted(set(a.hs)), tuple(a.select))
+    print(f"tuning {a.dataset}  H={H_GRID}  select-on={SELECT_HS}  "
+          f"T={T}  ({META.get('time_unit','')})", flush=True)
     main()

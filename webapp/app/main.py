@@ -113,36 +113,40 @@ def index(request: Request):
     })
 
 
-# The tuned PronoiaQ reference reservoir the demo runs. These are the reservoir
-# hyper-parameters the simple demo form does not expose; the advanced /forecast
-# and /freerun pages let a user sweep them. Kept in one place so the demo form
-# and the submit handler agree.
-#
-# Tuned by a leakage-safe sweep (validation-selected, test-reported) on the Gulf
-# ERSSTv5 series -- see Anomaly_Forecast/tune_forecast.py and
-# results/forecast_tuning.json. The temporal edge J*dt=4.5 (not the earlier 2.05)
-# and 6 qubits (not 7) minimise held-out error; the model is strongest at short
-# lead (H=1-3 months), where it beats BOTH persistence and the size-matched ESN
-# by ~25-33% RMSE. H=3 is the best single horizon (max skill over persistence).
-DEMO_MODEL = {
-    "dataset": "got_ersst",   # Gulf of Thailand SST (ERSSTv5 monthly reconstruction)
-    "horizon": 3,             # best horizon from the sweep (peak skill, beats ESN)
-    "n_qubits": 6,            # 6 > 7 here: more qubits did not help this task
-    "dt": 4.5,                # input interval J*dt (the temporal edge) -- swept
-    "virtual_nodes": 16,
-    "use_zz": True,           # two-point <Zi Zj> read-out features
-    "alpha": 0.11,            # 1 - alpha nominal band coverage
-    "kind": "ising",          # reservoir family for detect / free-run modes
+# The tuned PronoiaQ reference reservoirs the demo runs, ONE PER SERIES -- the
+# best reservoir differs by sampling rate (a daily series wants a shorter
+# temporal edge than a monthly one), so a single config would be wrong. Each was
+# found by a leakage-safe sweep (validation-selected, test-reported, with
+# persistence + size-matched ESN baselines): see Anomaly_Forecast/tune_forecast.py
+# and results/forecast_tuning_<dataset>.json. The advanced /forecast and /freerun
+# pages let a user sweep the knobs the simple demo form does not expose.
+DEFAULT_DATASET = "got_ersst"
+_DEFAULT_MODEL = {"horizon": 6, "n_qubits": 5, "dt": 2.0, "virtual_nodes": 16,
+                  "use_zz": True, "alpha": 0.11, "kind": "ising"}
+DEMO_MODELS = {
+    # Monthly ERSSTv5: long temporal edge; strongest at short lead (H=1-3),
+    # where it beats persistence AND the size-matched ESN by ~25-33% RMSE.
+    "got_ersst": {"horizon": 3, "n_qubits": 6, "dt": 4.5, "virtual_nodes": 16,
+                  "use_zz": True, "alpha": 0.11, "kind": "ising"},
+    # Daily OISST: short temporal edge (fast dynamics); very low absolute error,
+    # edges the ESN across the 5-30 day warning window. H=14 = actionable lead.
+    "got_sst": {"horizon": 14, "n_qubits": 5, "dt": 0.5, "virtual_nodes": 8,
+                "use_zz": True, "alpha": 0.11, "kind": "ising"},
 }
+
+
+def _model_for(dataset: str) -> dict:
+    """The tuned reservoir for a series (falls back to a sane default)."""
+    return {"dataset": dataset, **DEMO_MODELS.get(dataset, _DEFAULT_MODEL)}
 
 
 @app.get("/demo", response_class=HTMLResponse)
 def demo_page(request: Request, dataset: str | None = None, mode: str = "forecast"):
-    """The product demo: one form, three modes, driven by the tuned reference
-    reservoir (:data:`DEMO_MODEL`). Default = Forecast (observed vs QRC vs
+    """The product demo: one form, three modes, driven by the per-series tuned
+    reservoir (:func:`_model_for`). Default = Forecast (observed vs QRC vs
     baselines, with the conformal band)."""
     datasets = catalog.list_datasets()
-    model = {**DEMO_MODEL, "dataset": dataset or DEMO_MODEL["dataset"]}
+    model = _model_for(dataset or DEFAULT_DATASET)
     return templates.TemplateResponse(request, "demo.html", {
         "datasets": datasets,
         "featured": [d for d in datasets if d.get("featured")],
@@ -150,6 +154,7 @@ def demo_page(request: Request, dataset: str | None = None, mode: str = "forecas
         "recent": registry.list(limit=5),
         "mode": mode,
         "model": model,
+        "tuned": list(DEMO_MODELS),
     })
 
 
@@ -157,16 +162,16 @@ def demo_page(request: Request, dataset: str | None = None, mode: str = "forecas
 def demo_submit(
     request: Request,
     mode: str = Form("forecast"),
-    dataset: str = Form(DEMO_MODEL["dataset"]),
-    horizon: int = Form(DEMO_MODEL["horizon"]),
-    n_qubits: int = Form(DEMO_MODEL["n_qubits"]),
-    kind: str = Form(DEMO_MODEL["kind"]),
+    dataset: str = Form(DEFAULT_DATASET),
+    horizon: int = Form(DEMO_MODELS[DEFAULT_DATASET]["horizon"]),
+    n_qubits: int = Form(DEMO_MODELS[DEFAULT_DATASET]["n_qubits"]),
+    kind: str = Form(_DEFAULT_MODEL["kind"]),
     seed: int = Form(SEED),
 ):
     """Route the one demo form to the right job by mode, applying the tuned
-    reference reservoir (dt / virtual nodes / ZZ / alpha) the form does not
-    expose, then land on the run."""
-    m = DEMO_MODEL
+    reservoir for the chosen series (dt / virtual nodes / ZZ / alpha the form
+    does not expose), then land on the run."""
+    m = _model_for(dataset)
     try:
         if mode == "forecast":
             cfg = ForecastConfig(dataset=dataset, horizon=horizon,
