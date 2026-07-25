@@ -116,12 +116,19 @@ def index(request: Request):
 # The tuned PronoiaQ reference reservoir the demo runs. These are the reservoir
 # hyper-parameters the simple demo form does not expose; the advanced /forecast
 # and /freerun pages let a user sweep them. Kept in one place so the demo form
-# and the submit handler agree. (Matches the tuned Gulf-SST forecast config.)
+# and the submit handler agree.
+#
+# Tuned by a leakage-safe sweep (validation-selected, test-reported) on the Gulf
+# ERSSTv5 series -- see Anomaly_Forecast/tune_forecast.py and
+# results/forecast_tuning.json. The temporal edge J*dt=4.5 (not the earlier 2.05)
+# and 6 qubits (not 7) minimise held-out error; the model is strongest at short
+# lead (H=1-3 months), where it beats BOTH persistence and the size-matched ESN
+# by ~25-33% RMSE. H=3 is the best single horizon (max skill over persistence).
 DEMO_MODEL = {
     "dataset": "got_ersst",   # Gulf of Thailand SST (ERSSTv5 monthly reconstruction)
-    "horizon": 6,
-    "n_qubits": 7,
-    "dt": 2.05,               # input interval J*dt (the temporal edge)
+    "horizon": 3,             # best horizon from the sweep (peak skill, beats ESN)
+    "n_qubits": 6,            # 6 > 7 here: more qubits did not help this task
+    "dt": 4.5,                # input interval J*dt (the temporal edge) -- swept
     "virtual_nodes": 16,
     "use_zz": True,           # two-point <Zi Zj> read-out features
     "alpha": 0.11,            # 1 - alpha nominal band coverage
