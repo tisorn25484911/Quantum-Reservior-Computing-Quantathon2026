@@ -92,7 +92,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font: 400 15.5px/1.62 var(--body);
+  font: 400 16.5px/1.62 var(--body);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -107,8 +107,8 @@ h1, h2, h3, .display { font-family: var(--disp); letter-spacing: -0.02em; color:
 h1 { font-size: clamp(26px, 3.4vw, 38px); font-weight: 700; line-height: 1.1; margin: 0 0 10px; text-wrap: balance; }
 h2 { font-size: clamp(20px, 2.4vw, 26px); font-weight: 650; margin: 44px 0 14px; text-wrap: balance; }
 h3 { font-size: 16px; font-weight: 600; margin: 0 0 8px; }
-p.lede { color: var(--ink-2); font-size: clamp(16px, 1.7vw, 18.5px); line-height: 1.55; margin: 0 0 24px; max-width: 66ch; }
-.eyebrow { font-family: var(--disp); font-size: 12.5px; font-weight: 600; letter-spacing: .14em;
+p.lede { color: var(--ink-2); font-size: clamp(17px, 1.8vw, 20px); line-height: 1.55; margin: 0 0 24px; max-width: 66ch; }
+.eyebrow { font-family: var(--disp); font-size: 13px; font-weight: 600; letter-spacing: .14em;
            text-transform: uppercase; color: var(--accent); margin: 0 0 10px; }
 
 /* ---------------------------------------------------------------- header / nav */
@@ -130,7 +130,7 @@ header.top .wrap { display: flex; align-items: center; gap: 20px; padding: 13px 
 
 nav.top-nav { display: flex; align-items: center; gap: 6px; margin-left: auto; }
 nav.top-nav > a, .menu > summary {
-  color: var(--ink-2); font-size: 14.5px; font-weight: 500; padding: 7px 12px;
+  color: var(--ink-2); font-size: 15.5px; font-weight: 500; padding: 7px 12px;
   border-radius: 8px; cursor: pointer; white-space: nowrap;
 }
 nav.top-nav > a:hover, .menu > summary:hover { color: var(--ink); background: var(--surface-2); text-decoration: none; }
@@ -150,9 +150,9 @@ nav.top-nav > a.active { color: var(--accent); font-weight: 600; }
 }
 .menu-panel .grp { font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em;
   color: var(--ink-3); font-weight: 600; padding: 10px 10px 4px; }
-.menu-panel a { display: block; padding: 8px 10px; border-radius: 8px; color: var(--ink); font-size: 14px; }
+.menu-panel a { display: block; padding: 8px 10px; border-radius: 8px; color: var(--ink); font-size: 15px; }
 .menu-panel a:hover { background: var(--surface-2); text-decoration: none; }
-.menu-panel a span { display: block; font-size: 12px; color: var(--ink-3); margin-top: 1px; }
+.menu-panel a span { display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 1px; }
 
 /* ---------------------------------------------------------------- buttons */
 .btn, button {
@@ -173,8 +173,10 @@ nav.top-nav > a.active { color: var(--accent); font-weight: 600; }
 
 /* ---------------------------------------------------------------- hero */
 .hero { position: relative; overflow: hidden; margin: 8px 0 8px; padding: 64px 0 40px; }
-.hero-blob { position: absolute; inset: -10% -20% auto auto; width: min(680px, 70vw); opacity: .5;
-  filter: blur(4px); pointer-events: none; z-index: 0; }
+.hero-blob { position: absolute; inset: -14% -12% auto auto; width: min(620px, 58vw); opacity: .5;
+  filter: blur(6px); pointer-events: none; z-index: 0;
+  -webkit-mask-image: radial-gradient(closest-side, #000 52%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 52%, transparent 100%); }
 .hero-inner { position: relative; z-index: 1; max-width: 44rem; }
 .hero h1 { font-size: clamp(34px, 5.6vw, 60px); line-height: 1.03; }
 .hero .grad { background: linear-gradient(100deg, var(--accent-deep), var(--accent-2));
@@ -217,10 +219,10 @@ nav.top-nav > a.active { color: var(--accent); font-weight: 600; }
 /* ---------------------------------------------------------------- stat tiles */
 .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
         padding: 18px 18px; box-shadow: var(--shadow); }
-.stat .label { font-size: 11.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-3); font-weight: 600; }
-.stat .value { font-family: var(--disp); font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums;
+.stat .label { font-size: 12.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-3); font-weight: 600; }
+.stat .value { font-family: var(--disp); font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums;
                letter-spacing: -.02em; margin-top: 4px; line-height: 1; }
-.stat .sub { font-size: 12.5px; color: var(--ink-3); margin-top: 7px; line-height: 1.4; }
+.stat .sub { font-size: 13.5px; color: var(--ink-3); margin-top: 7px; line-height: 1.4; }
 .stat.good .value { color: var(--good); }
 .stat.bad .value { color: var(--bad); }
 .stat.accent { background: var(--accent-soft); border-color: var(--accent-line); }
@@ -229,7 +231,7 @@ nav.top-nav > a.active { color: var(--accent); font-weight: 600; }
 /* ---------------------------------------------------------------- badges */
 .badge {
   display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px;
-  font-size: 11.5px; font-weight: 600; letter-spacing: .01em;
+  font-size: 12px; font-weight: 600; letter-spacing: .01em;
   border: 1px solid var(--border-2); color: var(--ink-2); background: var(--surface-2);
   vertical-align: middle;
 }
@@ -241,11 +243,11 @@ nav.top-nav > a.active { color: var(--accent); font-weight: 600; }
 
 /* ---------------------------------------------------------------- tables */
 .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
-table { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--surface); }
+table { width: 100%; border-collapse: collapse; font-size: 15px; background: var(--surface); }
 th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--border); }
-thead th { font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+thead th { font-size: 12px; text-transform: uppercase; letter-spacing: .05em;
      color: var(--ink-3); font-weight: 600; background: var(--surface-2); position: sticky; top: 0; }
-td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 13px; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 14px; }
 tbody tr:hover td { background: color-mix(in srgb, var(--accent-soft) 55%, transparent); }
 tr.highlight td { background: var(--accent-soft); }
 tr.highlight:hover td { background: color-mix(in srgb, var(--accent-soft) 80%, var(--surface)); }
@@ -261,7 +263,7 @@ input, select {
 input:focus, select:focus { outline: none; border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft); }
 .field { margin-bottom: 16px; }
-.hint { font-size: 12px; color: var(--ink-3); margin-top: 5px; }
+.hint { font-size: 13px; color: var(--ink-3); margin-top: 5px; }
 .checkline { display: flex; align-items: center; gap: 9px; }
 .checkline input { width: auto; }
 .checkline label { margin: 0; }
@@ -279,7 +281,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent);
 figure { margin: 0 0 16px; }
 figure img { width: 100%; height: auto; display: block; border-radius: var(--radius-sm);
              background: #fff; border: 1px solid var(--border); }
-figcaption { font-size: 12.5px; color: var(--ink-3); margin-top: 8px; }
+figcaption { font-size: 13.5px; color: var(--ink-3); margin-top: 8px; }
 
 /* ---------------------------------------------------------------- notes */
 .note {
@@ -304,18 +306,18 @@ figcaption { font-size: 12.5px; color: var(--ink-3); margin-top: 8px; }
 .member .photo { aspect-ratio: 1/1; width: 100%; object-fit: cover; display: block;
   filter: saturate(.96); background: var(--surface-2); }
 .member .body { padding: 16px 18px 18px; }
-.member .role { font-family: var(--disp); font-size: 12px; font-weight: 600; letter-spacing: .08em;
+.member .role { font-family: var(--disp); font-size: 12.5px; font-weight: 600; letter-spacing: .08em;
   text-transform: uppercase; color: var(--accent); }
-.member .name { font-family: var(--disp); font-weight: 650; font-size: 16.5px; margin: 4px 0 2px; letter-spacing: -.01em; }
-.member .aff { font-size: 12.5px; color: var(--ink-3); }
-.member .desc { font-size: 13px; color: var(--ink-2); margin-top: 9px; line-height: 1.5; }
+.member .name { font-family: var(--disp); font-weight: 650; font-size: 17.5px; margin: 4px 0 2px; letter-spacing: -.01em; }
+.member .aff { font-size: 13.5px; color: var(--ink-3); }
+.member .desc { font-size: 14px; color: var(--ink-2); margin-top: 9px; line-height: 1.5; }
 
 /* ---------------------------------------------------------------- misc */
 .mono { font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); }
 .muted { color: var(--ink-3); }
 .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .spacer { flex: 1; }
-.pipe-flow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13.5px; }
+.pipe-flow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14.5px; }
 .pipe-flow .node { padding: 7px 13px; border: 1px solid var(--border-2); border-radius: 999px;
   background: var(--surface); font-weight: 600; color: var(--ink-2); }
 .pipe-flow .node.on { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-deep); }
@@ -327,7 +329,7 @@ footer.site { background: var(--surface-2); border-top: 1px solid var(--border);
 footer.site .wrap { padding-block: 40px 32px; display: grid; gap: 26px; grid-template-columns: 1.4fr 1fr 1fr; }
 footer.site .col h4 { font-family: var(--disp); font-size: 12px; text-transform: uppercase; letter-spacing: .1em;
   color: var(--ink-3); margin: 0 0 12px; }
-footer.site .col a { display: block; color: var(--ink-2); font-size: 14px; padding: 3px 0; }
+footer.site .col a { display: block; color: var(--ink-2); font-size: 15px; padding: 3px 0; }
 footer.site .col a:hover { color: var(--accent); text-decoration: none; }
 footer.site .legal { grid-column: 1 / -1; border-top: 1px solid var(--border); padding-top: 18px;
   color: var(--ink-3); font-size: 12px; line-height: 1.6; }
